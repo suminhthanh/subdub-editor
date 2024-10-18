@@ -41,7 +41,6 @@ const SubtitleTextArea = styled.textarea`
   font-family: inherit;
   line-height: 1.5;
   min-height: 1.5em;
-  box-sizing: border-box;
   display: flex;
   align-items: center;
 `;

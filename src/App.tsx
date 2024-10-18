@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import VideoPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
@@ -14,9 +15,15 @@ const AppContainer = styled.div`
   color: #4a4a4a;
 `;
 
-const Title = styled.h1`
-  color: #ff6b6b;
-  text-align: center;
+const Header = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+`;
+
+const LanguageSelect = styled.select`
+  padding: 5px;
+  font-size: 14px;
 `;
 
 const Button = styled.button`
@@ -54,6 +61,7 @@ const Tab = styled.button<{ active: boolean }>`
 `;
 
 function App() {
+  const { t, i18n } = useTranslation();
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
   const [videoUrl, setVideoUrl] = useState<string>('');
@@ -148,9 +156,19 @@ function App() {
     return () => clearInterval(interval);
   }, []);
 
+  const changeLanguage = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    i18n.changeLanguage(event.target.value);
+  };
+
   return (
     <AppContainer>
-      <Title>Video Subtitle Editor</Title>
+      <Header>
+        <LanguageSelect onChange={changeLanguage} value={i18n.language}>
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="ca">Català</option>
+        </LanguageSelect>
+      </Header>
       <input type="file" accept="video/*" onChange={handleFileSelect} />
       {videoUrl && (
         <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
@@ -158,8 +176,8 @@ function App() {
       {subtitles.length > 0 && (
         <>
           <TabContainer>
-            <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>Timeline</Tab>
-            <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>List</Tab>
+            <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
+            <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
           </TabContainer>
           {activeTab === 'timeline' ? (
             <SubtitleTimeline
@@ -175,7 +193,7 @@ function App() {
               onTimeChange={handleTimeChange}
             />
           )}
-          <Button onClick={handleDownloadResult}>Download Result</Button>
+          <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
         </>
       )}
     </AppContainer>

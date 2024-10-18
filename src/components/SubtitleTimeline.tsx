@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import styled from 'styled-components';
+import { useTranslation } from 'react-i18next';
 import SubtitleItem from './SubtitleItem';
 import { Subtitle } from '../services/FFmpegService';
 
@@ -83,6 +84,7 @@ const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
 const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange }) => {
+  const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
 
   const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
@@ -139,11 +141,11 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
 
   return (
     <TimelineContainer>
-      <h2>Subtitle Timeline</h2>
+      <h2>{t('subtitleTimeline')}</h2>
       <ZoomControls>
-        <Button onClick={handleZoomOut}>Zoom Out</Button>
-        <Button onClick={handleZoomIn}>Zoom In</Button>
-        <Button onClick={handleResetZoom}>Reset Zoom</Button>
+        <Button onClick={handleZoomOut}>{t('zoomOut')}</Button>
+        <Button onClick={handleZoomIn}>{t('zoomIn')}</Button>
+        <Button onClick={handleResetZoom}>{t('resetZoom')}</Button>
       </ZoomControls>
       <Timeline id="subtitle-timeline">
         <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
