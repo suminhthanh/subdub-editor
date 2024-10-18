@@ -1,24 +1,37 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import styled from 'styled-components';
+import styled, { createGlobalStyle } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import VideoPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
 
+const GlobalStyle = createGlobalStyle`
+  body {
+    margin: 0;
+    padding: 0;
+  }
+`;
+
 const AppContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 5px;
   font-family: Arial, sans-serif;
   background-color: #fff5e6;
   color: #4a4a4a;
+  box-sizing: border-box;
 `;
 
 const Header = styled.div`
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   margin-bottom: 20px;
+  gap: 10px;
 `;
 
 const LanguageSelect = styled.select`
@@ -33,7 +46,6 @@ const Button = styled.button`
   padding: 10px 20px;
   font-size: 16px;
   cursor: pointer;
-  margin: 10px 0;
   border-radius: 5px;
 
   &:hover {
@@ -43,7 +55,7 @@ const Button = styled.button`
 
 const TabContainer = styled.div`
   display: flex;
-  margin-bottom: 20px;
+  border-bottom: 1px solid #ff6b6b;
 `;
 
 const Tab = styled.button<{ active: boolean }>`
@@ -58,6 +70,35 @@ const Tab = styled.button<{ active: boolean }>`
   &:hover {
     background-color: ${props => props.active ? '#ff8787' : '#ffcb9a'};
   }
+`;
+
+const VideoContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 30vh;
+  margin-bottom: 20px;
+`;
+
+const ContentContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+`;
+
+const SubtitleContainer = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+`;
+
+const TabContent = styled.div`
+  flex: 1;
+  overflow: hidden;
 `;
 
 function App() {
@@ -108,6 +149,12 @@ function App() {
         console.error("Error downloading result:", error);
       }
     }
+  };
+
+  const handleCloseVideo = () => {
+    setVideoFile(null);
+    setVideoUrl('');
+    setSubtitles([]);
   };
 
   const handleTimeChange = (newTime: number) => {
@@ -161,42 +208,57 @@ function App() {
   };
 
   return (
-    <AppContainer>
-      <Header>
-        <LanguageSelect onChange={changeLanguage} value={i18n.language}>
-          <option value="en">English</option>
-          <option value="es">Español</option>
-          <option value="ca">Català</option>
-        </LanguageSelect>
-      </Header>
-      <input type="file" accept="video/*" onChange={handleFileSelect} />
-      {videoUrl && (
-        <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
-      )}
-      {subtitles.length > 0 && (
-        <>
-          <TabContainer>
-            <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
-            <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
-          </TabContainer>
-          {activeTab === 'timeline' ? (
-            <SubtitleTimeline
-              subtitles={subtitles}
-              setSubtitles={setSubtitles}
-              currentTime={currentTime}
-              onTimeChange={handleTimeChange}
-            />
+    <>
+      <GlobalStyle />
+      <AppContainer>
+        <Header>
+          {videoUrl ? (
+            <>
+              <Button onClick={handleCloseVideo}>{t('closeVideo')}</Button>
+              <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
+            </>
           ) : (
-            <SubtitleList
-              subtitles={subtitles}
-              onSubtitleChange={handleSubtitleChange}
-              onTimeChange={handleTimeChange}
-            />
+            <input type="file" accept="video/*" onChange={handleFileSelect} />
           )}
-          <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
-        </>
-      )}
-    </AppContainer>
+          <LanguageSelect onChange={changeLanguage} value={i18n.language}>
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="ca">Català</option>
+          </LanguageSelect>
+        </Header>
+        <ContentContainer>
+          {videoUrl && (
+            <VideoContainer>
+              <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
+            </VideoContainer>
+          )}
+          <SubtitleContainer>
+            {subtitles.length > 0 && (
+              <>
+                <TabContainer>
+                  <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
+                  <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
+                </TabContainer>
+                {activeTab === 'timeline' ? (
+                  <SubtitleTimeline
+                    subtitles={subtitles}
+                    setSubtitles={setSubtitles}
+                    currentTime={currentTime}
+                    onTimeChange={handleTimeChange}
+                  />
+                ) : (
+                  <SubtitleList
+                    subtitles={subtitles}
+                    onSubtitleChange={handleSubtitleChange}
+                    onTimeChange={handleTimeChange}
+                  />
+                )}
+              </>
+            )}
+          </SubtitleContainer>
+        </ContentContainer>
+      </AppContainer>
+    </>
   );
 }
 

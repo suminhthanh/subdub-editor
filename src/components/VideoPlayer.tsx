@@ -3,12 +3,17 @@ import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
 const VideoContainer = styled.div`
-  margin-bottom: 20px;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 `;
 
 const StyledVideo = styled.video`
-  width: 100%;
-  max-width: 800px;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 `;
 
 interface VideoPlayerProps {

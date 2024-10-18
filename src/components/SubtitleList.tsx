@@ -4,9 +4,7 @@ import { Subtitle } from '../services/FFmpegService';
 
 const ListContainer = styled.div`
   background-color: #ffd8a8;
-  padding: 20px;
-  border-radius: 5px;
-  height: 400px;
+  padding: 10px;
   overflow-y: auto;
 `;
 

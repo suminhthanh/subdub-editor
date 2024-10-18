@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import SubtitleItem from './SubtitleItem';
@@ -6,27 +6,34 @@ import { Subtitle } from '../services/FFmpegService';
 
 const TimelineContainer = styled.div`
   background-color: #ffd8a8;
-  padding: 20px;
-  border-radius: 5px;
-  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 `;
 
 const TimelineHeader = styled.div`
   display: flex;
   justify-content: flex-end;
-  margin-bottom: 10px;
+  padding: 10px;
+`;
+
+const TimelineContent = styled.div`
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
 `;
 
 const Timeline = styled.div`
   position: relative;
-  height: 400px;
-  overflow-y: auto;
-  overflow-x: scroll;
+  min-width: 100%;
+  height: auto;
 `;
 
 const CurrentTimeIndicator = styled.div`
   position: absolute;
-  top: 0;
+  top: 30px; // Adjusted to account for Ruler height
   bottom: 0;
   width: 2px;
   background-color: #ff6b6b;
@@ -43,6 +50,7 @@ const Ruler = styled.div`
   height: 30px;
   position: sticky;
   top: 0;
+  left: 0;
   background-color: #ffe8cc;
   z-index: 5;
   display: flex;
@@ -97,6 +105,7 @@ const MAX_ZOOM = 100;
 const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange }) => {
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
     const newSubtitles = [...subtitles];
@@ -113,6 +122,12 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
       event.preventDefault();
       const delta = event.deltaY > 0 ? 0.9 : 1.1;
       setZoomLevel(prev => Math.min(Math.max(prev * delta, MIN_ZOOM), MAX_ZOOM));
+    } else if (scrollContainerRef.current) {
+      // Handle horizontal scrolling
+      if (event.deltaX !== 0) {
+        event.preventDefault();
+        scrollContainerRef.current.scrollLeft += event.deltaX;
+      }
     }
   }, []);
 
@@ -124,19 +139,19 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
   }, [zoomLevel, onTimeChange]);
 
   useEffect(() => {
-    const timeline = document.getElementById('subtitle-timeline');
-    if (timeline) {
-      timeline.addEventListener('wheel', handleWheel, { passive: false });
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
     }
     return () => {
-      if (timeline) {
-        timeline.removeEventListener('wheel', handleWheel);
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('wheel', handleWheel);
       }
     };
   }, [handleWheel]);
 
   const duration = Math.max(...subtitles.map(s => s.startTime + s.duration), currentTime);
-  const timelineWidth = duration * zoomLevel;
+  const timelineWidth = Math.max(duration * zoomLevel, 100); // Ensure a minimum width
 
   const renderTimeMarkers = () => {
     const markers = [];
@@ -178,21 +193,23 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
           </ZoomButton>
         </ZoomControls>
       </TimelineHeader>
-      <Timeline id="subtitle-timeline">
-        <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
-          {renderTimeMarkers()}
-        </ClickableRuler>
-        <CurrentTimeIndicator style={{ left: `${currentTime * zoomLevel}px` }} />
-        {subtitles.map((subtitle, index) => (
-          <SubtitleRow key={index}>
-            <SubtitleItem
-              subtitle={subtitle}
-              onChange={(updatedSubtitle) => handleSubtitleChange(index, updatedSubtitle)}
-              zoomLevel={zoomLevel}
-            />
-          </SubtitleRow>
-        ))}
-      </Timeline>
+      <TimelineContent ref={scrollContainerRef}>
+        <Timeline id="subtitle-timeline" style={{ width: `${timelineWidth}px` }}>
+          <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
+            {renderTimeMarkers()}
+          </ClickableRuler>
+          <CurrentTimeIndicator style={{ left: `${currentTime * zoomLevel}px` }} />
+          {subtitles.map((subtitle, index) => (
+            <SubtitleRow key={index}>
+              <SubtitleItem
+                subtitle={subtitle}
+                onChange={(updatedSubtitle) => handleSubtitleChange(index, updatedSubtitle)}
+                zoomLevel={zoomLevel}
+              />
+            </SubtitleRow>
+          ))}
+        </Timeline>
+      </TimelineContent>
     </TimelineContainer>
   );
 };
