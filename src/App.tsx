@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import VideoPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
+import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
 
 const AppContainer = styled.div`
@@ -33,12 +34,32 @@ const Button = styled.button`
   }
 `;
 
+const TabContainer = styled.div`
+  display: flex;
+  margin-bottom: 20px;
+`;
+
+const Tab = styled.button<{ active: boolean }>`
+  flex: 1;
+  padding: 10px;
+  background-color: ${props => props.active ? '#ff6b6b' : '#ffd8a8'};
+  color: ${props => props.active ? 'white' : 'black'};
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: ${props => props.active ? '#ff8787' : '#ffcb9a'};
+  }
+`;
+
 function App() {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
   const videoRef = useRef<{
     currentTime: number;
     setCurrentTime: (time: number) => void;
@@ -49,11 +70,11 @@ function App() {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      console.log("File selected:", file.name);
+      console.debug("File selected:", file.name);
       setVideoFile(file);
       try {
         const url = URL.createObjectURL(file);
-        console.log("Created video URL:", url);
+        console.debug("Created video URL:", url);
         setVideoUrl(url);
         const extractedSubtitles = await extractSubtitles(file);
         setSubtitles(extractedSubtitles);
@@ -91,6 +112,12 @@ function App() {
     }
   }, [isPlaying]);
 
+  const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
+    const newSubtitles = [...subtitles];
+    newSubtitles[index] = updatedSubtitle;
+    setSubtitles(newSubtitles);
+  };
+
   useEffect(() => {
     document.addEventListener('keydown', handleKeyPress);
     return () => {
@@ -115,19 +142,28 @@ function App() {
       <Title>Video Subtitle Editor</Title>
       <input type="file" accept="video/*" onChange={handleFileSelect} />
       {videoUrl && (
-        <>
-          <p>Video URL: {videoUrl}</p>
-          <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
-        </>
+        <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
       )}
       {subtitles.length > 0 && (
         <>
-          <SubtitleTimeline
-            subtitles={subtitles}
-            setSubtitles={setSubtitles}
-            currentTime={currentTime}
-            onTimeChange={handleTimeChange}
-          />
+          <TabContainer>
+            <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>Timeline</Tab>
+            <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>List</Tab>
+          </TabContainer>
+          {activeTab === 'timeline' ? (
+            <SubtitleTimeline
+              subtitles={subtitles}
+              setSubtitles={setSubtitles}
+              currentTime={currentTime}
+              onTimeChange={handleTimeChange}
+            />
+          ) : (
+            <SubtitleList
+              subtitles={subtitles}
+              onSubtitleChange={handleSubtitleChange}
+              onTimeChange={handleTimeChange}
+            />
+          )}
           <Button onClick={handleRebuildSubtitles}>Rebuild Subtitles</Button>
         </>
       )}
