@@ -1,11 +1,14 @@
-import React, { useEffect, useRef, forwardRef, useImperativeHandle, useState } from 'react';
-import videojs from 'video.js';
-import 'video.js/dist/video-js.css';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
 const VideoContainer = styled.div`
   margin-bottom: 20px;
+`;
+
+const StyledVideo = styled.video`
+  width: 100%;
+  max-width: 800px;
 `;
 
 interface VideoPlayerProps {
@@ -15,68 +18,70 @@ interface VideoPlayerProps {
 
 const VideoPlayer = forwardRef<{ currentTime: number }, VideoPlayerProps>(({ src, subtitles }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const playerRef = useRef<videojs.Player | null>(null);
-  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
-      return playerRef.current ? playerRef.current.currentTime() : 0;
+      return videoRef.current ? videoRef.current.currentTime : 0;
     },
   }));
 
+  const subtitlesUrl = useMemo(() => {
+    if (subtitles.length === 0) return '';
+
+    const vttContent = `WEBVTT
+
+${subtitles.map((subtitle, index) => `
+${index + 1}
+${formatTime(subtitle.startTime)} --> ${formatTime(subtitle.startTime + subtitle.duration)}
+${subtitle.text}
+`).join('\n')}
+`;
+
+    const blob = new Blob([vttContent], { type: 'text/vtt' });
+    return URL.createObjectURL(blob);
+  }, [subtitles]);
+
   useEffect(() => {
-    if (!videoRef.current) return;
-
-    playerRef.current = videojs(videoRef.current, {
-      controls: true,
-      fluid: true,
-      preload: 'auto',
-    });
-
-    playerRef.current.ready(() => {
-      setIsPlayerReady(true);
-    });
-
     return () => {
-      if (playerRef.current) {
-        playerRef.current.dispose();
+      if (subtitlesUrl) {
+        URL.revokeObjectURL(subtitlesUrl);
       }
     };
-  }, []);
+  }, [subtitlesUrl]);
 
   useEffect(() => {
-    if (isPlayerReady && playerRef.current) {
-      playerRef.current.src({ type: 'video/mp4', src: src });
-
-      if (subtitles && subtitles.length > 0) {
-        const track = playerRef.current.textTracks()[0] || playerRef.current.addTextTrack('captions', 'English', 'en');
-        track.mode = 'showing';
-        
-        // Clear existing cues
-        while (track.cues && track.cues.length > 0) {
-          track.removeCue(track.cues[0]);
-        }
-
-        // Add new cues
-        subtitles.forEach((subtitle) => {
-          const cue = new VTTCue(
-            subtitle.startTime,
-            subtitle.startTime + subtitle.duration,
-            subtitle.text
-          );
-          track.addCue(cue);
-        });
-      }
+    if (videoRef.current) {
+      videoRef.current.src = src;
     }
-  }, [isPlayerReady, src, subtitles]);
+  }, [src]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video) {
+      video.onerror = () => {
+        console.error("Video error:", video.error);
+      };
+    }
+  }, []);
 
   return (
     <VideoContainer>
-      <div data-vjs-player>
-        <video ref={videoRef} className="video-js" />
-      </div>
+      <StyledVideo ref={videoRef} controls>
+        <source src={src} type="video/mp4" />
+        {subtitlesUrl && <track default kind="captions" srcLang="en" src={subtitlesUrl} />}
+        Your browser does not support the video tag.
+      </StyledVideo>
     </VideoContainer>
   );
 });
+
+const formatTime = (seconds: number): string => {
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const secs = Math.floor(seconds % 60);
+  const milliseconds = Math.floor((seconds % 1) * 1000);
+
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+};
 
 export default VideoPlayer;

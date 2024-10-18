@@ -43,10 +43,17 @@ function App() {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      console.log("File selected:", file.name);
       setVideoFile(file);
-      setVideoUrl(URL.createObjectURL(file));
-      const extractedSubtitles = await extractSubtitles(file);
-      setSubtitles(extractedSubtitles);
+      try {
+        const url = URL.createObjectURL(file);
+        console.log("Created video URL:", url);
+        setVideoUrl(url);
+        const extractedSubtitles = await extractSubtitles(file);
+        setSubtitles(extractedSubtitles);
+      } catch (error) {
+        console.error("Error processing video file:", error);
+      }
     }
   };
 
@@ -73,7 +80,12 @@ function App() {
     <AppContainer>
       <Title>Video Subtitle Editor</Title>
       <input type="file" accept="video/*" onChange={handleFileSelect} />
-      {videoUrl && <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />}
+      {videoUrl && (
+        <>
+          <p>Video URL: {videoUrl}</p>
+          <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
+        </>
+      )}
       {subtitles.length > 0 && (
         <>
           <SubtitleTimeline
