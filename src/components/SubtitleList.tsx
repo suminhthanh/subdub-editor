@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
@@ -12,8 +12,7 @@ const ListContainer = styled.div`
 
 const SubtitleRow = styled.div`
   display: flex;
-  align-items: center;
-  padding: 5px;
+  align-items: stretch;
   border-bottom: 1px solid #ccc;
 `;
 
@@ -21,16 +20,30 @@ const SubtitleTime = styled.span`
   width: 100px;
   font-size: 12px;
   cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5px;
   &:hover {
-    text-decoration: underline;
+    background-color: rgba(255, 255, 255, 0.2);
   }
 `;
 
-const SubtitleText = styled.input`
+const SubtitleTextArea = styled.textarea`
   flex-grow: 1;
   border: none;
   background: transparent;
   font-size: 14px;
+  resize: none;
+  overflow: hidden;
+  padding: 5px;
+  font-family: inherit;
+  line-height: 1.5;
+  min-height: 1.5em;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 `;
 
 interface SubtitleListProps {
@@ -44,6 +57,21 @@ const SubtitleList: React.FC<SubtitleListProps> = ({ subtitles, onSubtitleChange
     onTimeChange(time);
   };
 
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = 'auto';
+    textarea.style.height = `${Math.max(textarea.scrollHeight, textarea.clientHeight)}px`;
+  };
+
+  const handleTextareaChange = (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onSubtitleChange(index, { ...subtitles[index], text: e.target.value });
+    adjustTextareaHeight(e.target);
+  };
+
+  useEffect(() => {
+    const textareas = document.querySelectorAll<HTMLTextAreaElement>('.subtitle-textarea');
+    textareas.forEach(adjustTextareaHeight);
+  }, [subtitles]);
+
   return (
     <ListContainer>
       {subtitles.map((subtitle, index) => (
@@ -51,9 +79,11 @@ const SubtitleList: React.FC<SubtitleListProps> = ({ subtitles, onSubtitleChange
           <SubtitleTime onClick={() => handleTimeClick(subtitle.startTime)}>
             {formatTime(subtitle.startTime)}
           </SubtitleTime>
-          <SubtitleText
+          <SubtitleTextArea
+            className="subtitle-textarea"
             value={subtitle.text}
-            onChange={(e) => onSubtitleChange(index, { ...subtitle, text: e.target.value })}
+            onChange={(e) => handleTextareaChange(index, e)}
+            onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
           />
         </SubtitleRow>
       ))}
