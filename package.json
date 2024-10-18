@@ -1,0 +1,45 @@
+{
+  "name": "video-subtitle-editor",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@ffmpeg/core": "^0.11.0",
+    "@ffmpeg/ffmpeg": "^0.11.6",
+    "@types/node": "^16.11.27",
+    "@types/react": "^18.0.6",
+    "@types/react-dom": "^18.0.2",
+    "@types/styled-components": "^5.1.25",
+    "@types/video.js": "^7.3.40",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "react-draggable": "^4.4.5",
+    "react-scripts": "5.0.1",
+    "styled-components": "^5.3.5",
+    "typescript": "^4.6.3",
+    "video.js": "^7.18.1"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
