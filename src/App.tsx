@@ -84,10 +84,21 @@ function App() {
     }
   };
 
-  const handleRebuildSubtitles = async () => {
+  const handleDownloadResult = async () => {
     if (videoFile && subtitles.length > 0) {
-      const newVideoBlob = await rebuildSubtitles(videoFile, subtitles);
-      setVideoUrl(URL.createObjectURL(newVideoBlob));
+      try {
+        const newVideoBlob = await rebuildSubtitles(videoFile, subtitles);
+        const url = URL.createObjectURL(newVideoBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'video_with_subtitles.mp4';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading result:", error);
+      }
     }
   };
 
@@ -164,7 +175,7 @@ function App() {
               onTimeChange={handleTimeChange}
             />
           )}
-          <Button onClick={handleRebuildSubtitles}>Rebuild Subtitles</Button>
+          <Button onClick={handleDownloadResult}>Download Result</Button>
         </>
       )}
     </AppContainer>
