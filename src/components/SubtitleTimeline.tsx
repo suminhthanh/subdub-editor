@@ -67,17 +67,22 @@ const Button = styled.button`
   }
 `;
 
+const ClickableRuler = styled(Ruler)`
+  cursor: pointer;
+`;
+
 interface SubtitleTimelineProps {
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
   currentTime: number;
+  onTimeChange: (time: number) => void;
 }
 
 const DEFAULT_ZOOM = 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
-const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime }) => {
+const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange }) => {
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
 
   const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
@@ -97,6 +102,13 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
       setZoomLevel(prev => Math.min(Math.max(prev * delta, MIN_ZOOM), MAX_ZOOM));
     }
   }, []);
+
+  const handleRulerClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    const clickX = event.clientX - rect.left;
+    const newTime = clickX / zoomLevel;
+    onTimeChange(newTime);
+  }, [zoomLevel, onTimeChange]);
 
   useEffect(() => {
     const timeline = document.getElementById('subtitle-timeline');
@@ -134,9 +146,9 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
         <Button onClick={handleResetZoom}>Reset Zoom</Button>
       </ZoomControls>
       <Timeline id="subtitle-timeline">
-        <Ruler style={{ width: `${timelineWidth}px` }}>
+        <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
           {renderTimeMarkers()}
-        </Ruler>
+        </ClickableRuler>
         <CurrentTimeIndicator style={{ left: `${currentTime * zoomLevel}px` }} />
         {subtitles.map((subtitle, index) => (
           <SubtitleRow key={index}>

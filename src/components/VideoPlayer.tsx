@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
+import React, { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
@@ -16,12 +16,28 @@ interface VideoPlayerProps {
   subtitles: Subtitle[];
 }
 
-const VideoPlayer = forwardRef<{ currentTime: number }, VideoPlayerProps>(({ src, subtitles }, ref) => {
+const VideoPlayer = forwardRef<{
+  currentTime: number;
+  setCurrentTime: (time: number) => void;
+  play: () => void;
+  pause: () => void;
+}, VideoPlayerProps>(({ src, subtitles }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
       return videoRef.current ? videoRef.current.currentTime : 0;
+    },
+    setCurrentTime(time: number) {
+      if (videoRef.current) {
+        videoRef.current.currentTime = time;
+      }
+    },
+    play() {
+      videoRef.current?.play();
+    },
+    pause() {
+      videoRef.current?.pause();
     },
   }));
 

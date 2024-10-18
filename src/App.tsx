@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled from 'styled-components';
 import VideoPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
@@ -38,7 +38,13 @@ function App() {
   const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
   const [videoUrl, setVideoUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
-  const videoRef = useRef<{ currentTime: number } | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<{
+    currentTime: number;
+    setCurrentTime: (time: number) => void;
+    play: () => void;
+    pause: () => void;
+  } | null>(null);
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -63,6 +69,34 @@ function App() {
       setVideoUrl(URL.createObjectURL(newVideoBlob));
     }
   };
+
+  const handleTimeChange = (newTime: number) => {
+    if (videoRef.current) {
+      videoRef.current.setCurrentTime(newTime);
+    }
+  };
+
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+    if (event.code === 'Space' && event.target === document.body) {
+      event.preventDefault();
+      if (videoRef.current) {
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          videoRef.current.play();
+          setIsPlaying(true);
+        }
+      }
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    document.addEventListener('keydown', handleKeyPress);
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [handleKeyPress]);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -92,6 +126,7 @@ function App() {
             subtitles={subtitles}
             setSubtitles={setSubtitles}
             currentTime={currentTime}
+            onTimeChange={handleTimeChange}
           />
           <Button onClick={handleRebuildSubtitles}>Rebuild Subtitles</Button>
         </>
