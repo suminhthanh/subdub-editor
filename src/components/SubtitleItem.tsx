@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import styled from 'styled-components';
 import Draggable from 'react-draggable';
 import { Subtitle } from '../services/FFmpegService';
@@ -28,6 +28,7 @@ interface SubtitleItemProps {
 }
 
 const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange }) => {
+  const nodeRef = useRef(null);
   const [text, setText] = useState(subtitle.text);
 
   const handleDrag = (e: any, data: { x: number }) => {
@@ -51,8 +52,9 @@ const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange }) => {
       bounds="parent"
       onDrag={handleDrag}
       position={{ x: subtitle.startTime * 10, y: 0 }}
+      nodeRef={nodeRef}
     >
-      <SubtitleBox style={{ width: `${subtitle.duration * 10}px` }}>
+      <SubtitleBox style={{ width: `${subtitle.duration * 10}px` }} ref={nodeRef}>
         <SubtitleText
           value={text}
           onChange={handleTextChange}

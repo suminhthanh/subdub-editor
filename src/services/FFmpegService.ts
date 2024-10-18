@@ -17,10 +17,15 @@ export const extractSubtitles = async (videoFile: File): Promise<Subtitle[]> => 
 
   await ffmpeg.run('-i', 'input.mp4', '-map', '0:s:0', 'subtitles.srt');
 
+  try {
   const data = ffmpeg.FS('readFile', 'subtitles.srt');
   const subtitles = new TextDecoder().decode(data);
 
-  return parseSRT(subtitles);
+    return parseSRT(subtitles);
+  } catch (error) {
+    console.error('Error extracting subtitles:', error);
+    return [];
+  }
 };
 
 export const rebuildSubtitles = async (videoFile: File, subtitles: Subtitle[]): Promise<Blob> => {
