@@ -11,6 +11,12 @@ const TimelineContainer = styled.div`
   margin-bottom: 20px;
 `;
 
+const TimelineHeader = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+`;
+
 const Timeline = styled.div`
   position: relative;
   height: 400px;
@@ -51,20 +57,25 @@ const TimeMarker = styled.div`
 `;
 
 const ZoomControls = styled.div`
-  margin-bottom: 10px;
+  display: flex;
+  gap: 5px;
 `;
 
-const Button = styled.button`
-  margin-right: 10px;
-  padding: 5px 10px;
-  background-color: #ff6b6b;
-  color: white;
+const ZoomButton = styled.button`
+  background: none;
   border: none;
-  border-radius: 3px;
   cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
 
   &:hover {
-    background-color: #ff8787;
+    background-color: rgba(255, 255, 255, 0.9);
   }
 `;
 
@@ -141,12 +152,32 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
 
   return (
     <TimelineContainer>
-      <h2>{t('subtitleTimeline')}</h2>
-      <ZoomControls>
-        <Button onClick={handleZoomOut}>{t('zoomOut')}</Button>
-        <Button onClick={handleZoomIn}>{t('zoomIn')}</Button>
-        <Button onClick={handleResetZoom}>{t('resetZoom')}</Button>
-      </ZoomControls>
+      <TimelineHeader>
+        <ZoomControls>
+          <ZoomButton onClick={handleZoomOut} title={t('zoomOut')}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+              <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </ZoomButton>
+          <ZoomButton onClick={handleZoomIn} title={t('zoomIn')}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+              <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
+              <line x1="9" y1="6" x2="9" y2="12" stroke="currentColor" strokeWidth="2"/>
+            </svg>
+          </ZoomButton>
+          <ZoomButton onClick={handleResetZoom} title={t('resetZoom')}>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+              <path d="M9 6v3h3" stroke="currentColor" strokeWidth="2" fill="none"/>
+            </svg>
+          </ZoomButton>
+        </ZoomControls>
+      </TimelineHeader>
       <Timeline id="subtitle-timeline">
         <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
           {renderTimeMarkers()}
