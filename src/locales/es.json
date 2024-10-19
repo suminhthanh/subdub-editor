@@ -7,5 +7,10 @@
   "zoomOut": "Alejar",
   "zoomIn": "Acercar",
   "resetZoom": "Restablecer Zoom",
-  "closeVideo": "Cerrar Video"
+  "closeVideo": "Cerrar Video",
+  "openFile": "Abrir archivo",
+  "selectFileOrUUID": "Selecciona un archivo o introduce UUID",
+  "enterUUID": "Introduce UUID",
+  "submit": "Enviar",
+  "cancel": "Cancelar"
 }

@@ -5,6 +5,8 @@ import VideoPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
+import FileSelectionModal from './components/FileSelectionModal';
+import { loadVideoFromUUID, loadSubtitlesFromUUID, parseSubtitlesFromJSON } from './services/APIService';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -101,6 +103,13 @@ const TabContent = styled.div`
   overflow: hidden;
 `;
 
+const CenteredButton = styled(Button)`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+`;
+
 function App() {
   const { t, i18n } = useTranslation();
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -109,6 +118,8 @@ function App() {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [uuid, setUuid] = useState<string | null>(null);
   const videoRef = useRef<{
     currentTime: number;
     setCurrentTime: (time: number) => void;
@@ -116,20 +127,16 @@ function App() {
     pause: () => void;
   } | null>(null);
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      console.debug("File selected:", file.name);
-      setVideoFile(file);
-      try {
-        const url = URL.createObjectURL(file);
-        console.debug("Created video URL:", url);
-        setVideoUrl(url);
-        const extractedSubtitles = await extractSubtitles(file);
-        setSubtitles(extractedSubtitles);
-      } catch (error) {
-        console.error("Error processing video file:", error);
-      }
+  const handleFileSelect = async (file: File) => {
+    setVideoFile(file);
+    try {
+      const url = URL.createObjectURL(file);
+      console.debug("Created video URL:", url);
+      setVideoUrl(url);
+      const extractedSubtitles = await extractSubtitles(file);
+      setSubtitles(extractedSubtitles);
+    } catch (error) {
+      console.error("Error processing video file:", error);
     }
   };
 
@@ -155,6 +162,12 @@ function App() {
     setVideoFile(null);
     setVideoUrl('');
     setSubtitles([]);
+    setUuid(null);
+    setCurrentTime(0);
+    setIsPlaying(false);
+    if (videoRef.current) {
+      videoRef.current.setCurrentTime(0);
+    }
   };
 
   const handleTimeChange = (newTime: number) => {
@@ -207,6 +220,34 @@ function App() {
     i18n.changeLanguage(event.target.value);
   };
 
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleFileOrUUIDSelect = async (file: File | null, newUuid: string | null) => {
+    if (file) {
+      setUuid(null);
+      handleFileSelect(file);
+    } else if (newUuid) {
+      setVideoFile(null);
+      setUuid(newUuid);
+      try {
+        const videoUrl = await loadVideoFromUUID(newUuid);
+        setVideoUrl(videoUrl);
+        const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
+        const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
+        setSubtitles(parsedSubtitles);
+      } catch (error) {
+        console.error("Error loading video or subtitles from UUID:", error);
+      }
+    }
+    setIsModalOpen(false);
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -218,7 +259,7 @@ function App() {
               <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
             </>
           ) : (
-            <input type="file" accept="video/*" onChange={handleFileSelect} />
+            <CenteredButton onClick={handleOpenModal}>{t('openFile')}</CenteredButton>
           )}
           <LanguageSelect onChange={changeLanguage} value={i18n.language}>
             <option value="en">English</option>
@@ -258,6 +299,11 @@ function App() {
           </SubtitleContainer>
         </ContentContainer>
       </AppContainer>
+      <FileSelectionModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        onSubmit={handleFileOrUUIDSelect}
+      />
     </>
   );
 }

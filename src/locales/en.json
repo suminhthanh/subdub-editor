@@ -7,5 +7,10 @@
   "zoomOut": "Zoom Out",
   "zoomIn": "Zoom In",
   "resetZoom": "Reset Zoom",
-  "closeVideo": "Close Video"
+  "closeVideo": "Close Video",
+  "openFile": "Open file",
+  "selectFileOrUUID": "Select a file or enter UUID",
+  "enterUUID": "Enter UUID",
+  "submit": "Submit",
+  "cancel": "Cancel"
 }

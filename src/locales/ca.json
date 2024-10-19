@@ -7,5 +7,10 @@
   "zoomOut": "Allunyar",
   "zoomIn": "Apropar",
   "resetZoom": "Restablir Zoom",
-  "closeVideo": "Tancar Vídeo"
+  "closeVideo": "Tancar Vídeo",
+  "openFile": "Obrir fitxer",
+  "selectFileOrUUID": "Selecciona un fitxer o introdueix UUID",
+  "enterUUID": "Introdueix UUID",
+  "submit": "Enviar",
+  "cancel": "Cancel·lar"
 }
