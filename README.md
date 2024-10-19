@@ -2,6 +2,10 @@
 
 This is a React-based single-page application for editing video subtitles and dubs. It allows users to upload a video, extract existing subtitles, edit them, and rebuild the video with the updated subtitles.
 
+## Try it out
+
+You can try the Subtitle/Dubs Editor online at: [https://ccoreilly.github.io/subdub-editor/](https://ccoreilly.github.io/subdub-editor/)
+
 ## Features
 
 - Upload and play video files
