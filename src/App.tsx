@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import VideoPlayer from './components/VideoPlayer';
+import MediaPlayer from './components/VideoPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
@@ -120,6 +120,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uuid, setUuid] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<string>('video/mp4');
+  const [mediaFileName, setMediaFileName] = useState<string>('');
   const videoRef = useRef<{
     currentTime: number;
     setCurrentTime: (time: number) => void;
@@ -150,13 +152,13 @@ function App() {
           // If we don't have a videoFile (in case of UUID), we need to fetch it
           const response = await fetch(videoUrl);
           const blob = await response.blob();
-          fileToProcess = new File([blob], "video.mp4", { type: "video/mp4" });
+          fileToProcess = new File([blob], mediaFileName, { type: mediaType });
         }
-        const newVideoBlob = await rebuildSubtitles(fileToProcess, subtitles);
-        const url = URL.createObjectURL(newVideoBlob);
+        const newMediaBlob = await rebuildSubtitles(fileToProcess, subtitles);
+        const url = URL.createObjectURL(newMediaBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'video_with_subtitles.mp4';
+        a.download = `output_${mediaFileName}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -241,6 +243,8 @@ function App() {
     if (file) {
       setUuid(null);
       setVideoFile(file);
+      setMediaType(file.type);
+      setMediaFileName(file.name);
       try {
         const url = URL.createObjectURL(file);
         setVideoUrl(url);
@@ -253,8 +257,10 @@ function App() {
       setVideoFile(null);
       setUuid(newUuid);
       try {
-        const videoUrl = await loadVideoFromUUID(newUuid);
-        setVideoUrl(videoUrl);
+        const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
+        setVideoUrl(url);
+        setMediaType(contentType);
+        setMediaFileName(filename);
         const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
         const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
         setSubtitles(parsedSubtitles);
@@ -287,7 +293,7 @@ function App() {
         <ContentContainer>
           {videoUrl && (
             <VideoContainer>
-              <VideoPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} />
+              <MediaPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} mediaType={mediaType} />
             </VideoContainer>
           )}
           <SubtitleContainer>

@@ -15,9 +15,9 @@ export const extractSubtitles = async (
     await ffmpeg.load();
   }
 
-  ffmpeg.FS("writeFile", "input.mp4", await fetchFile(videoFile));
+  ffmpeg.FS("writeFile", videoFile.name, await fetchFile(videoFile));
 
-  await ffmpeg.run("-i", "input.mp4", "-map", "0:s:0", "subtitles.srt");
+  await ffmpeg.run("-i", videoFile.name, "-map", "0:s:0", "subtitles.srt");
 
   try {
     const data = ffmpeg.FS("readFile", "subtitles.srt");
@@ -31,19 +31,24 @@ export const extractSubtitles = async (
 };
 
 export const rebuildSubtitles = async (
-  videoFile: File,
+  mediaFile: File,
   subtitles: Subtitle[]
 ): Promise<Blob> => {
   if (!ffmpeg.isLoaded()) {
     await ffmpeg.load();
   }
 
-  ffmpeg.FS("writeFile", "input.mp4", await fetchFile(videoFile));
+  const inputFileName = mediaFile.name;
+  const outputFileName = `output_${inputFileName}`;
+
+  ffmpeg.FS("writeFile", inputFileName, await fetchFile(mediaFile));
   ffmpeg.FS("writeFile", "subtitles.srt", generateSRT(subtitles));
 
-  await ffmpeg.run(
+  const isAudio = mediaFile.type.startsWith("audio");
+
+  const ffmpegArgs = [
     "-i",
-    "input.mp4",
+    inputFileName,
     "-i",
     "subtitles.srt",
     "-c",
@@ -51,16 +56,21 @@ export const rebuildSubtitles = async (
     "-c:s",
     "mov_text",
     "-map",
-    "0:v",
-    "-map",
-    "0:a",
+    "0",
     "-map",
     "1",
-    "output.mp4"
-  );
+  ];
 
-  const data = ffmpeg.FS("readFile", "output.mp4");
-  return new Blob([data.buffer], { type: "video/mp4" });
+  if (isAudio) {
+    ffmpegArgs.splice(6, 2); // Remove "-map", "0" for audio files
+  }
+
+  ffmpegArgs.push(outputFileName);
+
+  await ffmpeg.run(...ffmpegArgs);
+
+  const data = ffmpeg.FS("readFile", outputFileName);
+  return new Blob([data.buffer], { type: mediaFile.type });
 };
 
 const parseSRT = (srtContent: string): Subtitle[] => {

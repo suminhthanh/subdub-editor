@@ -2,7 +2,7 @@ import React, { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } fr
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
-const VideoContainer = styled.div`
+const MediaContainer = styled.div`
   width: 100%;
   height: 100%;
   display: flex;
@@ -16,33 +16,38 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
-interface VideoPlayerProps {
+const StyledAudio = styled.audio`
+  width: 100%;
+`;
+
+interface MediaPlayerProps {
   src: string;
   subtitles: Subtitle[];
+  mediaType: string;
 }
 
-const VideoPlayer = forwardRef<{
+const MediaPlayer = forwardRef<{
   currentTime: number;
   setCurrentTime: (time: number) => void;
   play: () => void;
   pause: () => void;
-}, VideoPlayerProps>(({ src, subtitles }, ref) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
+}, MediaPlayerProps>(({ src, subtitles, mediaType }, ref) => {
+  const mediaRef = useRef<HTMLVideoElement | HTMLAudioElement>(null);
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
-      return videoRef.current ? videoRef.current.currentTime : 0;
+      return mediaRef.current ? mediaRef.current.currentTime : 0;
     },
     setCurrentTime(time: number) {
-      if (videoRef.current) {
-        videoRef.current.currentTime = time;
+      if (mediaRef.current) {
+        mediaRef.current.currentTime = time;
       }
     },
     play() {
-      videoRef.current?.play();
+      mediaRef.current?.play();
     },
     pause() {
-      videoRef.current?.pause();
+      mediaRef.current?.pause();
     },
   }));
 
@@ -71,28 +76,30 @@ ${subtitle.text}
   }, [subtitlesUrl]);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.src = src;
+    if (mediaRef.current) {
+      mediaRef.current.src = src;
     }
   }, [src]);
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.onerror = () => {
-        console.error("Video error:", video.error);
+    const media = mediaRef.current;
+    if (media) {
+      media.onerror = () => {
+        console.error("Media error:", media.error);
       };
     }
   }, []);
 
+  const MediaElement = mediaType.startsWith('video') ? StyledVideo : StyledAudio;
+
   return (
-    <VideoContainer>
-      <StyledVideo ref={videoRef} controls>
-        <source src={src} type="video/mp4" />
+    <MediaContainer>
+      <MediaElement ref={mediaRef} controls>
+        <source src={src} type={mediaType} />
         {subtitlesUrl && <track default kind="captions" srcLang="en" src={subtitlesUrl} />}
-        Your browser does not support the video tag.
-      </StyledVideo>
-    </VideoContainer>
+        Your browser does not support the {mediaType.split('/')[0]} tag.
+      </MediaElement>
+    </MediaContainer>
   );
 });
 
@@ -105,4 +112,4 @@ const formatTime = (seconds: number): string => {
   return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
 };
 
-export default VideoPlayer;
+export default MediaPlayer;
