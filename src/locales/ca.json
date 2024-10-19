@@ -7,7 +7,7 @@
   "zoomOut": "Allunyar",
   "zoomIn": "Apropar",
   "resetZoom": "Restablir Zoom",
-  "closeVideo": "Tancar Vídeo",
+  "closeMedia": "Tancar Arxiu",
   "openFile": "Obrir fitxer",
   "selectFileOrUUID": "Selecciona un fitxer o introdueix UUID",
   "enterUUID": "Introdueix UUID",

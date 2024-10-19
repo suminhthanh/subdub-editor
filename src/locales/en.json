@@ -7,7 +7,7 @@
   "zoomOut": "Zoom Out",
   "zoomIn": "Zoom In",
   "resetZoom": "Reset Zoom",
-  "closeVideo": "Close Video",
+  "closeMedia": "Close File",
   "openFile": "Open file",
   "selectFileOrUUID": "Select a file or enter UUID",
   "enterUUID": "Enter UUID",

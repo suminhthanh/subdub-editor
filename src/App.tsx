@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import MediaPlayer from './components/VideoPlayer';
+import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
@@ -112,45 +112,42 @@ const CenteredButton = styled(Button)`
 
 function App() {
   const { t, i18n } = useTranslation();
-  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
-  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [mediaUrl, setMediaUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uuid, setUuid] = useState<string | null>(null);
-  const [mediaType, setMediaType] = useState<string>('video/mp4');
+  const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
-  const videoRef = useRef<{
-    currentTime: number;
-    setCurrentTime: (time: number) => void;
-    play: () => void;
-    pause: () => void;
-  } | null>(null);
+  const mediaRef = useRef<MediaPlayerRef | null>(null);
 
   const handleFileSelect = async (file: File) => {
-    setVideoFile(file);
+    setMediaFile(file);
+    setMediaType(file.type);
+    setMediaFileName(file.name);
     try {
       const url = URL.createObjectURL(file);
-      console.debug("Created video URL:", url);
-      setVideoUrl(url);
+      console.debug("Created media URL:", url);
+      setMediaUrl(url);
       const extractedSubtitles = await extractSubtitles(file);
       setSubtitles(extractedSubtitles);
     } catch (error) {
-      console.error("Error processing video file:", error);
+      console.error("Error processing media file:", error);
     }
   };
 
   const handleDownloadResult = async () => {
-    if (videoUrl && subtitles.length > 0) {
+    if (mediaUrl && subtitles.length > 0) {
       try {
         let fileToProcess: File;
-        if (videoFile) {
-          fileToProcess = videoFile;
+        if (mediaFile) {
+          fileToProcess = mediaFile;
         } else {
-          // If we don't have a videoFile (in case of UUID), we need to fetch it
-          const response = await fetch(videoUrl);
+          // If we don't have a mediaFile (in case of UUID), we need to fetch it
+          const response = await fetch(mediaUrl);
           const blob = await response.blob();
           fileToProcess = new File([blob], mediaFileName, { type: mediaType });
         }
@@ -169,33 +166,39 @@ function App() {
     }
   };
 
-  const handleCloseVideo = () => {
-    setVideoFile(null);
-    setVideoUrl('');
-    setSubtitles([]);
+  const handleCloseMedia = () => {
+    setMediaFile(null);
+    setMediaUrl('');
+    setSubtitles([]); // Ensure subtitles are cleared
     setUuid(null);
     setCurrentTime(0);
     setIsPlaying(false);
-    if (videoRef.current) {
-      videoRef.current.setCurrentTime(0);
+    setMediaType('');
+    setMediaFileName('');
+    if (mediaRef.current) {
+      mediaRef.current.setCurrentTime(0);
+    }
+    // Revoke the object URL to free up memory
+    if (mediaUrl) {
+      URL.revokeObjectURL(mediaUrl);
     }
   };
 
   const handleTimeChange = (newTime: number) => {
-    if (videoRef.current) {
-      videoRef.current.setCurrentTime(newTime);
+    if (mediaRef.current) {
+      mediaRef.current.setCurrentTime(newTime);
     }
   };
 
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
     if (event.code === 'Space' && event.target === document.body) {
       event.preventDefault();
-      if (videoRef.current) {
+      if (mediaRef.current) {
         if (isPlaying) {
-          videoRef.current.pause();
+          mediaRef.current.pause();
           setIsPlaying(false);
         } else {
-          videoRef.current.play();
+          mediaRef.current.play();
           setIsPlaying(true);
         }
       }
@@ -217,8 +220,8 @@ function App() {
 
   useEffect(() => {
     const updateCurrentTime = () => {
-      if (videoRef.current) {
-        setCurrentTime(videoRef.current.currentTime);
+      if (mediaRef.current) {
+        setCurrentTime(mediaRef.current.currentTime);
       }
     };
 
@@ -240,32 +243,39 @@ function App() {
   };
 
   const handleFileOrUUIDSelect = async (file: File | null, newUuid: string | null) => {
+    // Revoke existing object URL if there is one
+    if (mediaUrl) {
+      URL.revokeObjectURL(mediaUrl);
+    }
+
     if (file) {
       setUuid(null);
-      setVideoFile(file);
+      setMediaFile(file);
       setMediaType(file.type);
       setMediaFileName(file.name);
       try {
         const url = URL.createObjectURL(file);
-        setVideoUrl(url);
+        setMediaUrl(url);
         const extractedSubtitles = await extractSubtitles(file);
         setSubtitles(extractedSubtitles);
       } catch (error) {
-        console.error("Error processing video file:", error);
+        console.error("Error processing media file:", error);
+        setSubtitles([]);
       }
     } else if (newUuid) {
-      setVideoFile(null);
+      setMediaFile(null);
       setUuid(newUuid);
       try {
         const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
-        setVideoUrl(url);
+        setMediaUrl(url);
         setMediaType(contentType);
         setMediaFileName(filename);
         const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
         const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
         setSubtitles(parsedSubtitles);
       } catch (error) {
-        console.error("Error loading video or subtitles from UUID:", error);
+        console.error("Error loading media or subtitles from UUID:", error);
+        setSubtitles([]);
       }
     }
     setIsModalOpen(false);
@@ -276,9 +286,9 @@ function App() {
       <GlobalStyle />
       <AppContainer>
         <Header>
-          {videoUrl ? (
+          {mediaUrl ? (
             <>
-              <Button onClick={handleCloseVideo}>{t('closeVideo')}</Button>
+              <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
               <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
             </>
           ) : (
@@ -291,9 +301,9 @@ function App() {
           </LanguageSelect>
         </Header>
         <ContentContainer>
-          {videoUrl && (
+          {mediaUrl && (
             <VideoContainer>
-              <MediaPlayer src={videoUrl} subtitles={subtitles} ref={videoRef} mediaType={mediaType} />
+              <MediaPlayer src={mediaUrl} subtitles={subtitles} ref={mediaRef} mediaType={mediaType} />
             </VideoContainer>
           )}
           <SubtitleContainer>
