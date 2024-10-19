@@ -98,11 +98,6 @@ const SubtitleContainer = styled.div`
   overflow: hidden;
 `;
 
-const TabContent = styled.div`
-  flex: 1;
-  overflow: hidden;
-`;
-
 const CenteredButton = styled(Button)`
   position: absolute;
   top: 50%;
@@ -119,7 +114,6 @@ function App() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [uuid, setUuid] = useState<string | null>(null);
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
@@ -132,20 +126,6 @@ function App() {
     }
   }, []);  // Empty dependency array ensures this runs only once on component mount
 
-  const handleFileSelect = async (file: File) => {
-    setMediaFile(file);
-    setMediaType(file.type);
-    setMediaFileName(file.name);
-    try {
-      const url = URL.createObjectURL(file);
-      console.debug("Created media URL:", url);
-      setMediaUrl(url);
-      const extractedSubtitles = await extractSubtitles(file);
-      setSubtitles(extractedSubtitles);
-    } catch (error) {
-      console.error("Error processing media file:", error);
-    }
-  };
 
   const handleDownloadResult = async () => {
     if (mediaUrl && subtitles.length > 0) {
@@ -178,7 +158,6 @@ function App() {
     setMediaFile(null);
     setMediaUrl('');
     setSubtitles([]); // Ensure subtitles are cleared
-    setUuid(null);
     setCurrentTime(0);
     setIsPlaying(false);
     setMediaType('');
@@ -260,7 +239,6 @@ function App() {
     setSubtitles([]);
 
     if (file) {
-      setUuid(null);
       setMediaFile(file);
       setMediaType(file.type);
       setMediaFileName(file.name);
@@ -275,7 +253,6 @@ function App() {
       }
     } else if (newUuid) {
       setMediaFile(null);
-      setUuid(newUuid);
       try {
         const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
         setMediaUrl(url);
