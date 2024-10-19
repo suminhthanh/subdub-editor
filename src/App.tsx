@@ -124,6 +124,14 @@ function App() {
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const uuidParam = params.get('uuid');
+    if (uuidParam) {
+      handleFileOrUUIDSelect(null, uuidParam);
+    }
+  }, []);  // Empty dependency array ensures this runs only once on component mount
+
   const handleFileSelect = async (file: File) => {
     setMediaFile(file);
     setMediaType(file.type);
@@ -247,6 +255,9 @@ function App() {
     if (mediaUrl) {
       URL.revokeObjectURL(mediaUrl);
     }
+
+    // Clear existing subtitles before loading new media
+    setSubtitles([]);
 
     if (file) {
       setUuid(null);
