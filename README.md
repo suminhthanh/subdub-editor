@@ -1,6 +1,6 @@
-# Video Subtitle Editor
+# Subtitle/Dubs Editor
 
-This is a React-based single-page application for editing video subtitles. It allows users to upload a video, extract existing subtitles, edit them, and rebuild the video with the updated subtitles.
+This is a React-based single-page application for editing video subtitles and dubs. It allows users to upload a video, extract existing subtitles, edit them, and rebuild the video with the updated subtitles.
 
 ## Features
 
@@ -12,15 +12,15 @@ This is a React-based single-page application for editing video subtitles. It al
 
 ## Prerequisites
 
-- Node.js (v14 or later)
-- npm (v6 or later)
+- Node.js (v18 or later)
+- npm (v9 or later)
 
 ## Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/video-subtitle-editor.git
-   cd video-subtitle-editor
+   git clone https://github.com/ccoreilly/subdub-editor.git
+   cd subdub-editor
    ```
 
 2. Install dependencies:
@@ -34,7 +34,3 @@ This is a React-based single-page application for editing video subtitles. It al
    ```
 
 4. Open your browser and navigate to `http://localhost:3000`
-
-## Building for Production
-
-To create a production build, run:
