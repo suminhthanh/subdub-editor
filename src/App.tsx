@@ -32,7 +32,7 @@ const Header = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   gap: 10px;
 `;
 
@@ -78,8 +78,8 @@ const VideoContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 30vh;
-  margin-bottom: 20px;
+  max-height: 30vh;
+  margin: 0px;
 `;
 
 const ContentContainer = styled.div`
