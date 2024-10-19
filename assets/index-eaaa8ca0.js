@@ -278,7 +278,7 @@ ${t.text}`}).join(`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   gap: 10px;
 `,Y1=ee.select`
   padding: 5px;
@@ -314,8 +314,8 @@ ${t.text}`}).join(`
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 30vh;
-  margin-bottom: 20px;
+  max-height: 30vh;
+  margin: 0px;
 `,X1=ee.div`
   flex: 1;
   display: flex;
