@@ -141,9 +141,18 @@ function App() {
   };
 
   const handleDownloadResult = async () => {
-    if (videoFile && subtitles.length > 0) {
+    if (videoUrl && subtitles.length > 0) {
       try {
-        const newVideoBlob = await rebuildSubtitles(videoFile, subtitles);
+        let fileToProcess: File;
+        if (videoFile) {
+          fileToProcess = videoFile;
+        } else {
+          // If we don't have a videoFile (in case of UUID), we need to fetch it
+          const response = await fetch(videoUrl);
+          const blob = await response.blob();
+          fileToProcess = new File([blob], "video.mp4", { type: "video/mp4" });
+        }
+        const newVideoBlob = await rebuildSubtitles(fileToProcess, subtitles);
         const url = URL.createObjectURL(newVideoBlob);
         const a = document.createElement('a');
         a.href = url;
@@ -231,7 +240,15 @@ function App() {
   const handleFileOrUUIDSelect = async (file: File | null, newUuid: string | null) => {
     if (file) {
       setUuid(null);
-      handleFileSelect(file);
+      setVideoFile(file);
+      try {
+        const url = URL.createObjectURL(file);
+        setVideoUrl(url);
+        const extractedSubtitles = await extractSubtitles(file);
+        setSubtitles(extractedSubtitles);
+      } catch (error) {
+        console.error("Error processing video file:", error);
+      }
     } else if (newUuid) {
       setVideoFile(null);
       setUuid(newUuid);
