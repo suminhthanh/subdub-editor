@@ -74,7 +74,7 @@ const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange, zoomLev
   };
 
   const handleResize = (e: any, direction: string, ref: any, delta: { width: number }) => {
-    const newDuration = Math.max(0.1, subtitle.duration + delta.width / zoomLevel);
+    const newDuration = Number(Math.max(0.1, subtitle.duration + delta.width / zoomLevel).toFixed(3));
     onChange({ ...subtitle, duration: newDuration });
   };
 

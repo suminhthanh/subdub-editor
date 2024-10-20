@@ -28,6 +28,12 @@ const SubtitleTime = styled.span`
   }
 `;
 
+const SubtitleTextContainer = styled.div`
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+`;
+
 const SubtitleTextArea = styled.textarea`
   flex-grow: 1;
   border: none;
@@ -39,17 +45,26 @@ const SubtitleTextArea = styled.textarea`
   font-family: inherit;
   line-height: 1.5;
   min-height: 1.5em;
+`;
+
+const EditIcon = styled.span`
+  cursor: pointer;
+  padding: 5px;
   display: flex;
   align-items: center;
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
 `;
 
 interface SubtitleListProps {
   subtitles: Subtitle[];
   onSubtitleChange: (index: number, updatedSubtitle: Subtitle) => void;
   onTimeChange: (time: number) => void;
+  onEditSubtitle: (subtitle: Subtitle) => void;
 }
 
-const SubtitleList: React.FC<SubtitleListProps> = ({ subtitles, onSubtitleChange, onTimeChange }) => {
+const SubtitleList: React.FC<SubtitleListProps> = ({ subtitles, onSubtitleChange, onTimeChange, onEditSubtitle }) => {
   const handleTimeClick = (time: number) => {
     onTimeChange(time);
   };
@@ -72,16 +87,23 @@ const SubtitleList: React.FC<SubtitleListProps> = ({ subtitles, onSubtitleChange
   return (
     <ListContainer>
       {subtitles.map((subtitle, index) => (
-        <SubtitleRow key={index}>
+        <SubtitleRow key={subtitle.id}>
           <SubtitleTime onClick={() => handleTimeClick(subtitle.startTime)}>
             {formatTime(subtitle.startTime)}
           </SubtitleTime>
-          <SubtitleTextArea
-            className="subtitle-textarea"
-            value={subtitle.text}
-            onChange={(e) => handleTextareaChange(index, e)}
-            onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
-          />
+          <SubtitleTextContainer>
+            <SubtitleTextArea
+              className="subtitle-textarea"
+              value={subtitle.text}
+              onChange={(e) => handleTextareaChange(index, e)}
+              onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+            />
+            <EditIcon onClick={() => onEditSubtitle(subtitle)}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+              </svg>
+            </EditIcon>
+          </SubtitleTextContainer>
         </SubtitleRow>
       ))}
     </ListContainer>

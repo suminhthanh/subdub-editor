@@ -63,6 +63,7 @@ export const loadSubtitlesFromUUID = async (uuid: string): Promise<any> => {
 
 export const parseSubtitlesFromJSON = (json: any): Subtitle[] => {
   return json.segments.map((segment: any) => ({
+    id: segment.id,
     startTime: segment.start,
     duration: segment.end - segment.start,
     text: segment.text.trim(),

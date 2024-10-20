@@ -1,8 +1,10 @@
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
+import { v4 as uuidv4 } from "uuid";
 
 const ffmpeg = createFFmpeg({ log: true });
 
 export interface Subtitle {
+  id: string;
   startTime: number;
   duration: number;
   text: string;
@@ -86,6 +88,7 @@ const parseSRT = (srtContent: string): Subtitle[] => {
       const text = lines.slice(2).join("\n");
 
       subtitles.push({
+        id: uuidv4(),
         startTime,
         duration: endTime - startTime,
         text,

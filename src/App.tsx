@@ -7,6 +7,7 @@ import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
 import FileSelectionModal from './components/FileSelectionModal';
 import { loadVideoFromUUID, loadSubtitlesFromUUID, parseSubtitlesFromJSON } from './services/APIService';
+import SubtitleEditModal from './components/SubtitleEditModal';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -105,6 +106,19 @@ const CenteredButton = styled(Button)`
   transform: translate(-50%, -50%);
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+`;
+
 function App() {
   const { t, i18n } = useTranslation();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -117,6 +131,7 @@ function App() {
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
+  const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -269,6 +284,20 @@ function App() {
     setIsModalOpen(false);
   };
 
+  const handleEditSubtitle = (subtitle: Subtitle) => {
+    setEditingSubtitle(subtitle);
+  };
+
+  const handleSaveSubtitle = (updatedSubtitle: Subtitle) => {
+    if (editingSubtitle) {
+      const newSubtitles = subtitles.map(s => 
+        s === editingSubtitle ? updatedSubtitle : s
+      );
+      setSubtitles(newSubtitles);
+      setEditingSubtitle(null);
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -307,12 +336,14 @@ function App() {
                     setSubtitles={setSubtitles}
                     currentTime={currentTime}
                     onTimeChange={handleTimeChange}
+                    onEditSubtitle={handleEditSubtitle}
                   />
                 ) : (
                   <SubtitleList
                     subtitles={subtitles}
                     onSubtitleChange={handleSubtitleChange}
                     onTimeChange={handleTimeChange}
+                    onEditSubtitle={handleEditSubtitle}
                   />
                 )}
               </>
@@ -324,6 +355,12 @@ function App() {
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleFileOrUUIDSelect}
+      />
+      <SubtitleEditModal
+        subtitle={editingSubtitle}
+        onSave={handleSaveSubtitle}
+        onClose={() => setEditingSubtitle(null)}
+        ModalOverlay={ModalOverlay}
       />
     </>
   );

@@ -3,7 +3,6 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useGesture } from '@use-gesture/react';
 import SubtitleItem from './SubtitleItem';
-import SubtitleEditModal from './SubtitleEditModal';
 import { Subtitle } from '../services/FFmpegService';
 
 const TimelineContainer = styled.div`
@@ -93,35 +92,22 @@ const ClickableRuler = styled(Ruler)`
   cursor: pointer;
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000; // Add this line to ensure the modal is above everything else
-`;
-
 interface SubtitleTimelineProps {
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
   currentTime: number;
   onTimeChange: (time: number) => void;
+  onEditSubtitle: (subtitle: Subtitle) => void;
 }
 
 const DEFAULT_ZOOM = 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
-const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange }) => {
+const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange, onEditSubtitle }) => {
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
 
   const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
     const newSubtitles = [...subtitles];
@@ -193,22 +179,6 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
     };
   }, [bind]);
 
-  const handleEditSubtitle = (subtitle: Subtitle) => {
-    setEditingSubtitle(subtitle);
-  };
-
-  const handleSaveSubtitle = (updatedSubtitle: Subtitle) => {
-    const index = subtitles.findIndex(s => s.startTime === updatedSubtitle.startTime && s.duration === updatedSubtitle.duration);
-    if (index !== -1) {
-      handleSubtitleChange(index, updatedSubtitle);
-    }
-    setEditingSubtitle(null);
-  };
-
-  const handleCloseModal = () => {
-    setEditingSubtitle(null);
-  };
-
   const duration = Math.max(...subtitles.map(s => s.startTime + s.duration), currentTime);
   const timelineWidth = Math.max(duration * zoomLevel, 100); // Ensure a minimum width
 
@@ -264,18 +234,12 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
                 subtitle={subtitle}
                 onChange={(updatedSubtitle) => handleSubtitleChange(index, updatedSubtitle)}
                 zoomLevel={zoomLevel}
-                onEdit={handleEditSubtitle}
+                onEdit={onEditSubtitle}
               />
             </SubtitleRow>
           ))}
         </Timeline>
       </TimelineContent>
-      <SubtitleEditModal
-        subtitle={editingSubtitle}
-        onSave={handleSaveSubtitle}
-        onClose={handleCloseModal}
-        ModalOverlay={ModalOverlay}
-      />
     </TimelineContainer>
   );
 };
