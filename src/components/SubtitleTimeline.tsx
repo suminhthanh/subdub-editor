@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
+import { useGesture } from '@use-gesture/react';
 import SubtitleItem from './SubtitleItem';
+import SubtitleEditModal from './SubtitleEditModal';
 import { Subtitle } from '../services/FFmpegService';
 
 const TimelineContainer = styled.div`
@@ -91,6 +93,19 @@ const ClickableRuler = styled(Ruler)`
   cursor: pointer;
 `;
 
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000; // Add this line to ensure the modal is above everything else
+`;
+
 interface SubtitleTimelineProps {
   subtitles: Subtitle[];
   setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
@@ -106,6 +121,7 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
 
   const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
     const newSubtitles = [...subtitles];
@@ -117,18 +133,24 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
   const handleZoomOut = () => setZoomLevel(prev => Math.max(prev / 1.5, MIN_ZOOM));
   const handleResetZoom = () => setZoomLevel(DEFAULT_ZOOM);
 
-  const handleWheel = useCallback((event: WheelEvent) => {
-    if (event.ctrlKey || event.metaKey) {
-      event.preventDefault();
-      const delta = event.deltaY > 0 ? 0.9 : 1.1;
-      setZoomLevel(prev => Math.min(Math.max(prev * delta, MIN_ZOOM), MAX_ZOOM));
-    } else if (scrollContainerRef.current) {
-      // Handle horizontal scrolling
-      if (event.deltaX !== 0) {
-        event.preventDefault();
-        scrollContainerRef.current.scrollLeft += event.deltaX;
+  const handleZoom = useCallback((delta: number, center: number) => {
+    setZoomLevel((prevZoom) => {
+      const newZoom = Math.min(Math.max(prevZoom * (1 + delta * 0.01), MIN_ZOOM), MAX_ZOOM);
+      
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const oldScrollLeft = container.scrollLeft;
+        const oldWidth = container.scrollWidth;
+        const newWidth = (oldWidth / prevZoom) * newZoom;
+        const newScrollLeft = (oldScrollLeft + center) * (newWidth / oldWidth) - center;
+        
+        requestAnimationFrame(() => {
+          container.scrollLeft = newScrollLeft;
+        });
       }
-    }
+      
+      return newZoom;
+    });
   }, []);
 
   const handleRulerClick = useCallback((event: React.MouseEvent<HTMLDivElement>) => {
@@ -138,17 +160,54 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
     onTimeChange(newTime);
   }, [zoomLevel, onTimeChange]);
 
+  const bind = useGesture(
+    {
+      onPinch: ({ delta: [d], origin: [ox], event }) => {
+        event.preventDefault();
+        const center = ox - (scrollContainerRef.current?.getBoundingClientRect().left || 0);
+        handleZoom(d, center);
+      },
+      onWheel: ({ delta: [, dy], event }) => {
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          const rect = scrollContainerRef.current?.getBoundingClientRect();
+          const center = event.clientX - (rect?.left || 0);
+          handleZoom(-dy, center);
+        }
+      },
+    },
+    {
+      eventOptions: { passive: false },
+    }
+  )(scrollContainerRef);
+
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (scrollContainer) {
-      scrollContainer.addEventListener('wheel', handleWheel, { passive: false });
+      scrollContainer.addEventListener('wheel', bind.onWheel as any, { passive: false });
     }
     return () => {
       if (scrollContainer) {
-        scrollContainer.removeEventListener('wheel', handleWheel);
+        scrollContainer.removeEventListener('wheel', bind.onWheel as any);
       }
     };
-  }, [handleWheel]);
+  }, [bind]);
+
+  const handleEditSubtitle = (subtitle: Subtitle) => {
+    setEditingSubtitle(subtitle);
+  };
+
+  const handleSaveSubtitle = (updatedSubtitle: Subtitle) => {
+    const index = subtitles.findIndex(s => s.startTime === updatedSubtitle.startTime && s.duration === updatedSubtitle.duration);
+    if (index !== -1) {
+      handleSubtitleChange(index, updatedSubtitle);
+    }
+    setEditingSubtitle(null);
+  };
+
+  const handleCloseModal = () => {
+    setEditingSubtitle(null);
+  };
 
   const duration = Math.max(...subtitles.map(s => s.startTime + s.duration), currentTime);
   const timelineWidth = Math.max(duration * zoomLevel, 100); // Ensure a minimum width
@@ -205,11 +264,18 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
                 subtitle={subtitle}
                 onChange={(updatedSubtitle) => handleSubtitleChange(index, updatedSubtitle)}
                 zoomLevel={zoomLevel}
+                onEdit={handleEditSubtitle}
               />
             </SubtitleRow>
           ))}
         </Timeline>
       </TimelineContent>
+      <SubtitleEditModal
+        subtitle={editingSubtitle}
+        onSave={handleSaveSubtitle}
+        onClose={handleCloseModal}
+        ModalOverlay={ModalOverlay}
+      />
     </TimelineContainer>
   );
 };

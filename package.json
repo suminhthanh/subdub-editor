@@ -9,6 +9,7 @@
     "@types/react-dom": "^18.0.2",
     "@types/styled-components": "^5.1.25",
     "@types/video.js": "^7.3.40",
+    "@use-gesture/react": "^10.3.1",
     "i18next": "^23.16.0",
     "i18next-browser-languagedetector": "^7.0.1",
     "react": "^18.0.0",
