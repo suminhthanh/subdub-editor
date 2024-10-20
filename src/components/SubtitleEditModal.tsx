@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
 
@@ -61,10 +61,16 @@ const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave,
     onClose();
   };
 
+  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
   if (!subtitle) return null;
 
   return (
-    <ModalOverlay>
+    <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
         <TextArea value={text} onChange={(e) => setText(e.target.value)} />
         <Input
