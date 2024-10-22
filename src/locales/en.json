@@ -10,5 +10,6 @@
   "selectFileOrUUID": "Select a file or enter UUID",
   "enterUUID": "Enter UUID",
   "submit": "Submit",
+  "save": "Save",
   "cancel": "Cancel"
 }

@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
-import { colors, typography, Button, Input, ModalContent, TextArea } from '../styles/designSystem';
-
-
+import { Button, Input, ModalContent, TextArea } from '../styles/designSystem';
+import { useTranslation } from 'react-i18next';
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -18,6 +17,7 @@ interface SubtitleEditModalProps {
 }
 
 const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave, onClose, ModalOverlay }) => {
+  const { t } = useTranslation();
   const [text, setText] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
@@ -67,8 +67,8 @@ const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave,
           step="0.1"
         />
         <ButtonContainer>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button onClick={handleSave}>Save</Button>
+          <Button onClick={onClose}>{t('cancel')}</Button>
+          <Button onClick={handleSave}>{t('save')}</Button>
         </ButtonContainer>
       </ModalContent>
     </ModalOverlay>

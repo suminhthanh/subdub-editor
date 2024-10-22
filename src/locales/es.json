@@ -10,5 +10,6 @@
   "selectFileOrUUID": "Selecciona un archivo o introduce UUID",
   "enterUUID": "Introduce UUID",
   "submit": "Enviar",
+  "save": "Guardar",
   "cancel": "Cancelar"
 }

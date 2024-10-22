@@ -10,5 +10,6 @@
   "selectFileOrUUID": "Selecciona un fitxer o introdueix UUID",
   "enterUUID": "Introdueix UUID",
   "submit": "Enviar",
+  "save": "Desar",
   "cancel": "Cancel·lar"
 }
