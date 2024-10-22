@@ -1,32 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
+import { colors, typography, Button, Input, ModalContent, TextArea } from '../styles/designSystem';
 
-const ModalContent = styled.div`
-  background-color: white;
-  padding: 20px;
-  border-radius: 5px;
-  width: 300px;
-`;
 
-const Input = styled.input`
-  width: 100%;
-  margin-bottom: 10px;
-`;
-
-const TextArea = styled.textarea`
-  width: 100%;
-  height: 100px;
-  margin-bottom: 10px;
-`;
 
 const ButtonContainer = styled.div`
   display: flex;
   justify-content: space-between;
-`;
-
-const Button = styled.button`
-  padding: 5px 10px;
 `;
 
 interface SubtitleEditModalProps {

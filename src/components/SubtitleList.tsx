@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Subtitle } from '../services/FFmpegService';
+import { Button, colors, typography } from '../styles/designSystem';
 
 const ListContainer = styled.div`
-  background-color: #ffd8a8;
+  background-color: ${colors.background};
   padding: 10px;
   overflow-y: auto;
 `;
@@ -11,20 +12,21 @@ const ListContainer = styled.div`
 const SubtitleRow = styled.div`
   display: flex;
   align-items: stretch;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid ${colors.border};
 `;
 
 const SubtitleTime = styled.span`
   width: 100px;
-  font-size: 12px;
+  font-size: ${typography.fontSize.small};
   cursor: pointer;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 5px;
+  color: ${colors.text};
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: ${colors.timeline};
   }
 `;
 
@@ -38,22 +40,25 @@ const SubtitleTextArea = styled.textarea`
   flex-grow: 1;
   border: none;
   background: transparent;
-  font-size: 14px;
+  font-size: ${typography.fontSize.medium};
   resize: none;
   overflow: hidden;
   padding: 5px;
-  font-family: inherit;
+  font-family: ${typography.fontFamily};
   line-height: 1.5;
   min-height: 1.5em;
+  color: ${colors.text};
 `;
 
-const EditIcon = styled.span`
+const EditIcon = styled(Button)`
   cursor: pointer;
   padding: 5px;
   display: flex;
   align-items: center;
+  color: ${colors.primary};
+  background-color: transparent;
   &:hover {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: ${colors.desactivatLight};
   }
 `;
 

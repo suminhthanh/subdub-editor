@@ -8,11 +8,15 @@ import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegS
 import FileSelectionModal from './components/FileSelectionModal';
 import { loadVideoFromUUID, loadSubtitlesFromUUID, parseSubtitlesFromJSON } from './services/APIService';
 import SubtitleEditModal from './components/SubtitleEditModal';
+import { Button, Select, colors, typography } from './styles/designSystem';
 
 const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
+    font-family: ${typography.fontFamily};
+    background-color: ${colors.secondaryBackground};
+    color: ${colors.black};
   }
 `;
 
@@ -23,9 +27,6 @@ const AppContainer = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   padding: 5px;
-  font-family: Arial, sans-serif;
-  background-color: #fff5e6;
-  color: #4a4a4a;
   box-sizing: border-box;
 `;
 
@@ -37,23 +38,11 @@ const Header = styled.div`
   gap: 10px;
 `;
 
-const LanguageSelect = styled.select`
-  padding: 5px;
-  font-size: 14px;
-`;
-
-const Button = styled.button`
-  background-color: #ff6b6b;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: 5px;
-
-  &:hover {
-    background-color: #ff8787;
-  }
+const CenteredButton = styled(Button)`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 `;
 
 const TabContainer = styled.div`
@@ -64,14 +53,14 @@ const TabContainer = styled.div`
 const Tab = styled.button<{ active: boolean }>`
   flex: 1;
   padding: 10px;
-  background-color: ${props => props.active ? '#ff6b6b' : '#ffd8a8'};
-  color: ${props => props.active ? 'white' : 'black'};
+  background-color: ${props => props.active ? colors.primary : colors.desactivat};
+  color: ${props => props.active ? colors.white : colors.black};
   border: none;
   cursor: pointer;
   transition: background-color 0.3s;
 
   &:hover {
-    background-color: ${props => props.active ? '#ff8787' : '#ffcb9a'};
+    background-color: ${props => props.active ? colors.primaryLight : colors.desactivatLight};
   }
 `;
 
@@ -97,13 +86,6 @@ const SubtitleContainer = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-`;
-
-const CenteredButton = styled(Button)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 `;
 
 const ModalOverlay = styled.div`
@@ -311,11 +293,11 @@ function App() {
           ) : (
             <CenteredButton onClick={handleOpenModal}>{t('openFile')}</CenteredButton>
           )}
-          <LanguageSelect onChange={changeLanguage} value={i18n.language}>
+          <Select onChange={changeLanguage} value={i18n.language}>
             <option value="en">English</option>
             <option value="es">Español</option>
             <option value="ca">Català</option>
-          </LanguageSelect>
+          </Select>
         </Header>
         <ContentContainer>
           {mediaUrl && (

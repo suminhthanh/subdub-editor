@@ -2,9 +2,11 @@ import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { Rnd } from 'react-rnd';
 import { Subtitle } from '../services/FFmpegService';
+import { colors, typography } from '../styles/designSystem';
 
 const SubtitleBox = styled.div`
-  background-color: #ff9f43;
+  background-color: ${colors.quaternaryLight};
+  color: ${colors.black};
   border-radius: 5px;
   padding: 5px;
   cursor: move;
@@ -15,7 +17,7 @@ const SubtitleBox = styled.div`
   height: 30px;
   display: flex;
   align-items: center;
-  font-size: 14px;
+  font-size: ${typography.fontSize.medium};
 `;
 
 interface SubtitleItemProps {

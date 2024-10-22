@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useGesture } from '@use-gesture/react';
 import SubtitleItem from './SubtitleItem';
 import { Subtitle } from '../services/FFmpegService';
+import { colors, typography, Button } from '../styles/designSystem';
 
 const TimelineContainer = styled.div`
-  background-color: #ffd8a8;
+  background-color: ${colors.background};
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -34,10 +35,10 @@ const Timeline = styled.div`
 
 const CurrentTimeIndicator = styled.div`
   position: absolute;
-  top: 30px; // Adjusted to account for Ruler height
+  top: 30px;
   bottom: 0;
   width: 2px;
-  background-color: #ff6b6b;
+  background-color: ${colors.primary};
   z-index: 10;
 `;
 
@@ -52,7 +53,8 @@ const Ruler = styled.div`
   position: sticky;
   top: 0;
   left: 0;
-  background-color: #ffe8cc;
+  background-color: ${colors.timeline};
+  border-bottom: 1px solid ${colors.border};
   z-index: 5;
   display: flex;
   align-items: flex-end;
@@ -61,7 +63,8 @@ const Ruler = styled.div`
 const TimeMarker = styled.div`
   position: absolute;
   bottom: 0;
-  font-size: 10px;
+  font-size: ${typography.fontSize.small};
+  color: ${colors.text};
   transform: translateX(-50%);
 `;
 
@@ -70,22 +73,14 @@ const ZoomControls = styled.div`
   gap: 5px;
 `;
 
-const ZoomButton = styled.button`
-  background: none;
-  border: none;
-  cursor: pointer;
+const ZoomButton = styled(Button)`
   padding: 5px;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.7);
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
 `;
 
 const ClickableRuler = styled(Ruler)`
