@@ -12,7 +12,7 @@ export const colors = {
   tertiaryLight: "#ff9999",
   quaternary: "#ff8000", // Taronja
   quaternaryLight: "#ffb36b",
-  desactivat: "#bdbdbd",
+  desactivat: "#c6c6c6",
   desactivatLight: "#e5e5e5",
   background: "#f8f8f8",
   secondaryBackground: "#ffffff",

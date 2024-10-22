@@ -13,12 +13,7 @@ const TimelineContainer = styled.div`
   flex: 1;
   min-height: 0;
   overflow: hidden;
-`;
-
-const TimelineHeader = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  padding: 10px;
+  position: relative;
 `;
 
 const TimelineContent = styled.div`
@@ -71,6 +66,12 @@ const TimeMarker = styled.div`
 const ZoomControls = styled.div`
   display: flex;
   gap: 5px;
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  z-index: 10;
+  padding: 5px;
+  border-radius: 5px;
 `;
 
 const ZoomButton = styled(Button)`
@@ -191,32 +192,6 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
 
   return (
     <TimelineContainer>
-      <TimelineHeader>
-        <ZoomControls>
-          <ZoomButton onClick={handleZoomOut} title={t('zoomOut')}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
-              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
-              <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-          </ZoomButton>
-          <ZoomButton onClick={handleZoomIn} title={t('zoomIn')}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
-              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
-              <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
-              <line x1="9" y1="6" x2="9" y2="12" stroke="currentColor" strokeWidth="2"/>
-            </svg>
-          </ZoomButton>
-          <ZoomButton onClick={handleResetZoom} title={t('resetZoom')}>
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
-              <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
-              <path d="M9 6v3h3" stroke="currentColor" strokeWidth="2" fill="none"/>
-            </svg>
-          </ZoomButton>
-        </ZoomControls>
-      </TimelineHeader>
       <TimelineContent ref={scrollContainerRef}>
         <Timeline id="subtitle-timeline" style={{ width: `${timelineWidth}px` }}>
           <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
@@ -235,6 +210,30 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
           ))}
         </Timeline>
       </TimelineContent>
+      <ZoomControls>
+        <ZoomButton onClick={handleZoomOut} title={t('zoomOut')}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+            <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+            <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+        </ZoomButton>
+        <ZoomButton onClick={handleZoomIn} title={t('zoomIn')}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+            <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+            <line x1="6" y1="9" x2="12" y2="9" stroke="currentColor" strokeWidth="2"/>
+            <line x1="9" y1="6" x2="9" y2="12" stroke="currentColor" strokeWidth="2"/>
+          </svg>
+        </ZoomButton>
+        <ZoomButton onClick={handleResetZoom} title={t('resetZoom')}>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="7" stroke="currentColor" strokeWidth="2"/>
+            <line x1="14" y1="14" x2="18" y2="18" stroke="currentColor" strokeWidth="2"/>
+            <path d="M9 6v3h3" stroke="currentColor" strokeWidth="2" fill="none"/>
+          </svg>
+        </ZoomButton>
+      </ZoomControls>
     </TimelineContainer>
   );
 };
