@@ -5,11 +5,13 @@ import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
 import TrackTimeline from './components/TrackTimeline';
 import TrackList from './components/TrackList';
 import { extractTracks, rebuildMedia } from './services/FFmpegService';
-import { loadVideoFromUUID, loadTracksFromUUID, parseTracksFromJSON } from './services/APIService';
 import TrackEditModal from './components/TrackEditModal';
 import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
 import { Input } from './styles/designSystem';
 import { Track } from './types/Track';
+import { APIServiceInterface } from './services/APIServiceInterface';
+import { TranscriptionAPIService } from './services/TranscriptionAPIService';
+import { DubbingAPIService } from './services/DubbingAPIService';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -126,13 +128,15 @@ function App() {
   const [isUUIDMode, setIsUUIDMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [apiService, setApiService] = useState<APIServiceInterface>(DubbingAPIService);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const uuidParam = params.get('uuid');
-    console.debug('uuidParam', uuidParam);
+    const serviceParam = params.get('service');
     if (uuidParam) {
       setIsUUIDMode(true);
+      setApiService(serviceParam === 'transcription' ? TranscriptionAPIService : DubbingAPIService);
       handleFileOrUUIDSelect(null, uuidParam);
     }
   }, []);
@@ -240,19 +244,16 @@ function App() {
     // Clear existing tracks and errors before loading new media
     setTracks([]);
     setLoadError(null);
-    console.log('handleFileOrUUIDSelect', file, newUuid);
-    console.log('isUUIDMode', isUUIDMode);
 
     if (newUuid) {
       setMediaFile(null);
       try {
-        console.log('loading video from UUID', newUuid);
-        const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
-        setMediaUrl(url);
-        setMediaType(contentType);
-        setMediaFileName(filename);
-        const tracksJSON = await loadTracksFromUUID(newUuid);
-        const parsedTracks = parseTracksFromJSON(tracksJSON);
+        const videoData = await apiService.loadVideoFromUUID(newUuid);
+        setMediaUrl(videoData.url);
+        setMediaType(videoData.contentType);
+        setMediaFileName(videoData.filename);
+        const tracksJSON = await apiService.loadTracksFromUUID(newUuid);
+        const parsedTracks = apiService.parseTracksFromJSON(tracksJSON);
         setTracks(parsedTracks);
       } catch (error) {
         console.error("Error loading media or tracks from UUID:", error);

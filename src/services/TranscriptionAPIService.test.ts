@@ -1,4 +1,4 @@
-import { extractFilenameFromContentDisposition } from "./APIService";
+import { extractFilenameFromContentDisposition } from "./TranscriptionAPIService";
 
 describe("extractFilenameFromContentDisposition", () => {
   it("should extract filename from content-disposition header", () => {

@@ -1,6 +1,13 @@
 import { Track } from "../types/Track";
+import { APIServiceInterface } from "./APIServiceInterface";
+import { v4 as uuidv4 } from "uuid";
 
-const API_BASE_URL = "https://api.softcatala.org/transcribe-service/v1";
+const API_BASE_URL = "http://localhost:8700";
+
+interface DubbingJSON {
+  utterances: Track[];
+  source_language: string;
+}
 
 const MIME_TO_EXT: { [key: string]: string } = {
   "audio/mpeg": "mp3",
@@ -30,7 +37,6 @@ export const extractFilenameFromContentDisposition = (
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
-  console.log("loadVideoFromUUID", uuid);
   const response = await fetch(
     `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`
   );
@@ -52,30 +58,42 @@ export const loadVideoFromUUID = async (
   return { url, contentType, filename };
 };
 
-export const loadTracksFromUUID = async (uuid: string): Promise<any> => {
+export const loadTracksFromUUID = async (
+  uuid: string
+): Promise<DubbingJSON> => {
   const response = await fetch(
     `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=json`
   );
   if (!response.ok) {
-    throw new Error("Failed to load tracks");
+    throw new Error("Failed to load dubbing data");
   }
   return response.json();
 };
 
-export const parseTracksFromJSON = (json: any): Track[] => {
-  return json.segments.map((segment: any) => ({
-    id: segment.id,
-    start: segment.start,
-    end: segment.end,
-    speaker_id: segment.speaker || "",
-    path: "",
-    text: segment.text.trim(),
-    for_dubbing: false,
-    ssml_gender: "",
-    translated_text: "",
-    assigned_voice: "",
-    pitch: 0,
-    speed: 1,
-    volume_gain_db: 0,
+export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
+  const utterances = json.utterances;
+
+  return utterances.map((item: any) => ({
+    id: uuidv4(),
+    start: item.start || 0,
+    end: item.end || 0,
+    speaker_id: item.speaker_id || "",
+    path: item.path || "",
+    text: item.text || "",
+    for_dubbing: item.for_dubbing || false,
+    ssml_gender: item.ssml_gender || "",
+    translated_text: item.translated_text || "",
+    assigned_voice: item.assigned_voice || "",
+    pitch: item.pitch || 0,
+    speed: item.speed || 1,
+    volume_gain_db: item.volume_gain_db || 0,
+    dubbed_path: item.dubbed_path,
+    chunk_size: item.chunk_size,
   }));
+};
+
+export const DubbingAPIService: APIServiceInterface = {
+  loadVideoFromUUID,
+  loadTracksFromUUID,
+  parseTracksFromJSON,
 };
