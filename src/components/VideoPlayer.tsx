@@ -45,7 +45,7 @@ interface Subtitle {
 }
 
 interface AudioTrack {
-  buffer: ArrayBuffer;
+  buffer: ArrayBuffer | AudioBuffer;
   label: string;
 }
 
@@ -155,10 +155,17 @@ ${subtitle.text}
 
       const loadAudioTracks = async () => {
         for (let i = 0; i < audioTracks.length; i++) {
-          const audioData = audioTracks[i].buffer.slice(0);
           try {
-            const buffer = await audioContext.decodeAudioData(audioData);
+            let buffer: AudioBuffer;
+            const trackBuffer = audioTracks[i].buffer;
+            if (trackBuffer instanceof AudioBuffer) {
+              buffer = trackBuffer;
+            } else {
+              const audioData = trackBuffer.slice(0);
+              buffer = await audioContext.decodeAudioData(audioData);
+            }
             audioBuffersRef.current[i] = buffer;
+            console.log(`Successfully loaded audio track ${i}: ${audioTracks[i].label}`);
           } catch (error) {
             console.error(`Error decoding audio track ${i}:`, error);
           }
@@ -195,7 +202,7 @@ ${subtitle.text}
         });
       };
     }
-  }, [audioTracks, selectedTracks]); // Add selectedTracks as a dependency
+  }, [audioTracks, selectedTracks]);
 
   useEffect(() => {
     if (videoRef.current && !videoRef.current.paused) {

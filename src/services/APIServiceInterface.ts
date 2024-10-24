@@ -15,4 +15,8 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   loadOriginalAudioFromUUID: (uuid: string) => Promise<ArrayBuffer>;
   loadBackgroundAudioFromUUID: (uuid: string) => Promise<ArrayBuffer>;
   loadDubbedVocalsFromUUID: (uuid: string) => Promise<ArrayBuffer>;
+  loadDubbedAudioChunksFromUUID: (
+    uuid: string,
+    tracks: Track[]
+  ) => Promise<AudioBuffer>;
 }

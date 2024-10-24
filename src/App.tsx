@@ -12,6 +12,7 @@ import { Track } from './types/Track';
 import { APIServiceInterface, DubbingAPIServiceInterface } from './services/APIServiceInterface';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
+import { audioBufferToArrayBuffer } from './utils/audioUtils';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -125,7 +126,7 @@ function App() {
   const [serviceParam, setServiceParam] = useState<string>('dubbing');
   const [isLoading, setIsLoading] = useState(false);
   const initialLoadRef = useRef(false);
-  const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer; label: string }[]>([]);
+  const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer | AudioBuffer; label: string }[]>([]);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -255,7 +256,6 @@ function App() {
         console.log("Starting API calls for UUID:", newUuid);
 
         if (serviceParam === "dubbing") {
-          // Fetch silent video, original audio, and background audio
           const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, dubbedVocalsBuffer, tracksDataResponse] = await Promise.all([
             DubbingAPIService.loadSilentVideoFromUUID(newUuid),
             DubbingAPIService.loadOriginalAudioFromUUID(newUuid),
@@ -263,16 +263,29 @@ function App() {
             DubbingAPIService.loadDubbedVocalsFromUUID(newUuid),
             DubbingAPIService.loadTracksFromUUID(newUuid)
           ]);
+
+          const parsedTracks = DubbingAPIService.parseTracksFromJSON(tracksDataResponse);
+          
+          // Load dubbed audio chunks
+          const constructedDubbedAudioBuffer = await DubbingAPIService.loadDubbedAudioChunksFromUUID(newUuid, parsedTracks);
+
           console.log("API calls completed for UUID:", newUuid);
 
           setMediaUrl(silentVideoResponse.url);
           setMediaType('video/mp4');
-          setAudioTracks([
-            { buffer: originalAudioBuffer, label: 'Original Audio' },
-            { buffer: backgroundAudioBuffer, label: 'Background Audio' },
-            { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals' }
-          ]);
-          setTracks(DubbingAPIService.parseTracksFromJSON(tracksDataResponse));
+          setAudioTracks(tracks => {
+            const newTracks = [
+              { buffer: originalAudioBuffer, label: 'Original Audio' },
+              { buffer: backgroundAudioBuffer, label: 'Background Audio' },
+              { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals (Original)' },
+              { buffer: constructedDubbedAudioBuffer, label: 'Dubbed Audio (Constructed)' }
+            ];
+            newTracks.forEach((track, index) => {
+              console.log(`Audio track ${index} (${track.label}):`, track.buffer);
+            });
+            return newTracks;
+          });
+          setTracks(parsedTracks);
         } else if (serviceParam === "transcription") {
           const [videoDataResponse, tracksDataResponse] = await Promise.all([
             TranscriptionAPIService.loadVideoFromUUID(newUuid),
@@ -303,7 +316,7 @@ function App() {
       }
     }
     setIsLoading(false);
-  }, [mediaUrl]);
+  }, [mediaUrl, serviceParam]);
 
   const handleEditTrack = (track: Track) => {
     setEditingTrack(track);

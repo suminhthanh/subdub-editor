@@ -39,8 +39,8 @@ export interface Track {
   volume_gain_db: number;
 
   // An optional path to the dubbed audio file
-  dubbed_path?: string;
+  dubbed_path: string;
 
   // An optional chunk size for processing
-  chunk_size?: number;
+  chunk_size: number;
 }
