@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { Rnd } from 'react-rnd';
-import { Subtitle } from '../services/FFmpegService';
+import { Track } from '../types/Track';
 import { colors, typography } from '../styles/designSystem';
 
-const SubtitleBox = styled.div`
+const TrackBox = styled.div`
   background-color: ${colors.quaternaryLight};
   color: ${colors.black};
   border-radius: 5px;
@@ -20,14 +20,14 @@ const SubtitleBox = styled.div`
   font-size: ${typography.fontSize.medium};
 `;
 
-interface SubtitleItemProps {
-  subtitle: Subtitle;
-  onChange: (updatedSubtitle: Subtitle) => void;
+interface TrackItemProps {
+  track: Track;
+  onChange: (updatedTrack: Track) => void;
   zoomLevel: number;
-  onEdit: (subtitle: Subtitle) => void;
+  onEdit: (track: Track) => void;
 }
 
-const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange, zoomLevel, onEdit }) => {
+const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdit }) => {
   const [isDragging, setIsDragging] = useState(false);
   const interactionStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -41,7 +41,7 @@ const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange, zoomLev
       const dy = Math.abs(clientY - interactionStartPosRef.current.y);
       
       if (dx < 5 && dy < 5 && !isDragging) {
-        onEdit(subtitle);
+        onEdit(track);
       }
     }
     interactionStartPosRef.current = null;
@@ -70,20 +70,20 @@ const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange, zoomLev
   };
 
   const handleDragStop = (e: any, d: { x: number, y: number }) => {
-    const newStartTime = Math.max(0, d.x / zoomLevel);
-    onChange({ ...subtitle, startTime: newStartTime });
+    const newStart = Math.max(0, d.x / zoomLevel);
+    onChange({ ...track, start: newStart, end: newStart + (track.end - track.start) });
     setIsDragging(false);
   };
 
   const handleResize = (e: any, direction: string, ref: any, delta: { width: number }) => {
-    const newDuration = Number(Math.max(0.1, subtitle.duration + delta.width / zoomLevel).toFixed(3));
-    onChange({ ...subtitle, duration: newDuration });
+    const newDuration = Math.max(0.1, (track.end - track.start) + delta.width / zoomLevel);
+    onChange({ ...track, end: track.start + newDuration });
   };
 
   return (
     <Rnd
-      position={{ x: subtitle.startTime * zoomLevel, y: 0 }}
-      size={{ width: subtitle.duration * zoomLevel, height: 30 }}
+      position={{ x: track.start * zoomLevel, y: 0 }}
+      size={{ width: (track.end - track.start) * zoomLevel, height: 30 }}
       onDragStart={handleDragStart}
       onDragStop={handleDragStop}
       onResizeStop={handleResize}
@@ -92,16 +92,16 @@ const SubtitleItem: React.FC<SubtitleItemProps> = ({ subtitle, onChange, zoomLev
       enableResizing={{ right: true }}
       minWidth={10}
     >
-      <SubtitleBox
+      <TrackBox
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {subtitle.text}
-      </SubtitleBox>
+        {track.text}
+      </TrackBox>
     </Rnd>
   );
 };
 
-export default SubtitleItem;
+export default TrackItem;

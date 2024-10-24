@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 
@@ -14,7 +14,7 @@ const StyledAudio = styled.audio`
   width: 100%;
 `;
 
-const AudioPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, mediaType }, ref) => {
+const AudioPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, mediaType, tracks }, ref) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useImperativeHandle(ref, () => ({
@@ -48,6 +48,9 @@ const AudioPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, mediaTy
       };
     }
   }, []);
+
+  // Note: Audio elements don't support subtitles/captions natively.
+  // If you need to display lyrics or transcriptions, you'll need to implement a custom solution.
 
   return (
     <MediaContainer>

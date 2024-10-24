@@ -1,4 +1,4 @@
-import { Subtitle } from "./FFmpegService";
+import { Track } from "../types/Track";
 
 const API_BASE_URL = "https://api.softcatala.org/transcribe-service/v1";
 
@@ -52,21 +52,30 @@ export const loadVideoFromUUID = async (
   return { url, contentType, filename };
 };
 
-export const loadSubtitlesFromUUID = async (uuid: string): Promise<any> => {
+export const loadTracksFromUUID = async (uuid: string): Promise<any> => {
   const response = await fetch(
     `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=json`
   );
   if (!response.ok) {
-    throw new Error("Failed to load subtitles");
+    throw new Error("Failed to load tracks");
   }
   return response.json();
 };
 
-export const parseSubtitlesFromJSON = (json: any): Subtitle[] => {
+export const parseTracksFromJSON = (json: any): Track[] => {
   return json.segments.map((segment: any) => ({
     id: segment.id,
-    startTime: segment.start,
-    duration: segment.end - segment.start,
+    start: segment.start,
+    end: segment.end,
+    speaker_id: segment.speaker || "",
+    path: "",
     text: segment.text.trim(),
+    for_dubbing: false,
+    ssml_gender: "",
+    translated_text: "",
+    assigned_voice: "",
+    pitch: 0,
+    speed: 1,
+    volume_gain_db: 0,
   }));
 };

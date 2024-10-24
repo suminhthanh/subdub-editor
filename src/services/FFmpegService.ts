@@ -1,5 +1,6 @@
 import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { v4 as uuidv4 } from "uuid";
+import { Track } from "../types/Track";
 
 const ffmpeg = createFFmpeg({ log: true });
 
@@ -10,16 +11,14 @@ export interface Subtitle {
   text: string;
 }
 
-export const extractSubtitles = async (
-  videoFile: File
-): Promise<Subtitle[]> => {
+export const extractTracks = async (mediaFile: File): Promise<Track[]> => {
   if (!ffmpeg.isLoaded()) {
     await ffmpeg.load();
   }
 
-  ffmpeg.FS("writeFile", videoFile.name, await fetchFile(videoFile));
+  ffmpeg.FS("writeFile", mediaFile.name, await fetchFile(mediaFile));
 
-  await ffmpeg.run("-i", videoFile.name, "-map", "0:s:0", "subtitles.srt");
+  await ffmpeg.run("-i", mediaFile.name, "-map", "0:s:0", "subtitles.srt");
 
   try {
     const data = ffmpeg.FS("readFile", "subtitles.srt");
@@ -27,14 +26,14 @@ export const extractSubtitles = async (
 
     return parseSRT(subtitles);
   } catch (error) {
-    console.error("Error extracting subtitles:", error);
+    console.error("Error extracting tracks:", error);
     return [];
   }
 };
 
-export const rebuildSubtitles = async (
+export const rebuildMedia = async (
   mediaFile: File,
-  subtitles: Subtitle[]
+  tracks: Track[]
 ): Promise<Blob> => {
   if (!ffmpeg.isLoaded()) {
     await ffmpeg.load();
@@ -44,7 +43,7 @@ export const rebuildSubtitles = async (
   const outputFileName = `output_${inputFileName}`;
 
   ffmpeg.FS("writeFile", inputFileName, await fetchFile(mediaFile));
-  ffmpeg.FS("writeFile", "subtitles.srt", generateSRT(subtitles));
+  ffmpeg.FS("writeFile", "subtitles.srt", generateSRT(tracks));
 
   const isAudio = mediaFile.type.startsWith("audio");
 
@@ -75,38 +74,45 @@ export const rebuildSubtitles = async (
   return new Blob([data.buffer], { type: mediaFile.type });
 };
 
-const parseSRT = (srtContent: string): Subtitle[] => {
-  const subtitles: Subtitle[] = [];
+const parseSRT = (srtContent: string): Track[] => {
+  const tracks: Track[] = [];
   const subtitleBlocks = srtContent.trim().split("\n\n");
 
   subtitleBlocks.forEach((block) => {
     const lines = block.split("\n");
     if (lines.length >= 3) {
       const timeCode = lines[1].split(" --> ");
-      const startTime = timeStringToSeconds(timeCode[0]);
-      const endTime = timeStringToSeconds(timeCode[1]);
+      const start = timeStringToSeconds(timeCode[0]);
+      const end = timeStringToSeconds(timeCode[1]);
       const text = lines.slice(2).join("\n");
 
-      subtitles.push({
+      tracks.push({
         id: uuidv4(),
-        startTime,
-        duration: endTime - startTime,
+        start,
+        end,
+        speaker_id: "",
+        path: "",
         text,
+        for_dubbing: false,
+        ssml_gender: "",
+        translated_text: "",
+        assigned_voice: "",
+        pitch: 0,
+        speed: 1,
+        volume_gain_db: 0,
       });
     }
   });
 
-  return subtitles;
+  return tracks;
 };
 
-const generateSRT = (subtitles: Subtitle[]): string => {
-  return subtitles
-    .map((subtitle, index) => {
-      const startTime = secondsToTimeString(subtitle.startTime);
-      const endTime = secondsToTimeString(
-        subtitle.startTime + subtitle.duration
-      );
-      return `${index + 1}\n${startTime} --> ${endTime}\n${subtitle.text}`;
+const generateSRT = (tracks: Track[]): string => {
+  return tracks
+    .map((track, index) => {
+      const startTime = secondsToTimeString(track.start);
+      const endTime = secondsToTimeString(track.end);
+      return `${index + 1}\n${startTime} --> ${endTime}\n${track.text}`;
     })
     .join("\n\n");
 };

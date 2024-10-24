@@ -1,11 +1,11 @@
 import React, { forwardRef } from 'react';
-import { Subtitle } from '../services/FFmpegService';
 import VideoPlayer from './VideoPlayer';
 import AudioPlayer from './AudioPlayer';
+import { Track } from '../types/Track';
 
 export interface MediaPlayerProps {
   src: string;
-  subtitles: Subtitle[];
+  tracks: Track[];
   mediaType: string;
 }
 

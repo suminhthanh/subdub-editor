@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { Subtitle } from '../services/FFmpegService';
+import { Track } from '../types/Track';
 import { Button, Input, ModalContent, TextArea } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
 
@@ -9,34 +9,34 @@ const ButtonContainer = styled.div`
   justify-content: space-between;
 `;
 
-interface SubtitleEditModalProps {
-  subtitle: Subtitle | null;
-  onSave: (updatedSubtitle: Subtitle) => void;
+interface TrackEditModalProps {
+  track: Track | null;
+  onSave: (updatedTrack: Track) => void;
   onClose: () => void;
   ModalOverlay: React.ComponentType<any>;
 }
 
-const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave, onClose, ModalOverlay }) => {
+const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose, ModalOverlay }) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
 
   useEffect(() => {
-    if (subtitle) {
-      setText(subtitle.text);
-      setStartTime(subtitle.startTime);
-      setEndTime(subtitle.startTime + subtitle.duration);
+    if (track) {
+      setText(track.text);
+      setStartTime(track.start);
+      setEndTime(track.end);
     }
-  }, [subtitle]);
+  }, [track]);
 
   const handleSave = () => {
-    if (subtitle) {
+    if (track) {
       onSave({
-        ...subtitle,
+        ...track,
         text,
-        startTime,
-        duration: endTime - startTime
+        start: startTime,
+        end: endTime
       });
     }
     onClose();
@@ -48,7 +48,7 @@ const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave,
     }
   }, [onClose]);
 
-  if (!subtitle) return null;
+  if (!track) return null;
 
   return (
     <ModalOverlay onClick={handleOverlayClick}>
@@ -75,4 +75,4 @@ const SubtitleEditModal: React.FC<SubtitleEditModalProps> = ({ subtitle, onSave,
   );
 };
 
-export default SubtitleEditModal;
+export default TrackEditModal;

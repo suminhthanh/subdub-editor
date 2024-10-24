@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import styled, { createGlobalStyle } from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
-import SubtitleTimeline from './components/SubtitleTimeline';
-import SubtitleList from './components/SubtitleList';
-import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
-import { loadVideoFromUUID, loadSubtitlesFromUUID, parseSubtitlesFromJSON } from './services/APIService';
-import SubtitleEditModal from './components/SubtitleEditModal';
+import TrackTimeline from './components/TrackTimeline';
+import TrackList from './components/TrackList';
+import { extractTracks, rebuildMedia } from './services/FFmpegService';
+import { loadVideoFromUUID, loadTracksFromUUID, parseTracksFromJSON } from './services/APIService';
+import TrackEditModal from './components/TrackEditModal';
 import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
 import { Input } from './styles/designSystem';
+import { Track } from './types/Track';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -80,7 +81,7 @@ const ContentContainer = styled.div`
   overflow: hidden;
 `;
 
-const SubtitleContainer = styled.div`
+const TrackContainer = styled.div`
   flex: 1;
   min-height: 0;
   display: flex;
@@ -112,7 +113,7 @@ const CenteredContent = styled.div`
 function App() {
   const { t, i18n } = useTranslation();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [subtitles, setSubtitles] = useState<Subtitle[]>([]);
+  const [tracks, setTracks] = useState<Track[]>([]);
   const [mediaUrl, setMediaUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -121,7 +122,7 @@ function App() {
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
-  const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
+  const [editingTrack, setEditingTrack] = useState<Track | null>(null);
   const [isUUIDMode, setIsUUIDMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -137,7 +138,7 @@ function App() {
   }, []);
 
   const handleDownloadResult = async () => {
-    if (mediaUrl && subtitles.length > 0) {
+    if (mediaUrl && tracks.length > 0) {
       try {
         let fileToProcess: File;
         if (mediaFile) {
@@ -148,7 +149,7 @@ function App() {
           const blob = await response.blob();
           fileToProcess = new File([blob], mediaFileName, { type: mediaType });
         }
-        const newMediaBlob = await rebuildSubtitles(fileToProcess, subtitles);
+        const newMediaBlob = await rebuildMedia(fileToProcess, tracks);
         const url = URL.createObjectURL(newMediaBlob);
         const a = document.createElement('a');
         a.href = url;
@@ -166,7 +167,7 @@ function App() {
   const handleCloseMedia = () => {
     setMediaFile(null);
     setMediaUrl('');
-    setSubtitles([]); // Ensure subtitles are cleared
+    setTracks([]); // Ensure tracks are cleared
     setCurrentTime(0);
     setIsPlaying(false);
     setMediaType('');
@@ -201,10 +202,10 @@ function App() {
     }
   }, [isPlaying]);
 
-  const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
-    const newSubtitles = [...subtitles];
-    newSubtitles[index] = updatedSubtitle;
-    setSubtitles(newSubtitles);
+  const handleTrackChange = (index: number, updatedTrack: Track) => {
+    const newTracks = [...tracks];
+    newTracks[index] = updatedTrack;
+    setTracks(newTracks);
   };
 
   useEffect(() => {
@@ -236,8 +237,8 @@ function App() {
       URL.revokeObjectURL(mediaUrl);
     }
 
-    // Clear existing subtitles and errors before loading new media
-    setSubtitles([]);
+    // Clear existing tracks and errors before loading new media
+    setTracks([]);
     setLoadError(null);
     console.log('handleFileOrUUIDSelect', file, newUuid);
     console.log('isUUIDMode', isUUIDMode);
@@ -250,13 +251,13 @@ function App() {
         setMediaUrl(url);
         setMediaType(contentType);
         setMediaFileName(filename);
-        const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
-        const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
-        setSubtitles(parsedSubtitles);
+        const tracksJSON = await loadTracksFromUUID(newUuid);
+        const parsedTracks = parseTracksFromJSON(tracksJSON);
+        setTracks(parsedTracks);
       } catch (error) {
-        console.error("Error loading media or subtitles from UUID:", error);
+        console.error("Error loading media or tracks from UUID:", error);
         setLoadError('errorLoadingUUID');
-        setSubtitles([]);
+        setTracks([]);
       }
     } else if (file) {
       setMediaFile(file);
@@ -265,27 +266,27 @@ function App() {
       try {
         const url = URL.createObjectURL(file);
         setMediaUrl(url);
-        const extractedSubtitles = await extractSubtitles(file);
-        setSubtitles(extractedSubtitles);
+        const extractedTracks = await extractTracks(file);
+        setTracks(extractedTracks);
       } catch (error) {
         console.error("Error processing media file:", error);
-        setSubtitles([]);
+        setTracks([]);
       }
     }
     setIsModalOpen(false);
   };
 
-  const handleEditSubtitle = (subtitle: Subtitle) => {
-    setEditingSubtitle(subtitle);
+  const handleEditTrack = (track: Track) => {
+    setEditingTrack(track);
   };
 
-  const handleSaveSubtitle = (updatedSubtitle: Subtitle) => {
-    if (editingSubtitle) {
-      const newSubtitles = subtitles.map(s => 
-        s === editingSubtitle ? updatedSubtitle : s
+  const handleSaveTrack = (updatedTrack: Track) => {
+    if (editingTrack) {
+      const newTracks = tracks.map(t => 
+        t.id === editingTrack.id ? updatedTrack : t
       );
-      setSubtitles(newSubtitles);
-      setEditingSubtitle(null);
+      setTracks(newTracks);
+      setEditingTrack(null);
     }
   };
 
@@ -326,34 +327,34 @@ function App() {
           {mediaUrl ? (
             <>
               <VideoContainer>
-                <MediaPlayer src={mediaUrl} subtitles={subtitles} ref={mediaRef} mediaType={mediaType} />
+                <MediaPlayer src={mediaUrl} tracks={tracks} ref={mediaRef} mediaType={mediaType} />
               </VideoContainer>
-              <SubtitleContainer>
-                {subtitles.length > 0 && (
+              <TrackContainer>
+                {tracks.length > 0 && (
                   <>
                     <TabContainer>
                       <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
                       <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
                     </TabContainer>
                     {activeTab === 'timeline' ? (
-                      <SubtitleTimeline
-                        subtitles={subtitles}
-                        setSubtitles={setSubtitles}
+                      <TrackTimeline
+                        tracks={tracks}
+                        setTracks={setTracks}
                         currentTime={currentTime}
                         onTimeChange={handleTimeChange}
-                        onEditSubtitle={handleEditSubtitle}
+                        onEditTrack={handleEditTrack}
                       />
                     ) : (
-                      <SubtitleList
-                        subtitles={subtitles}
-                        onSubtitleChange={handleSubtitleChange}
+                      <TrackList
+                        tracks={tracks}
+                        onTrackChange={handleTrackChange}
                         onTimeChange={handleTimeChange}
-                        onEditSubtitle={handleEditSubtitle}
+                        onEditTrack={handleEditTrack}
                       />
                     )}
                   </>
                 )}
-              </SubtitleContainer>
+              </TrackContainer>
             </>
           ) : loadError ? (
             <CenteredMessage>{t(loadError)}</CenteredMessage>
@@ -365,10 +366,10 @@ function App() {
           ) : null}
         </ContentContainer>
       </AppContainer>
-      <SubtitleEditModal
-        subtitle={editingSubtitle}
-        onSave={handleSaveSubtitle}
-        onClose={() => setEditingSubtitle(null)}
+      <TrackEditModal
+        track={editingTrack}
+        onSave={handleSaveTrack}
+        onClose={() => setEditingTrack(null)}
         ModalOverlay={ModalOverlay}
       />
     </>

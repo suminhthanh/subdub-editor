@@ -2,8 +2,8 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { useGesture } from '@use-gesture/react';
-import SubtitleItem from './SubtitleItem';
-import { Subtitle } from '../services/FFmpegService';
+import TrackItem from './TrackItem';
+import { Track } from '../types/Track';
 import { colors, typography, Button } from '../styles/designSystem';
 
 const TimelineContainer = styled.div`
@@ -37,7 +37,7 @@ const CurrentTimeIndicator = styled.div`
   z-index: 10;
 `;
 
-const SubtitleRow = styled.div`
+const TrackRow = styled.div`
   position: relative;
   height: 40px;
   margin-bottom: 5px;
@@ -88,27 +88,27 @@ const ClickableRuler = styled(Ruler)`
   cursor: pointer;
 `;
 
-interface SubtitleTimelineProps {
-  subtitles: Subtitle[];
-  setSubtitles: React.Dispatch<React.SetStateAction<Subtitle[]>>;
+interface TrackTimelineProps {
+  tracks: Track[];
+  setTracks: React.Dispatch<React.SetStateAction<Track[]>>;
   currentTime: number;
   onTimeChange: (time: number) => void;
-  onEditSubtitle: (subtitle: Subtitle) => void;
+  onEditTrack: (track: Track) => void;
 }
 
 const DEFAULT_ZOOM = 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
-const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubtitles, currentTime, onTimeChange, onEditSubtitle }) => {
+const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, setTracks, currentTime, onTimeChange, onEditTrack }) => {
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSubtitleChange = (index: number, updatedSubtitle: Subtitle) => {
-    const newSubtitles = [...subtitles];
-    newSubtitles[index] = updatedSubtitle;
-    setSubtitles(newSubtitles);
+  const handleTrackChange = (index: number, updatedTrack: Track) => {
+    const newTracks = [...tracks];
+    newTracks[index] = updatedTrack;
+    setTracks(newTracks);
   };
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev * 1.5, MAX_ZOOM));
@@ -175,7 +175,7 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
     };
   }, [bind]);
 
-  const duration = Math.max(...subtitles.map(s => s.startTime + s.duration), currentTime);
+  const duration = Math.max(...tracks.map(t => t.end), currentTime);
   const timelineWidth = Math.max(duration * zoomLevel, 100); // Ensure a minimum width
 
   const renderTimeMarkers = () => {
@@ -193,20 +193,20 @@ const SubtitleTimeline: React.FC<SubtitleTimelineProps> = ({ subtitles, setSubti
   return (
     <TimelineContainer>
       <TimelineContent ref={scrollContainerRef}>
-        <Timeline id="subtitle-timeline" style={{ width: `${timelineWidth}px` }}>
+        <Timeline id="track-timeline" style={{ width: `${timelineWidth}px` }}>
           <ClickableRuler style={{ width: `${timelineWidth}px` }} onClick={handleRulerClick}>
             {renderTimeMarkers()}
           </ClickableRuler>
           <CurrentTimeIndicator style={{ left: `${currentTime * zoomLevel}px` }} />
-          {subtitles.map((subtitle, index) => (
-            <SubtitleRow key={index}>
-              <SubtitleItem
-                subtitle={subtitle}
-                onChange={(updatedSubtitle) => handleSubtitleChange(index, updatedSubtitle)}
+          {tracks.map((track, index) => (
+            <TrackRow key={track.id}>
+              <TrackItem
+                track={track}
+                onChange={(updatedTrack) => handleTrackChange(index, updatedTrack)}
                 zoomLevel={zoomLevel}
-                onEdit={onEditSubtitle}
+                onEdit={onEditTrack}
               />
-            </SubtitleRow>
+            </TrackRow>
           ))}
         </Timeline>
       </TimelineContent>
@@ -244,4 +244,4 @@ const formatTime = (seconds: number): string => {
   return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 };
 
-export default SubtitleTimeline;
+export default TrackTimeline;
