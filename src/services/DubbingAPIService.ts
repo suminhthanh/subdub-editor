@@ -1,38 +1,14 @@
 import { Track } from "../types/Track";
 import { APIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
+import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
 
-const API_BASE_URL = "http://localhost:8700";
+const API_BASE_URL = "http://192.168.178.152:8700";
 
 interface DubbingJSON {
   utterances: Track[];
   source_language: string;
 }
-
-const MIME_TO_EXT: { [key: string]: string } = {
-  "audio/mpeg": "mp3",
-  "audio/wav": "wav",
-  "application/ogg": "ogg",
-  "audio/flac": "flac",
-  "video/x-msvideo": "avi",
-  "video/mp4": "mp4",
-  "video/x-matroska": "mkv",
-  "video/quicktime": "mov",
-  "video/mts": "mts",
-};
-
-export const extractFilenameFromContentDisposition = (
-  contentDisposition: string | null
-): string => {
-  if (!contentDisposition) return "input";
-
-  const filenameMatch = contentDisposition.match(/filename="?([^;]+)"?/i);
-  if (filenameMatch) {
-    return filenameMatch[1].replace(/['"]/g, "");
-  }
-
-  return "input";
-};
 
 export const loadVideoFromUUID = async (
   uuid: string

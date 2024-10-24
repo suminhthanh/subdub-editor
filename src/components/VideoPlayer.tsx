@@ -2,7 +2,6 @@ import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'rea
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 import { formatTime } from '../utils/timeUtils';
-import { Track } from '../types/Track';
 
 const MediaContainer = styled.div`
   width: 100%;
@@ -99,7 +98,7 @@ ${subtitle.text}
 
   return (
     <MediaContainer>
-      <StyledVideo ref={videoRef} controls>
+      <StyledVideo ref={videoRef} controls preload="auto">
         <source src={src} type={mediaType} />
         {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
         Your browser does not support the video tag.

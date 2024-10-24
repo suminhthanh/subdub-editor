@@ -31,6 +31,7 @@ const AppContainer = styled.div`
   margin: 0 auto;
   padding: 5px;
   box-sizing: border-box;
+  background-color: ${colors.background};
 `;
 
 const Header = styled.div`
@@ -39,13 +40,6 @@ const Header = styled.div`
   align-items: center;
   margin-bottom: 10px;
   gap: 10px;
-`;
-
-const CenteredButton = styled(Button)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
 `;
 
 const TabContainer = styled.div`
@@ -72,6 +66,7 @@ const VideoContainer = styled.div`
   justify-content: center;
   align-items: center;
   max-height: 30vh;
+  width: 100%;
   margin: 0px;
 `;
 
@@ -129,11 +124,19 @@ function App() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [apiService, setApiService] = useState<APIServiceInterface>(DubbingAPIService);
+  const [isLoading, setIsLoading] = useState(false);
+  const [videoData, setVideoData] = useState<{ url: string; contentType: string; filename: string } | null>(null);
+  const [tracksData, setTracksData] = useState<any>(null);
+  const initialLoadRef = useRef(false);
 
   useEffect(() => {
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+
     const params = new URLSearchParams(window.location.search);
     const uuidParam = params.get('uuid');
     const serviceParam = params.get('service');
+    console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam);
     if (uuidParam) {
       setIsUUIDMode(true);
       setApiService(serviceParam === 'transcription' ? TranscriptionAPIService : DubbingAPIService);
@@ -217,7 +220,7 @@ function App() {
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [handleKeyPress]);
+  }, [handleKeyPress, isPlaying]);
 
   useEffect(() => {
     const updateCurrentTime = () => {
@@ -235,7 +238,9 @@ function App() {
     i18n.changeLanguage(event.target.value);
   };
 
-  const handleFileOrUUIDSelect = async (file: File | null, newUuid: string | null) => {
+  const handleFileOrUUIDSelect = useCallback(async (file: File | null, newUuid: string | null) => {
+    console.log("handleFileOrUUIDSelect called with UUID:", newUuid);
+    
     // Revoke existing object URL if there is one
     if (mediaUrl) {
       URL.revokeObjectURL(mediaUrl);
@@ -244,21 +249,28 @@ function App() {
     // Clear existing tracks and errors before loading new media
     setTracks([]);
     setLoadError(null);
+    setIsLoading(true);
 
     if (newUuid) {
       setMediaFile(null);
       try {
-        const videoData = await apiService.loadVideoFromUUID(newUuid);
-        setMediaUrl(videoData.url);
-        setMediaType(videoData.contentType);
-        setMediaFileName(videoData.filename);
-        const tracksJSON = await apiService.loadTracksFromUUID(newUuid);
-        const parsedTracks = apiService.parseTracksFromJSON(tracksJSON);
-        setTracks(parsedTracks);
+        console.log("Starting API calls for UUID:", newUuid);
+        // Fetch video data and tracks data concurrently
+        const [videoDataResponse, tracksDataResponse] = await Promise.all([
+          apiService.loadVideoFromUUID(newUuid),
+          apiService.loadTracksFromUUID(newUuid)
+        ]);
+        console.log("API calls completed for UUID:", newUuid);
+
+        setVideoData(videoDataResponse);
+        setTracksData(tracksDataResponse);
+        setMediaUrl(videoDataResponse.url);
+        setMediaType(videoDataResponse.contentType);
+        setMediaFileName(videoDataResponse.filename);
+        setTracks(apiService.parseTracksFromJSON(tracksDataResponse));
       } catch (error) {
         console.error("Error loading media or tracks from UUID:", error);
         setLoadError('errorLoadingUUID');
-        setTracks([]);
       }
     } else if (file) {
       setMediaFile(file);
@@ -275,7 +287,8 @@ function App() {
       }
     }
     setIsModalOpen(false);
-  };
+    setIsLoading(false);
+  }, [apiService, mediaUrl]);
 
   const handleEditTrack = (track: Track) => {
     setEditingTrack(track);
@@ -325,7 +338,9 @@ function App() {
           </Select>
         </Header>
         <ContentContainer>
-          {mediaUrl ? (
+          {isLoading ? (
+            <CenteredMessage>{t('loading')}</CenteredMessage>
+          ) : mediaUrl ? (
             <>
               <VideoContainer>
                 <MediaPlayer src={mediaUrl} tracks={tracks} ref={mediaRef} mediaType={mediaType} />
