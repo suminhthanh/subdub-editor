@@ -29,7 +29,6 @@ const AppContainer = styled.div`
   height: 100vh;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 5px;
   box-sizing: border-box;
   background-color: ${colors.background};
 `;
@@ -39,6 +38,7 @@ const Header = styled.div`
   justify-content: flex-end;
   align-items: center;
   margin-bottom: 10px;
+  padding: 5px;
   gap: 10px;
 `;
 
@@ -115,7 +115,6 @@ function App() {
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
@@ -125,8 +124,6 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [apiService, setApiService] = useState<APIServiceInterface>(DubbingAPIService);
   const [isLoading, setIsLoading] = useState(false);
-  const [videoData, setVideoData] = useState<{ url: string; contentType: string; filename: string } | null>(null);
-  const [tracksData, setTracksData] = useState<any>(null);
   const initialLoadRef = useRef(false);
 
   useEffect(() => {
@@ -262,8 +259,6 @@ function App() {
         ]);
         console.log("API calls completed for UUID:", newUuid);
 
-        setVideoData(videoDataResponse);
-        setTracksData(tracksDataResponse);
         setMediaUrl(videoDataResponse.url);
         setMediaType(videoDataResponse.contentType);
         setMediaFileName(videoDataResponse.filename);
@@ -286,7 +281,6 @@ function App() {
         setTracks([]);
       }
     }
-    setIsModalOpen(false);
     setIsLoading(false);
   }, [apiService, mediaUrl]);
 

@@ -5,7 +5,7 @@ import { Button, colors, typography } from '../styles/designSystem';
 
 const ListContainer = styled.div`
   background-color: ${colors.background};
-  padding: 10px;
+  padding-right: 10px;
   overflow-y: auto;
 `;
 
