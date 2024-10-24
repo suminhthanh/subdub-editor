@@ -11,5 +11,6 @@
   "enterUUID": "Introdueix UUID",
   "submit": "Enviar",
   "save": "Desar",
-  "cancel": "Cancel·lar"
+  "cancel": "Cancel·lar",
+  "errorLoadingUUID": "Error carregant el vídeo, potser ja no existeix"
 }

@@ -30,6 +30,7 @@ export const extractFilenameFromContentDisposition = (
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
+  console.log("loadVideoFromUUID", uuid);
   const response = await fetch(
     `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`
   );

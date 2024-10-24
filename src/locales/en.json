@@ -11,5 +11,6 @@
   "enterUUID": "Enter UUID",
   "submit": "Submit",
   "save": "Save",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "errorLoadingUUID": "Error loading video, maybe it doesn't exist"
 }

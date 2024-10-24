@@ -5,10 +5,10 @@ import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
 import SubtitleTimeline from './components/SubtitleTimeline';
 import SubtitleList from './components/SubtitleList';
 import { extractSubtitles, rebuildSubtitles, Subtitle } from './services/FFmpegService';
-import FileSelectionModal from './components/FileSelectionModal';
 import { loadVideoFromUUID, loadSubtitlesFromUUID, parseSubtitlesFromJSON } from './services/APIService';
 import SubtitleEditModal from './components/SubtitleEditModal';
 import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
+import { Input } from './styles/designSystem';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -88,6 +88,27 @@ const SubtitleContainer = styled.div`
   overflow: hidden;
 `;
 
+const CenteredMessage = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 1.2em;
+  color: ${colors.primary};
+`;
+
+const CenteredContent = styled.div`
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+`;
+
 function App() {
   const { t, i18n } = useTranslation();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -101,15 +122,19 @@ function App() {
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
   const [editingSubtitle, setEditingSubtitle] = useState<Subtitle | null>(null);
+  const [isUUIDMode, setIsUUIDMode] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const uuidParam = params.get('uuid');
+    console.debug('uuidParam', uuidParam);
     if (uuidParam) {
+      setIsUUIDMode(true);
       handleFileOrUUIDSelect(null, uuidParam);
     }
-  }, []);  // Empty dependency array ensures this runs only once on component mount
-
+  }, []);
 
   const handleDownloadResult = async () => {
     if (mediaUrl && subtitles.length > 0) {
@@ -205,24 +230,35 @@ function App() {
     i18n.changeLanguage(event.target.value);
   };
 
-  const handleOpenModal = () => {
-    setIsModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-
   const handleFileOrUUIDSelect = async (file: File | null, newUuid: string | null) => {
     // Revoke existing object URL if there is one
     if (mediaUrl) {
       URL.revokeObjectURL(mediaUrl);
     }
 
-    // Clear existing subtitles before loading new media
+    // Clear existing subtitles and errors before loading new media
     setSubtitles([]);
+    setLoadError(null);
+    console.log('handleFileOrUUIDSelect', file, newUuid);
+    console.log('isUUIDMode', isUUIDMode);
 
-    if (file) {
+    if (newUuid) {
+      setMediaFile(null);
+      try {
+        console.log('loading video from UUID', newUuid);
+        const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
+        setMediaUrl(url);
+        setMediaType(contentType);
+        setMediaFileName(filename);
+        const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
+        const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
+        setSubtitles(parsedSubtitles);
+      } catch (error) {
+        console.error("Error loading media or subtitles from UUID:", error);
+        setLoadError('errorLoadingUUID');
+        setSubtitles([]);
+      }
+    } else if (file) {
       setMediaFile(file);
       setMediaType(file.type);
       setMediaFileName(file.name);
@@ -233,20 +269,6 @@ function App() {
         setSubtitles(extractedSubtitles);
       } catch (error) {
         console.error("Error processing media file:", error);
-        setSubtitles([]);
-      }
-    } else if (newUuid) {
-      setMediaFile(null);
-      try {
-        const { url, contentType, filename } = await loadVideoFromUUID(newUuid);
-        setMediaUrl(url);
-        setMediaType(contentType);
-        setMediaFileName(filename);
-        const subtitlesJSON = await loadSubtitlesFromUUID(newUuid);
-        const parsedSubtitles = parseSubtitlesFromJSON(subtitlesJSON);
-        setSubtitles(parsedSubtitles);
-      } catch (error) {
-        console.error("Error loading media or subtitles from UUID:", error);
         setSubtitles([]);
       }
     }
@@ -267,18 +289,32 @@ function App() {
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files.length > 0) {
+      setSelectedFile(event.target.files[0]);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (selectedFile) {
+      handleFileOrUUIDSelect(selectedFile, null);
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
       <AppContainer>
         <Header>
-          {mediaUrl ? (
+          {mediaUrl && (
             <>
-              <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
+              {!isUUIDMode && (
+                <Button onClick={() => {
+                  handleCloseMedia();
+                }}>{t('closeMedia')}</Button>
+              )}
               <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
             </>
-          ) : (
-            <CenteredButton onClick={handleOpenModal}>{t('openFile')}</CenteredButton>
           )}
           <Select onChange={changeLanguage} value={i18n.language}>
             <option value="en">English</option>
@@ -287,44 +323,48 @@ function App() {
           </Select>
         </Header>
         <ContentContainer>
-          {mediaUrl && (
-            <VideoContainer>
-              <MediaPlayer src={mediaUrl} subtitles={subtitles} ref={mediaRef} mediaType={mediaType} />
-            </VideoContainer>
-          )}
-          <SubtitleContainer>
-            {subtitles.length > 0 && (
-              <>
-                <TabContainer>
-                  <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
-                  <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
-                </TabContainer>
-                {activeTab === 'timeline' ? (
-                  <SubtitleTimeline
-                    subtitles={subtitles}
-                    setSubtitles={setSubtitles}
-                    currentTime={currentTime}
-                    onTimeChange={handleTimeChange}
-                    onEditSubtitle={handleEditSubtitle}
-                  />
-                ) : (
-                  <SubtitleList
-                    subtitles={subtitles}
-                    onSubtitleChange={handleSubtitleChange}
-                    onTimeChange={handleTimeChange}
-                    onEditSubtitle={handleEditSubtitle}
-                  />
+          {mediaUrl ? (
+            <>
+              <VideoContainer>
+                <MediaPlayer src={mediaUrl} subtitles={subtitles} ref={mediaRef} mediaType={mediaType} />
+              </VideoContainer>
+              <SubtitleContainer>
+                {subtitles.length > 0 && (
+                  <>
+                    <TabContainer>
+                      <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
+                      <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
+                    </TabContainer>
+                    {activeTab === 'timeline' ? (
+                      <SubtitleTimeline
+                        subtitles={subtitles}
+                        setSubtitles={setSubtitles}
+                        currentTime={currentTime}
+                        onTimeChange={handleTimeChange}
+                        onEditSubtitle={handleEditSubtitle}
+                      />
+                    ) : (
+                      <SubtitleList
+                        subtitles={subtitles}
+                        onSubtitleChange={handleSubtitleChange}
+                        onTimeChange={handleTimeChange}
+                        onEditSubtitle={handleEditSubtitle}
+                      />
+                    )}
+                  </>
                 )}
-              </>
-            )}
-          </SubtitleContainer>
+              </SubtitleContainer>
+            </>
+          ) : loadError ? (
+            <CenteredMessage>{t(loadError)}</CenteredMessage>
+          ) : !isUUIDMode ? (
+            <CenteredContent>
+              <Input type="file" onChange={handleFileChange} />
+              <Button onClick={handleSubmit} disabled={!selectedFile}>{t('openFile')}</Button>
+            </CenteredContent>
+          ) : null}
         </ContentContainer>
       </AppContainer>
-      <FileSelectionModal
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleFileOrUUIDSelect}
-      />
       <SubtitleEditModal
         subtitle={editingSubtitle}
         onSave={handleSaveSubtitle}

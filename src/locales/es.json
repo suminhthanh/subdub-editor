@@ -11,5 +11,6 @@
   "enterUUID": "Introduce UUID",
   "submit": "Enviar",
   "save": "Guardar",
-  "cancel": "Cancelar"
+  "cancel": "Cancelar",
+  "errorLoadingUUID": "Error cargando el video, es posible que ya no exista"
 }
