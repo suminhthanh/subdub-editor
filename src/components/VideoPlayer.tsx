@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 import { formatTime } from '../utils/timeUtils';
@@ -9,6 +9,7 @@ const MediaContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative; /* Establish positioning context */
 `;
 
 const StyledVideo = styled.video`
@@ -17,15 +18,39 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
+const TrackSelector = styled.select`
+  position: absolute; /* Overlay on video */
+  bottom: 10px; /* Position at the bottom */
+  left: 10px; /* Position at the left */
+  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+  color: white; /* White text color */
+  border: none; /* Remove border */
+  padding: 5px; /* Add some padding */
+  border-radius: 5px; /* Rounded corners */
+`;
+
 interface Subtitle {
   startTime: number;
   duration: number;
   text: string;
 }
 
-const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, tracks, mediaType }, ref) => {
+interface AudioTrack {
+  url: string;
+  label: string;
+}
+
+interface VideoPlayerProps extends MediaPlayerProps {
+  audioTracks: AudioTrack[];
+}
+
+const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks, mediaType, audioTracks }, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLTrackElement>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const audioBufferSourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const audioBufferRef = useRef<AudioBuffer | null>(null);
+  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
@@ -74,14 +99,6 @@ ${subtitle.text}
   }, [subtitlesUrl]);
 
   useEffect(() => {
-    return () => {
-      if (subtitlesUrl) {
-        URL.revokeObjectURL(subtitlesUrl);
-      }
-    };
-  }, [subtitlesUrl]);
-
-  useEffect(() => {
     if (videoRef.current) {
       videoRef.current.src = src;
     }
@@ -96,13 +113,98 @@ ${subtitle.text}
     }
   }, []);
 
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && audioTracks.length > 0) {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      const audioContext = audioContextRef.current;
+
+      const loadAudioTrack = (index: number) => {
+        fetch(audioTracks[index].url)
+          .then(response => response.arrayBuffer())
+          .then(data => audioContext.decodeAudioData(data))
+          .then(buffer => {
+            audioBufferRef.current = buffer;
+          })
+          .catch(error => console.error("Error loading audio track:", error));
+      };
+
+      loadAudioTrack(selectedTrackIndex);
+
+      const handlePlay = () => {
+        if (audioBufferRef.current) {
+          audioBufferSourceRef.current = audioContext.createBufferSource();
+          audioBufferSourceRef.current.buffer = audioBufferRef.current;
+          audioBufferSourceRef.current.connect(audioContext.destination);
+          audioBufferSourceRef.current.start(0, video.currentTime);
+        }
+      };
+
+      const handlePause = () => {
+        if (audioBufferSourceRef.current) {
+          audioBufferSourceRef.current.stop();
+          audioBufferSourceRef.current.disconnect();
+          audioBufferSourceRef.current = null;
+        }
+      };
+
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+
+      return () => {
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+      };
+    }
+  }, [audioTracks, selectedTrackIndex]);
+
+  const handleTrackChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newIndex = parseInt(event.target.value, 10);
+    setSelectedTrackIndex(newIndex);
+
+    // Stop the current audio playback
+    if (audioBufferSourceRef.current) {
+      audioBufferSourceRef.current.stop();
+      audioBufferSourceRef.current.disconnect();
+      audioBufferSourceRef.current = null;
+    }
+
+    // Load and start the new audio track
+    const video = videoRef.current;
+    if (video && audioContextRef.current) {
+      const audioContext = audioContextRef.current;
+      fetch(audioTracks[newIndex].url)
+        .then(response => response.arrayBuffer())
+        .then(data => audioContext.decodeAudioData(data))
+        .then(buffer => {
+          audioBufferRef.current = buffer;
+          if (!video.paused) {
+            audioBufferSourceRef.current = audioContext.createBufferSource();
+            audioBufferSourceRef.current.buffer = buffer;
+            audioBufferSourceRef.current.connect(audioContext.destination);
+            audioBufferSourceRef.current.start(0, video.currentTime);
+          }
+        })
+        .catch(error => console.error("Error loading audio track:", error));
+    }
+  };
+
   return (
     <MediaContainer>
       <StyledVideo ref={videoRef} controls preload="auto">
         <source src={src} type={mediaType} />
-        {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
+        {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="en" label="English" />}
         Your browser does not support the video tag.
       </StyledVideo>
+      <TrackSelector value={selectedTrackIndex} onChange={handleTrackChange}>
+        {audioTracks.map((track, index) => (
+          <option key={index} value={index}>
+            {track.label}
+          </option>
+        ))}
+      </TrackSelector>
     </MediaContainer>
   );
 });

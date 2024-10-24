@@ -130,3 +130,42 @@ const secondsToTimeString = (totalSeconds: number): string => {
     .toString()
     .padStart(2, "0")}:${seconds.padStart(6, "0")}`;
 };
+
+export const mergeMediaWithFFmpeg = async (
+  videoUrl: string,
+  audioUrls: string[]
+): Promise<Blob> => {
+  if (!ffmpeg.isLoaded()) {
+    await ffmpeg.load();
+  }
+
+  const videoData = await fetchFile(videoUrl);
+  ffmpeg.FS("writeFile", "video.mp4", videoData);
+
+  for (let i = 0; i < audioUrls.length; i++) {
+    const audioData = await fetchFile(audioUrls[i]);
+    ffmpeg.FS("writeFile", `audio${i}.mp3`, audioData);
+  }
+
+  const outputFileName = "output.mp4";
+
+  // Construct the FFmpeg command
+  const ffmpegArgs = [
+    "-i",
+    "video.mp4",
+    ...audioUrls.map((_, i) => ["-i", `audio${i}.mp3`]).flat(),
+    "-c:v",
+    "copy",
+    "-c:a",
+    "aac",
+    "-map",
+    "0:v",
+    ...audioUrls.map((_, i) => ["-map", `${i + 1}:a`]).flat(),
+    outputFileName,
+  ];
+
+  await ffmpeg.run(...ffmpegArgs);
+
+  const data = ffmpeg.FS("readFile", outputFileName);
+  return new Blob([data.buffer], { type: "video/mp4" });
+};

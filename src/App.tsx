@@ -4,12 +4,12 @@ import { useTranslation } from 'react-i18next';
 import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
 import TrackTimeline from './components/TrackTimeline';
 import TrackList from './components/TrackList';
-import { extractTracks, rebuildMedia } from './services/FFmpegService';
+import { extractTracks, rebuildMedia, mergeMediaWithFFmpeg } from './services/FFmpegService';
 import TrackEditModal from './components/TrackEditModal';
 import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
 import { Input } from './styles/designSystem';
 import { Track } from './types/Track';
-import { APIServiceInterface } from './services/APIServiceInterface';
+import { APIServiceInterface, DubbingAPIServiceInterface } from './services/APIServiceInterface';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
 
@@ -122,9 +122,10 @@ function App() {
   const [isUUIDMode, setIsUUIDMode] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [apiService, setApiService] = useState<APIServiceInterface>(DubbingAPIService);
+  const [serviceParam, setServiceParam] = useState<string>('dubbing');
   const [isLoading, setIsLoading] = useState(false);
   const initialLoadRef = useRef(false);
+  const [audioTracks, setAudioTracks] = useState<{ url: string; label: string }[]>([]);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -136,7 +137,7 @@ function App() {
     console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam);
     if (uuidParam) {
       setIsUUIDMode(true);
-      setApiService(serviceParam === 'transcription' ? TranscriptionAPIService : DubbingAPIService);
+      setServiceParam(serviceParam || 'dubbing');
       handleFileOrUUIDSelect(null, uuidParam);
     }
   }, []);
@@ -252,17 +253,35 @@ function App() {
       setMediaFile(null);
       try {
         console.log("Starting API calls for UUID:", newUuid);
-        // Fetch video data and tracks data concurrently
-        const [videoDataResponse, tracksDataResponse] = await Promise.all([
-          apiService.loadVideoFromUUID(newUuid),
-          apiService.loadTracksFromUUID(newUuid)
-        ]);
-        console.log("API calls completed for UUID:", newUuid);
 
-        setMediaUrl(videoDataResponse.url);
-        setMediaType(videoDataResponse.contentType);
-        setMediaFileName(videoDataResponse.filename);
-        setTracks(apiService.parseTracksFromJSON(tracksDataResponse));
+        if (serviceParam === "dubbing") {
+          // Fetch silent video, original audio, and background audio
+          const [silentVideoResponse, originalAudioResponse, backgroundAudioResponse, tracksDataResponse] = await Promise.all([
+            DubbingAPIService.loadSilentVideoFromUUID(newUuid),
+            DubbingAPIService.loadOriginalAudioFromUUID(newUuid),
+            DubbingAPIService.loadBackgroundAudioFromUUID(newUuid),
+            DubbingAPIService.loadTracksFromUUID(newUuid)
+          ]);
+          console.log("API calls completed for UUID:", newUuid);
+
+          setMediaUrl(silentVideoResponse.url);
+          setMediaType('video/mp4');
+          setAudioTracks([
+            { url: originalAudioResponse.url, label: 'Original Audio' },
+            { url: backgroundAudioResponse.url, label: 'Background Audio' }
+          ]);
+          setTracks(DubbingAPIService.parseTracksFromJSON(tracksDataResponse));
+        } else if (serviceParam === "transcription") {
+          const [videoDataResponse, tracksDataResponse] = await Promise.all([
+            TranscriptionAPIService.loadVideoFromUUID(newUuid),
+            TranscriptionAPIService.loadTracksFromUUID(newUuid)
+          ]);
+
+          setMediaUrl(videoDataResponse.url);
+          setMediaType(videoDataResponse.contentType);
+          setMediaFileName(videoDataResponse.filename);
+          setTracks(TranscriptionAPIService.parseTracksFromJSON(tracksDataResponse));
+        }
       } catch (error) {
         console.error("Error loading media or tracks from UUID:", error);
         setLoadError('errorLoadingUUID');
@@ -282,7 +301,7 @@ function App() {
       }
     }
     setIsLoading(false);
-  }, [apiService, mediaUrl]);
+  }, [mediaUrl]);
 
   const handleEditTrack = (track: Track) => {
     setEditingTrack(track);
@@ -337,7 +356,7 @@ function App() {
           ) : mediaUrl ? (
             <>
               <VideoContainer>
-                <MediaPlayer src={mediaUrl} tracks={tracks} ref={mediaRef} mediaType={mediaType} />
+                <MediaPlayer src={mediaUrl} tracks={tracks} ref={mediaRef} mediaType={mediaType} audioTracks={audioTracks} />
               </VideoContainer>
               <TrackContainer>
                 {tracks.length > 0 && (

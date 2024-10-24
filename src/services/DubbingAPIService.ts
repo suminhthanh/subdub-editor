@@ -1,5 +1,5 @@
 import { Track } from "../types/Track";
-import { APIServiceInterface } from "./APIServiceInterface";
+import { DubbingAPIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
 
@@ -32,6 +32,67 @@ export const loadVideoFromUUID = async (
   }
 
   return { url, contentType, filename };
+};
+
+export const loadSilentVideoFromUUID = async (
+  uuid: string
+): Promise<{ url: string }> => {
+  const response = await fetch(
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_video.mp4`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to load silent video");
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  return { url };
+};
+
+export const loadOriginalAudioFromUUID = async (
+  uuid: string
+): Promise<{ url: string }> => {
+  const response = await fetch(
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_audio.mp3`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to load original audio");
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  return { url };
+};
+
+export const loadBackgroundAudioFromUUID = async (
+  uuid: string
+): Promise<{ url: string }> => {
+  const response = await fetch(
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/no_vocals.mp3`
+  );
+  if (!response.ok) {
+    throw new Error("Failed to load background audio");
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  return { url };
+};
+
+export const loadAudioChunkFromUUID = async (
+  uuid: string,
+  chunk_name: string
+): Promise<{ url: string }> => {
+  const response = await fetch(
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunk_name}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load chunk ${chunk_name}`);
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+
+  return { url };
 };
 
 export const loadTracksFromUUID = async (
@@ -68,8 +129,12 @@ export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
   }));
 };
 
-export const DubbingAPIService: APIServiceInterface = {
+export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadVideoFromUUID,
+  loadSilentVideoFromUUID,
+  loadOriginalAudioFromUUID,
+  loadBackgroundAudioFromUUID,
+  loadAudioChunkFromUUID,
   loadTracksFromUUID,
   parseTracksFromJSON,
 };
