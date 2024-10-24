@@ -256,10 +256,11 @@ function App() {
 
         if (serviceParam === "dubbing") {
           // Fetch silent video, original audio, and background audio
-          const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, tracksDataResponse] = await Promise.all([
+          const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, dubbedVocalsBuffer, tracksDataResponse] = await Promise.all([
             DubbingAPIService.loadSilentVideoFromUUID(newUuid),
             DubbingAPIService.loadOriginalAudioFromUUID(newUuid),
             DubbingAPIService.loadBackgroundAudioFromUUID(newUuid),
+            DubbingAPIService.loadDubbedVocalsFromUUID(newUuid),
             DubbingAPIService.loadTracksFromUUID(newUuid)
           ]);
           console.log("API calls completed for UUID:", newUuid);
@@ -268,7 +269,8 @@ function App() {
           setMediaType('video/mp4');
           setAudioTracks([
             { buffer: originalAudioBuffer, label: 'Original Audio' },
-            { buffer: backgroundAudioBuffer, label: 'Background Audio' }
+            { buffer: backgroundAudioBuffer, label: 'Background Audio' },
+            { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals' }
           ]);
           setTracks(DubbingAPIService.parseTracksFromJSON(tracksDataResponse));
         } else if (serviceParam === "transcription") {

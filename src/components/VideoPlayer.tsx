@@ -18,15 +18,24 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
-const TrackSelector = styled.select`
-  position: absolute; /* Overlay on video */
-  bottom: 10px; /* Position at the bottom */
-  left: 10px; /* Position at the left */
-  background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
-  color: white; /* White text color */
-  border: none; /* Remove border */
-  padding: 5px; /* Add some padding */
-  border-radius: 5px; /* Rounded corners */
+const TrackSelectorContainer = styled.div`
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 5px;
+  border-radius: 5px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: block;
+  margin-bottom: 5px;
+  cursor: pointer;
+`;
+
+const Checkbox = styled.input`
+  margin-right: 5px;
 `;
 
 interface Subtitle {
@@ -48,9 +57,31 @@ const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks,
   const videoRef = useRef<HTMLVideoElement>(null);
   const trackRef = useRef<HTMLTrackElement>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
-  const audioBufferSourceRef = useRef<AudioBufferSourceNode | null>(null);
-  const audioBufferRef = useRef<AudioBuffer | null>(null);
-  const [selectedTrackIndex, setSelectedTrackIndex] = useState(0);
+  const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+  const audioBuffersRef = useRef<AudioBuffer[]>([]);
+  const [selectedTracks, setSelectedTracks] = useState<number[]>([1, 2]); // Default to original and background
+
+  const playSelectedTracks = (startTime: number) => {
+    if (!audioContextRef.current) return;
+
+    // Stop all currently playing tracks
+    audioBufferSourcesRef.current.forEach(source => {
+      source.stop();
+      source.disconnect();
+    });
+    audioBufferSourcesRef.current = [];
+
+    // Play only selected tracks
+    selectedTracks.forEach(index => {
+      if (audioBuffersRef.current[index]) {
+        const source = audioContextRef.current!.createBufferSource();
+        source.buffer = audioBuffersRef.current[index];
+        source.connect(audioContextRef.current!.destination);
+        source.start(0, startTime);
+        audioBufferSourcesRef.current.push(source);
+      }
+    });
+  };
 
   useImperativeHandle(ref, () => ({
     get currentTime() {
@@ -59,18 +90,7 @@ const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks,
     setCurrentTime(time: number) {
       if (videoRef.current) {
         videoRef.current.currentTime = time;
-        // Sync audio buffer with video time
-        if (audioBufferSourceRef.current) {
-          audioBufferSourceRef.current.stop();
-          audioBufferSourceRef.current.disconnect();
-          audioBufferSourceRef.current = null;
-        }
-        if (audioBufferRef.current && audioContextRef.current) {
-          audioBufferSourceRef.current = audioContextRef.current.createBufferSource();
-          audioBufferSourceRef.current.buffer = audioBufferRef.current;
-          audioBufferSourceRef.current.connect(audioContextRef.current.destination);
-          audioBufferSourceRef.current.start(0, time);
-        }
+        playSelectedTracks(time);
       }
     },
     play() {
@@ -133,99 +153,63 @@ ${subtitle.text}
       }
       const audioContext = audioContextRef.current;
 
-      const loadAudioTrack = (index: number) => {
-        const audioData = audioTracks[index].buffer;
-
-        // Create a copy of the ArrayBuffer to avoid detachment issues
-        const audioDataCopy = audioData.slice(0);
-
-        audioContext.decodeAudioData(audioDataCopy)
-          .then(buffer => {
-            audioBufferRef.current = buffer;
-            // Start playing the new track from the current video time
-            if (!video.paused) {
-              if (audioBufferSourceRef.current) {
-                audioBufferSourceRef.current.stop();
-                audioBufferSourceRef.current.disconnect();
-              }
-              audioBufferSourceRef.current = audioContext.createBufferSource();
-              audioBufferSourceRef.current.buffer = buffer;
-              audioBufferSourceRef.current.connect(audioContext.destination);
-              audioBufferSourceRef.current.start(0, video.currentTime);
-            }
-          })
-          .catch(error => console.error("Error decoding audio track:", error));
-      };
-
-      loadAudioTrack(selectedTrackIndex);
-
-      const handlePlay = () => {
-        if (audioBufferRef.current) {
-          if (audioBufferSourceRef.current) {
-            audioBufferSourceRef.current.stop();
-            audioBufferSourceRef.current.disconnect();
+      const loadAudioTracks = async () => {
+        for (let i = 0; i < audioTracks.length; i++) {
+          const audioData = audioTracks[i].buffer.slice(0);
+          try {
+            const buffer = await audioContext.decodeAudioData(audioData);
+            audioBuffersRef.current[i] = buffer;
+          } catch (error) {
+            console.error(`Error decoding audio track ${i}:`, error);
           }
-          audioBufferSourceRef.current = audioContext.createBufferSource();
-          audioBufferSourceRef.current.buffer = audioBufferRef.current;
-          audioBufferSourceRef.current.connect(audioContext.destination);
-          audioBufferSourceRef.current.start(0, video.currentTime);
         }
       };
 
+      loadAudioTracks();
+
+      const handlePlay = () => {
+        playSelectedTracks(video.currentTime);
+      };
+
       const handlePause = () => {
-        if (audioBufferSourceRef.current) {
-          audioBufferSourceRef.current.stop();
-          audioBufferSourceRef.current.disconnect();
-          audioBufferSourceRef.current = null;
+        audioBufferSourcesRef.current.forEach(source => source.stop());
+      };
+
+      const handleSeeked = () => {
+        if (!video.paused) {
+          playSelectedTracks(video.currentTime);
         }
       };
 
       video.addEventListener('play', handlePlay);
       video.addEventListener('pause', handlePause);
+      video.addEventListener('seeked', handleSeeked);
 
       return () => {
         video.removeEventListener('play', handlePlay);
         video.removeEventListener('pause', handlePause);
+        video.removeEventListener('seeked', handleSeeked);
+        audioBufferSourcesRef.current.forEach(source => {
+          source.stop();
+          source.disconnect();
+        });
       };
     }
-  }, [audioTracks, selectedTrackIndex]);
+  }, [audioTracks, selectedTracks]); // Add selectedTracks as a dependency
 
-  const handleTrackChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newIndex = parseInt(event.target.value, 10);
-    setSelectedTrackIndex(newIndex);
-
-    // Stop the current audio playback
-    if (audioBufferSourceRef.current) {
-      audioBufferSourceRef.current.stop();
-      audioBufferSourceRef.current.disconnect();
-      audioBufferSourceRef.current = null;
+  useEffect(() => {
+    if (videoRef.current && !videoRef.current.paused) {
+      playSelectedTracks(videoRef.current.currentTime);
     }
+  }, [selectedTracks]);
 
-    // Load and start the new audio track
-    const video = videoRef.current;
-    if (video && audioContextRef.current) {
-      const audioContext = audioContextRef.current;
-      const audioData = audioTracks[newIndex].buffer;
-
-      // Create a new ArrayBuffer from the original data
-      const audioDataCopy = audioData.slice(0);
-
-      audioContext.decodeAudioData(audioDataCopy.slice(0))
-        .then(buffer => {
-          audioBufferRef.current = buffer;
-          if (!video.paused) {
-            if (audioBufferSourceRef.current) {
-              audioBufferSourceRef.current.stop();
-              audioBufferSourceRef.current.disconnect();
-            }
-            audioBufferSourceRef.current = audioContext.createBufferSource();
-            audioBufferSourceRef.current.buffer = buffer;
-            audioBufferSourceRef.current.connect(audioContext.destination);
-            audioBufferSourceRef.current.start(0, video.currentTime);
-          }
-        })
-        .catch(error => console.error("Error decoding audio track:", error));
-    }
+  const handleTrackChange = (index: number) => {
+    setSelectedTracks(prevSelectedTracks => {
+      const newSelectedTracks = prevSelectedTracks.includes(index)
+        ? prevSelectedTracks.filter(i => i !== index)
+        : [...prevSelectedTracks, index];
+      return newSelectedTracks;
+    });
   };
 
   return (
@@ -235,13 +219,18 @@ ${subtitle.text}
         {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="en" label="English" />}
         Your browser does not support the video tag.
       </StyledVideo>
-      <TrackSelector value={selectedTrackIndex} onChange={handleTrackChange}>
+      <TrackSelectorContainer>
         {audioTracks.map((track, index) => (
-          <option key={index} value={index}>
+          <CheckboxLabel key={index}>
+            <Checkbox
+              type="checkbox"
+              checked={selectedTracks.includes(index)}
+              onChange={() => handleTrackChange(index)}
+            />
             {track.label}
-          </option>
+          </CheckboxLabel>
         ))}
-      </TrackSelector>
+      </TrackSelectorContainer>
     </MediaContainer>
   );
 });
