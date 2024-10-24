@@ -51,48 +51,26 @@ export const loadSilentVideoFromUUID = async (
 
 export const loadOriginalAudioFromUUID = async (
   uuid: string
-): Promise<{ url: string }> => {
+): Promise<ArrayBuffer> => {
   const response = await fetch(
     `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_audio.mp3`
   );
   if (!response.ok) {
     throw new Error("Failed to load original audio");
   }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  return { url };
+  return response.arrayBuffer();
 };
 
 export const loadBackgroundAudioFromUUID = async (
   uuid: string
-): Promise<{ url: string }> => {
+): Promise<ArrayBuffer> => {
   const response = await fetch(
     `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/no_vocals.mp3`
   );
   if (!response.ok) {
     throw new Error("Failed to load background audio");
   }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  return { url };
-};
-
-export const loadAudioChunkFromUUID = async (
-  uuid: string,
-  chunk_name: string
-): Promise<{ url: string }> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunk_name}`
-  );
-  if (!response.ok) {
-    throw new Error(`Failed to load chunk ${chunk_name}`);
-  }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  return { url };
+  return response.arrayBuffer();
 };
 
 export const loadTracksFromUUID = async (
@@ -134,7 +112,6 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadSilentVideoFromUUID,
   loadOriginalAudioFromUUID,
   loadBackgroundAudioFromUUID,
-  loadAudioChunkFromUUID,
   loadTracksFromUUID,
   parseTracksFromJSON,
 };

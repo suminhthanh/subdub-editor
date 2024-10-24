@@ -36,7 +36,7 @@ interface Subtitle {
 }
 
 interface AudioTrack {
-  url: string;
+  buffer: ArrayBuffer;
   label: string;
 }
 
@@ -59,6 +59,18 @@ const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks,
     setCurrentTime(time: number) {
       if (videoRef.current) {
         videoRef.current.currentTime = time;
+        // Sync audio buffer with video time
+        if (audioBufferSourceRef.current) {
+          audioBufferSourceRef.current.stop();
+          audioBufferSourceRef.current.disconnect();
+          audioBufferSourceRef.current = null;
+        }
+        if (audioBufferRef.current && audioContextRef.current) {
+          audioBufferSourceRef.current = audioContextRef.current.createBufferSource();
+          audioBufferSourceRef.current.buffer = audioBufferRef.current;
+          audioBufferSourceRef.current.connect(audioContextRef.current.destination);
+          audioBufferSourceRef.current.start(0, time);
+        }
       }
     },
     play() {
@@ -122,19 +134,37 @@ ${subtitle.text}
       const audioContext = audioContextRef.current;
 
       const loadAudioTrack = (index: number) => {
-        fetch(audioTracks[index].url)
-          .then(response => response.arrayBuffer())
-          .then(data => audioContext.decodeAudioData(data))
+        const audioData = audioTracks[index].buffer;
+
+        // Create a copy of the ArrayBuffer to avoid detachment issues
+        const audioDataCopy = audioData.slice(0);
+
+        audioContext.decodeAudioData(audioDataCopy)
           .then(buffer => {
             audioBufferRef.current = buffer;
+            // Start playing the new track from the current video time
+            if (!video.paused) {
+              if (audioBufferSourceRef.current) {
+                audioBufferSourceRef.current.stop();
+                audioBufferSourceRef.current.disconnect();
+              }
+              audioBufferSourceRef.current = audioContext.createBufferSource();
+              audioBufferSourceRef.current.buffer = buffer;
+              audioBufferSourceRef.current.connect(audioContext.destination);
+              audioBufferSourceRef.current.start(0, video.currentTime);
+            }
           })
-          .catch(error => console.error("Error loading audio track:", error));
+          .catch(error => console.error("Error decoding audio track:", error));
       };
 
       loadAudioTrack(selectedTrackIndex);
 
       const handlePlay = () => {
         if (audioBufferRef.current) {
+          if (audioBufferSourceRef.current) {
+            audioBufferSourceRef.current.stop();
+            audioBufferSourceRef.current.disconnect();
+          }
           audioBufferSourceRef.current = audioContext.createBufferSource();
           audioBufferSourceRef.current.buffer = audioBufferRef.current;
           audioBufferSourceRef.current.connect(audioContext.destination);
@@ -175,19 +205,26 @@ ${subtitle.text}
     const video = videoRef.current;
     if (video && audioContextRef.current) {
       const audioContext = audioContextRef.current;
-      fetch(audioTracks[newIndex].url)
-        .then(response => response.arrayBuffer())
-        .then(data => audioContext.decodeAudioData(data))
+      const audioData = audioTracks[newIndex].buffer;
+
+      // Create a new ArrayBuffer from the original data
+      const audioDataCopy = audioData.slice(0);
+
+      audioContext.decodeAudioData(audioDataCopy.slice(0))
         .then(buffer => {
           audioBufferRef.current = buffer;
           if (!video.paused) {
+            if (audioBufferSourceRef.current) {
+              audioBufferSourceRef.current.stop();
+              audioBufferSourceRef.current.disconnect();
+            }
             audioBufferSourceRef.current = audioContext.createBufferSource();
             audioBufferSourceRef.current.buffer = buffer;
             audioBufferSourceRef.current.connect(audioContext.destination);
             audioBufferSourceRef.current.start(0, video.currentTime);
           }
         })
-        .catch(error => console.error("Error loading audio track:", error));
+        .catch(error => console.error("Error decoding audio track:", error));
     }
   };
 

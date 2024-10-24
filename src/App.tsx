@@ -125,7 +125,7 @@ function App() {
   const [serviceParam, setServiceParam] = useState<string>('dubbing');
   const [isLoading, setIsLoading] = useState(false);
   const initialLoadRef = useRef(false);
-  const [audioTracks, setAudioTracks] = useState<{ url: string; label: string }[]>([]);
+  const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer; label: string }[]>([]);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -256,7 +256,7 @@ function App() {
 
         if (serviceParam === "dubbing") {
           // Fetch silent video, original audio, and background audio
-          const [silentVideoResponse, originalAudioResponse, backgroundAudioResponse, tracksDataResponse] = await Promise.all([
+          const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, tracksDataResponse] = await Promise.all([
             DubbingAPIService.loadSilentVideoFromUUID(newUuid),
             DubbingAPIService.loadOriginalAudioFromUUID(newUuid),
             DubbingAPIService.loadBackgroundAudioFromUUID(newUuid),
@@ -267,8 +267,8 @@ function App() {
           setMediaUrl(silentVideoResponse.url);
           setMediaType('video/mp4');
           setAudioTracks([
-            { url: originalAudioResponse.url, label: 'Original Audio' },
-            { url: backgroundAudioResponse.url, label: 'Background Audio' }
+            { buffer: originalAudioBuffer, label: 'Original Audio' },
+            { buffer: backgroundAudioBuffer, label: 'Background Audio' }
           ]);
           setTracks(DubbingAPIService.parseTracksFromJSON(tracksDataResponse));
         } else if (serviceParam === "transcription") {

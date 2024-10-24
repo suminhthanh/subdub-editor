@@ -7,7 +7,7 @@ export interface MediaPlayerProps {
   src: string;
   tracks: Track[];
   mediaType: string;
-  audioTracks: { url: string; label: string }[];
+  audioTracks: { buffer: ArrayBuffer; label: string }[];
 }
 
 export interface MediaPlayerRef {
