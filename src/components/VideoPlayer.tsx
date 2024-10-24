@@ -107,7 +107,7 @@ const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks,
     const subtitles: Subtitle[] = tracks.map(track => ({
       startTime: track.start,
       duration: track.end - track.start,
-      text: track.text
+      text: track.translated_text
     }));
 
     const vttContent = `WEBVTT
@@ -169,6 +169,7 @@ ${subtitle.text}
 
       const handlePlay = () => {
         playSelectedTracks(video.currentTime);
+        video.play();
       };
 
       const handlePause = () => {
@@ -176,9 +177,8 @@ ${subtitle.text}
       };
 
       const handleSeeked = () => {
-        if (!video.paused) {
-          playSelectedTracks(video.currentTime);
-        }
+        playSelectedTracks(video.currentTime);
+        video.play();
       };
 
       video.addEventListener('play', handlePlay);
@@ -216,7 +216,7 @@ ${subtitle.text}
     <MediaContainer>
       <StyledVideo ref={videoRef} controls preload="auto">
         <source src={src} type={mediaType} />
-        {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="en" label="English" />}
+        {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
         Your browser does not support the video tag.
       </StyledVideo>
       <TrackSelectorContainer>

@@ -67,9 +67,10 @@ interface TrackListProps {
   onTrackChange: (index: number, updatedTrack: Track) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
+  isDubbingService: boolean;
 }
 
-const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack }) => {
+const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, isDubbingService }) => {
   const handleTimeClick = (time: number) => {
     onTimeChange(time);
   };
@@ -80,7 +81,13 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChan
   };
 
   const handleTextareaChange = (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onTrackChange(index, { ...tracks[index], text: e.target.value });
+    const updatedTrack = { ...tracks[index] };
+    if (isDubbingService) {
+      updatedTrack.translated_text = e.target.value;
+    } else {
+      updatedTrack.text = e.target.value;
+    }
+    onTrackChange(index, updatedTrack);
     adjustTextareaHeight(e.target);
   };
 
@@ -99,7 +106,7 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChan
           <TrackTextContainer>
             <TrackTextArea
               className="track-textarea"
-              value={track.text}
+              value={isDubbingService ? track.translated_text : track.text}
               onChange={(e) => handleTextareaChange(index, e)}
               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
             />

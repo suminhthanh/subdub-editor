@@ -12,5 +12,10 @@
   "submit": "Submit",
   "save": "Save",
   "cancel": "Cancel",
-  "errorLoadingUUID": "Error loading video, maybe it doesn't exist"
+  "errorLoadingUUID": "Error loading video, maybe it doesn't exist",
+  "originalText": "Original Text",
+  "translatedText": "Translated Text",
+  "startTime": "Start Time",
+  "endTime": "End Time",
+  "text": "Text"
 }

@@ -12,5 +12,10 @@
   "submit": "Enviar",
   "save": "Desar",
   "cancel": "Cancel·lar",
-  "errorLoadingUUID": "Error carregant el vídeo, potser ja no existeix"
+  "errorLoadingUUID": "Error carregant el vídeo, potser ja no existeix",
+  "originalText": "Text Original",
+  "translatedText": "Text Traduit",
+  "startTime": "Temps Inicial",
+  "endTime": "Temps Final",
+  "text": "Text"
 }

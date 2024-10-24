@@ -12,5 +12,10 @@
   "submit": "Enviar",
   "save": "Guardar",
   "cancel": "Cancelar",
-  "errorLoadingUUID": "Error cargando el video, es posible que ya no exista"
+  "errorLoadingUUID": "Error cargando el video, es posible que ya no exista",
+  "originalText": "Texto Original",
+  "translatedText": "Texto Traducido",
+  "startTime": "Tiempo Inicial",
+  "endTime": "Tiempo Final",
+  "text": "Texto"
 }

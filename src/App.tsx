@@ -331,6 +331,8 @@ function App() {
     }
   };
 
+  const isDubbingService = serviceParam === 'dubbing';
+
   return (
     <>
       <GlobalStyle />
@@ -374,6 +376,7 @@ function App() {
                         currentTime={currentTime}
                         onTimeChange={handleTimeChange}
                         onEditTrack={handleEditTrack}
+                        isDubbingService={isDubbingService}
                       />
                     ) : (
                       <TrackList
@@ -381,6 +384,7 @@ function App() {
                         onTrackChange={handleTrackChange}
                         onTimeChange={handleTimeChange}
                         onEditTrack={handleEditTrack}
+                        isDubbingService={isDubbingService}
                       />
                     )}
                   </>
@@ -402,6 +406,7 @@ function App() {
         onSave={handleSaveTrack}
         onClose={() => setEditingTrack(null)}
         ModalOverlay={ModalOverlay}
+        isDubbingService={isDubbingService}
       />
     </>
   );

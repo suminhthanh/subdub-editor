@@ -25,9 +25,10 @@ interface TrackItemProps {
   onChange: (updatedTrack: Track) => void;
   zoomLevel: number;
   onEdit: (track: Track) => void;
+  isDubbingService: boolean;
 }
 
-const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdit }) => {
+const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdit, isDubbingService }) => {
   const [isDragging, setIsDragging] = useState(false);
   const interactionStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -98,7 +99,7 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {track.text}
+        {isDubbingService ? track.translated_text : track.text}
       </TrackBox>
     </Rnd>
   );
