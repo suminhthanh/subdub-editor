@@ -9,15 +9,23 @@ const ButtonContainer = styled.div`
   justify-content: space-between;
 `;
 
+const DeleteButton = styled(Button)`
+  background-color: #ff4136;
+  &:hover {
+    background-color: #ff7066;
+  }
+`;
+
 interface TrackEditModalProps {
   track: Track | null;
   onSave: (updatedTrack: Track) => void;
   onClose: () => void;
+  onDelete: (trackId: string) => void;
   ModalOverlay: React.ComponentType<any>;
-  isDubbingService: boolean; // Add this prop
+  isDubbingService: boolean;
 }
 
-const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose, ModalOverlay, isDubbingService }) => {
+const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose, onDelete, ModalOverlay, isDubbingService }) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
@@ -57,32 +65,11 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
 
   if (!track) return null;
 
-  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newStartTime = Number(e.target.value);
-    setStartTime(newStartTime);
+  const handleDelete = () => {
     if (track) {
-      onSave({
-        ...track,
-        text,
-        translated_text: translatedText,
-        start: newStartTime,
-        end: endTime
-      });
+      onDelete(track.id);
     }
-  };
-
-  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEndTime = Number(e.target.value);
-    setEndTime(newEndTime);
-    if (track) {
-      onSave({
-        ...track,
-        text,
-        translated_text: translatedText,
-        start: startTime,
-        end: newEndTime
-      });
-    }
+    onClose();
   };
 
   return (
@@ -106,14 +93,14 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
         <Input
           type="number"
           value={startTime}
-          onChange={handleStartTimeChange}
+          onChange={(e) => setStartTime(Number(e.target.value))}
           step="0.1"
         />
         <label>{t('endTime')}</label>
         <Input
           type="number"
           value={endTime}
-          onChange={handleEndTimeChange}
+          onChange={(e) => setEndTime(Number(e.target.value))}
           step="0.1"
         />
         <label>{t('speed')}</label>
@@ -126,8 +113,11 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
           max="2"
         />
         <ButtonContainer>
-          <Button onClick={onClose}>{t('cancel')}</Button>
-          <Button onClick={handleSave}>{t('save')}</Button>
+          <DeleteButton onClick={handleDelete}>{t('deleteTrack')}</DeleteButton>
+          <div>
+            <Button onClick={onClose}>{t('cancel')}</Button>
+            <Button onClick={handleSave}>{t('save')}</Button>
+          </div>
         </ButtonContainer>
       </ModalContent>
     </ModalOverlay>

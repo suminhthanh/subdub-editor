@@ -380,6 +380,14 @@ function App() {
     );
   };
 
+  const handleDeleteTrack = useCallback((trackId: string) => {
+    setTracks(prevTracks => {
+      const newTracks = prevTracks.filter(t => t.id !== trackId);
+      recreateConstructedAudio(newTracks);
+      return newTracks;
+    });
+  }, [recreateConstructedAudio]);
+
   const isDubbingService = serviceParam === 'dubbing';
 
 
@@ -443,6 +451,7 @@ function App() {
                         onTrackChange={handleTrackChange}
                         onTimeChange={handleTimeChange}
                         onEditTrack={handleEditTrack}
+                        onDeleteTrack={handleDeleteTrack}
                         isDubbingService={isDubbingService}
                       />
                     ) : (
@@ -470,6 +479,7 @@ function App() {
         track={editingTrack}
         onSave={handleSaveTrack}
         onClose={() => setEditingTrack(null)}
+        onDelete={handleDeleteTrack}
         ModalOverlay={ModalOverlay}
         isDubbingService={isDubbingService}
       />

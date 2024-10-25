@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
 import { Button, colors, typography } from '../styles/designSystem';
+import { useTranslation } from 'react-i18next';
 
 const ListContainer = styled.div`
   background-color: ${colors.background};
@@ -50,7 +51,7 @@ const TrackTextArea = styled.textarea`
   color: ${colors.text};
 `;
 
-const EditIcon = styled(Button)`
+const IconButton = styled(Button)`
   cursor: pointer;
   padding: 5px;
   display: flex;
@@ -67,10 +68,13 @@ interface TrackListProps {
   onTrackChange: (index: number, updatedTrack: Track) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
+  onDeleteTrack: (trackId: string) => void;
   isDubbingService: boolean;
 }
 
-const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, isDubbingService }) => {
+const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, onDeleteTrack, isDubbingService }) => {
+  const { t } = useTranslation();
+
   const handleTimeClick = (time: number) => {
     onTimeChange(time);
   };
@@ -110,11 +114,16 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChan
               onChange={(e) => handleTextareaChange(index, e)}
               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
             />
-            <EditIcon onClick={() => onEditTrack(track)}>
+            <IconButton onClick={() => onEditTrack(track)} title={t('edit')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
               </svg>
-            </EditIcon>
+            </IconButton>
+            <IconButton onClick={() => onDeleteTrack(track.id)} title={t('delete')}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+              </svg>
+            </IconButton>
           </TrackTextContainer>
         </TrackRow>
       ))}
