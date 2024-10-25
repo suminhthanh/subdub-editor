@@ -155,12 +155,12 @@ function App() {
         if (mediaFile) {
           fileToProcess = mediaFile;
         } else {
-          // If we don't have a mediaFile (in case of UUID), we need to fetch it
+          // In case of UUID, use the existing mediaUrl (silent video)
           const response = await fetch(mediaUrl);
           const blob = await response.blob();
-          fileToProcess = new File([blob], mediaFileName, { type: mediaType });
+          fileToProcess = new File([blob], `dubbed_final.mp4`, { type: mediaType });
         }
-        const newMediaBlob = await rebuildMedia(fileToProcess, tracks);
+        const newMediaBlob = await rebuildMedia(fileToProcess, tracks, audioTracks);
         const url = URL.createObjectURL(newMediaBlob);
         const a = document.createElement('a');
         a.href = url;
