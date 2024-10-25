@@ -67,9 +67,8 @@ export class AudioService {
 
       // Adjust the speed of the chunk
       const speedAdjustedBuffer = await adjustAudioSpeed(
-        this.audioContext,
         chunkAudioBuffer,
-        track.speed
+        track.speed || 1
       );
       audioBuffers.push(speedAdjustedBuffer);
       currentTime = track.start + speedAdjustedBuffer.duration;

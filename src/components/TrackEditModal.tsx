@@ -23,6 +23,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
   const [translatedText, setTranslatedText] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
+  const [speed, setSpeed] = useState(1);
 
   useEffect(() => {
     if (track) {
@@ -30,6 +31,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
       setTranslatedText(track.translated_text || '');
       setStartTime(track.start);
       setEndTime(track.end);
+      setSpeed(track.speed || 1);
     }
   }, [track]);
 
@@ -40,7 +42,8 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
         text,
         translated_text: translatedText,
         start: startTime,
-        end: endTime
+        end: endTime,
+        speed: speed
       });
     }
     onClose();
@@ -112,6 +115,15 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
           value={endTime}
           onChange={handleEndTimeChange}
           step="0.1"
+        />
+        <label>{t('speed')}</label>
+        <Input
+          type="number"
+          value={speed}
+          onChange={(e) => setSpeed(Number(e.target.value))}
+          step="0.1"
+          min="0.1"
+          max="2"
         />
         <ButtonContainer>
           <Button onClick={onClose}>{t('cancel')}</Button>

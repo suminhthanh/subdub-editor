@@ -57,7 +57,6 @@ export const audioBufferToArrayBuffer = (
 };
 
 export const adjustAudioSpeed = async (
-  audioContext: AudioContext,
   audioBuffer: AudioBuffer,
   speed: number
 ): Promise<AudioBuffer> => {
