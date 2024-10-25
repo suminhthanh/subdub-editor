@@ -15,6 +15,7 @@ export interface MediaPlayerProps {
   mediaType: string;
   audioTracks: AudioTrack[];
   selectedAudioTracks: number[];
+  selectedSubtitles: string;
 }
 
 export interface MediaPlayerRef {

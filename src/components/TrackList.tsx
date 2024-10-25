@@ -70,9 +70,10 @@ interface TrackListProps {
   onEditTrack: (track: Track) => void;
   onDeleteTrack: (trackId: string) => void;
   isDubbingService: boolean;
+  showSpeakerColors: boolean;
 }
 
-const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, onDeleteTrack, isDubbingService }) => {
+const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, onDeleteTrack, isDubbingService, showSpeakerColors }) => {
   const { t } = useTranslation();
 
   const handleTimeClick = (time: number) => {

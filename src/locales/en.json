@@ -25,5 +25,10 @@
   "subtitles": "Subtitles",
   "noSubtitles": "No Subtitles",
   "originalSubtitles": "Original Subtitles",
-  "dubbedSubtitles": "Dubbed Subtitles"
+  "dubbedSubtitles": "Dubbed Subtitles",
+  "speakers": "Speakers",
+  "newSpeakerName": "New speaker name",
+  "speaker": "Speaker",
+  "selectSpeaker": "Select a speaker",
+  "showSpeakerColors": "Show speaker colors"
 }

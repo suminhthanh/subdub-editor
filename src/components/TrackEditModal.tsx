@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
-import { Button, Input, ModalContent, TextArea } from '../styles/designSystem';
+import { Button, Input, ModalContent, TextArea, Select } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
+import { speakerService, Speaker } from '../services/SpeakerService';
 
 const ButtonContainer = styled.div`
   display: flex;
@@ -25,13 +26,22 @@ interface TrackEditModalProps {
   isDubbingService: boolean;
 }
 
-const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose, onDelete, ModalOverlay, isDubbingService }) => {
+const TrackEditModal: React.FC<TrackEditModalProps> = ({ 
+  track, 
+  onSave, 
+  onClose, 
+  onDelete, 
+  ModalOverlay, 
+  isDubbingService,
+}) => {
   const { t } = useTranslation();
   const [text, setText] = useState('');
   const [translatedText, setTranslatedText] = useState('');
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
   const [speed, setSpeed] = useState(1);
+  const [selectedSpeakerId, setSelectedSpeakerId] = useState('');
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
 
   useEffect(() => {
     if (track) {
@@ -40,7 +50,9 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
       setStartTime(track.start);
       setEndTime(track.end);
       setSpeed(track.speed || 1);
+      setSelectedSpeakerId(track.speaker_id || '');
     }
+    setSpeakers(speakerService.getSpeakers());
   }, [track]);
 
   const handleSave = () => {
@@ -51,7 +63,8 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
         translated_text: translatedText,
         start: startTime,
         end: endTime,
-        speed: speed
+        speed: speed,
+        speaker_id: selectedSpeakerId
       });
     }
     onClose();
@@ -112,6 +125,18 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
           min="0.1"
           max="2"
         />
+        <label>{t('speaker')}</label>
+        <Select
+          value={selectedSpeakerId}
+          onChange={(e) => setSelectedSpeakerId(e.target.value)}
+        >
+          <option value="">{t('selectSpeaker')}</option>
+          {speakers.map(speaker => (
+            <option key={speaker.id} value={speaker.id}>
+              {speaker.name}
+            </option>
+          ))}
+        </Select>
         <ButtonContainer>
           <DeleteButton onClick={handleDelete}>{t('deleteTrack')}</DeleteButton>
           <div>

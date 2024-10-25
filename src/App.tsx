@@ -13,6 +13,7 @@ import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
 import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
+import { speakerService } from './services/SpeakerService';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -130,6 +131,7 @@ function App() {
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([0, 1]); // Default to first two tracks
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
+  const [showSpeakerColors, setShowSpeakerColors] = useState(true);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -395,6 +397,10 @@ function App() {
     setSelectedSubtitles(subtitles);
   };
 
+  const handleShowSpeakerColorsChange = (show: boolean) => {
+    setShowSpeakerColors(show);
+  };
+
   const isDubbingService = serviceParam === 'dubbing';
 
 
@@ -452,6 +458,7 @@ function App() {
                         onEditTrack={handleEditTrack}
                         isDubbingService={isDubbingService}
                         onTrackChange={handleTrackChange}
+                        showSpeakerColors={showSpeakerColors}
                       />
                     ) : activeTab === 'list' ? (
                       <TrackList
@@ -461,6 +468,7 @@ function App() {
                         onEditTrack={handleEditTrack}
                         onDeleteTrack={handleDeleteTrack}
                         isDubbingService={isDubbingService}
+                        showSpeakerColors={showSpeakerColors}
                       />
                     ) : (
                       <VideoOptions
@@ -469,6 +477,8 @@ function App() {
                         onAudioTrackToggle={handleAudioTrackToggle}
                         selectedSubtitles={selectedSubtitles}
                         onSubtitlesChange={handleSubtitlesChange}
+                        showSpeakerColors={showSpeakerColors}
+                        onShowSpeakerColorsChange={handleShowSpeakerColorsChange}
                       />
                     )}
                   </>

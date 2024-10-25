@@ -2,6 +2,7 @@ import { Track } from "../types/Track";
 import { DubbingAPIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
+import { speakerService } from "./SpeakerService";
 
 const API_BASE_URL = "http://192.168.178.152:8700";
 
@@ -100,8 +101,23 @@ export const loadTracksFromUUID = async (
 export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
   const utterances = json.utterances;
 
+  // Extract unique speakers from the utterances
+  const uniqueSpeakers = Array.from(
+    new Set(utterances.map((item) => item.speaker_id))
+  ).map((speakerId) => {
+    const speaker = utterances.find((u) => u.speaker_id === speakerId);
+    return {
+      id: speakerId,
+      name: speakerId, // Use the speaker_id as the name
+      voice: speaker?.assigned_voice || "default",
+    };
+  });
+
+  // Set the speakers in the SpeakerService
+  speakerService.setSpeakers(uniqueSpeakers);
+
   return utterances.map((item: any) => ({
-    id: uuidv4(),
+    id: item.id || uuidv4(),
     start: item.start || 0,
     end: item.end || 0,
     speaker_id: item.speaker_id || "",

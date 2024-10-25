@@ -3,9 +3,10 @@ import styled from 'styled-components';
 import { Rnd } from 'react-rnd';
 import { Track } from '../types/Track';
 import { colors, typography } from '../styles/designSystem';
+import { speakerService } from '../services/SpeakerService';
 
-const TrackBox = styled.div`
-  background-color: ${colors.quaternaryLight};
+const TrackBox = styled.div<{ backgroundColor: string }>`
+  background-color: ${props => props.backgroundColor};
   color: ${colors.black};
   border-radius: 5px;
   padding: 5px;
@@ -26,9 +27,17 @@ interface TrackItemProps {
   zoomLevel: number;
   onEdit: (track: Track) => void;
   isDubbingService: boolean;
+  showSpeakerColors: boolean;
 }
 
-const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdit, isDubbingService }) => {
+const TrackItem: React.FC<TrackItemProps> = ({ 
+  track, 
+  onChange, 
+  zoomLevel, 
+  onEdit, 
+  isDubbingService,
+  showSpeakerColors
+}) => {
   const [isDragging, setIsDragging] = useState(false);
   const interactionStartPosRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -94,6 +103,9 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
     onChange(newTrack, false); // Don't trigger audio recreation when resizing
   };
 
+  const speaker = speakerService.getSpeakerById(track.speaker_id);
+  const backgroundColor = showSpeakerColors && speaker ? speaker.color : colors.quaternaryLight;
+
   return (
     <Rnd
       position={{ x: track.start * zoomLevel, y: 0 }}
@@ -107,6 +119,7 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
       minWidth={10}
     >
       <TrackBox
+        backgroundColor={backgroundColor}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}
         onTouchStart={handleTouchStart}
