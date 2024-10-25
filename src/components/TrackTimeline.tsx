@@ -95,21 +95,20 @@ interface TrackTimelineProps {
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
   isDubbingService: boolean;
+  onTrackChange: (index: number, updatedTrack: Track) => void;
 }
 
 const DEFAULT_ZOOM = 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
-const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, setTracks, currentTime, onTimeChange, onEditTrack, isDubbingService }) => {
+const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, setTracks, currentTime, onTimeChange, onEditTrack, isDubbingService, onTrackChange }) => {
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const handleTrackChange = (index: number, updatedTrack: Track) => {
-    const newTracks = [...tracks];
-    newTracks[index] = updatedTrack;
-    setTracks(newTracks);
+    onTrackChange(index, updatedTrack);
   };
 
   const handleZoomIn = () => setZoomLevel(prev => Math.min(prev * 1.5, MAX_ZOOM));

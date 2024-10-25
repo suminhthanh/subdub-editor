@@ -148,6 +148,7 @@ ${subtitle.text}
   useEffect(() => {
     const video = videoRef.current;
     if (video && audioTracks.length > 0) {
+      console.log("Received new audio tracks in VideoPlayer:", audioTracks);
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
       }

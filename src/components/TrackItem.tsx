@@ -72,13 +72,17 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
 
   const handleDragStop = (e: any, d: { x: number, y: number }) => {
     const newStart = Math.max(0, d.x / zoomLevel);
-    onChange({ ...track, start: newStart, end: newStart + (track.end - track.start) });
+    const newTrack = { ...track, start: newStart, end: newStart + (track.end - track.start) };
+    console.log("Track dragged:", newTrack);
+    onChange(newTrack);
     setIsDragging(false);
   };
 
   const handleResize = (e: any, direction: string, ref: any, delta: { width: number }) => {
     const newDuration = Math.max(0.1, (track.end - track.start) + delta.width / zoomLevel);
-    onChange({ ...track, end: track.start + newDuration });
+    const newTrack = { ...track, end: track.start + newDuration };
+    console.log("Track resized:", newTrack);
+    onChange(newTrack);
   };
 
   return (

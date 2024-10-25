@@ -12,7 +12,8 @@ import { Track } from './types/Track';
 import { APIServiceInterface, DubbingAPIServiceInterface } from './services/APIServiceInterface';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
-import { audioBufferToArrayBuffer } from './utils/audioUtils';
+import { audioBufferToArrayBuffer, adjustAudioSpeed, concatenateAudioBuffers, createSilentAudioBuffer } from './utils/audioUtils';
+import { audioService } from './services/AudioService';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -127,6 +128,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const initialLoadRef = useRef(false);
   const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer | AudioBuffer; label: string }[]>([]);
+  const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -208,12 +210,6 @@ function App() {
     }
   }, [isPlaying]);
 
-  const handleTrackChange = (index: number, updatedTrack: Track) => {
-    const newTracks = [...tracks];
-    newTracks[index] = updatedTrack;
-    setTracks(newTracks);
-  };
-
   useEffect(() => {
     document.addEventListener('keydown', handleKeyPress);
     return () => {
@@ -267,7 +263,10 @@ function App() {
           const parsedTracks = DubbingAPIService.parseTracksFromJSON(tracksDataResponse);
           
           // Load dubbed audio chunks
-          const constructedDubbedAudioBuffer = await DubbingAPIService.loadDubbedAudioChunksFromUUID(newUuid, parsedTracks);
+          const chunkBuffers = await DubbingAPIService.loadDubbedAudioChunksFromUUID(newUuid, parsedTracks);
+          setChunkBuffers(chunkBuffers);
+
+          const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(parsedTracks, chunkBuffers);
 
           console.log("API calls completed for UUID:", newUuid);
 
@@ -322,15 +321,46 @@ function App() {
     setEditingTrack(track);
   };
 
-  const handleSaveTrack = (updatedTrack: Track) => {
+  const recreateConstructedAudio = useCallback(async (updatedTracks: Track[]) => {
+    if (serviceParam === "dubbing") {
+      try {
+        console.log("Recreating constructed audio...");
+        const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
+        console.log("Audio reconstruction complete. Updating audio tracks...");
+        setAudioTracks(prevTracks => {
+          const newTracks = [...prevTracks];
+          newTracks[3] = { buffer: result, label: 'Dubbed Audio (Constructed)' };
+          return newTracks;
+        });
+      } catch (error) {
+        console.error("Error recreating constructed audio:", error);
+      }
+    }
+  }, [serviceParam, chunkBuffers]);
+
+  const handleSaveTrack = useCallback((updatedTrack: Track) => {
     if (editingTrack) {
-      const newTracks = tracks.map(t => 
-        t.id === editingTrack.id ? updatedTrack : t
-      );
-      setTracks(newTracks);
+      setTracks(prevTracks => {
+        const newTracks = prevTracks.map(t => 
+          t.id === editingTrack.id ? updatedTrack : t
+        );
+        recreateConstructedAudio(newTracks);
+        return newTracks;
+      });
       setEditingTrack(null);
     }
-  };
+  }, [editingTrack, recreateConstructedAudio]);
+
+  const handleTrackChange = useCallback((index: number, updatedTrack: Track) => {
+    console.log(`Track ${index} changed:`, updatedTrack);
+    setTracks(prevTracks => {
+      const newTracks = [...prevTracks];
+      newTracks[index] = updatedTrack;
+      console.log("Tracks updated, calling recreateConstructedAudio...");
+      recreateConstructedAudio(newTracks);
+      return newTracks;
+    });
+  }, [recreateConstructedAudio]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files.length > 0) {
@@ -345,6 +375,7 @@ function App() {
   };
 
   const isDubbingService = serviceParam === 'dubbing';
+
 
   return (
     <>
@@ -390,6 +421,7 @@ function App() {
                         onTimeChange={handleTimeChange}
                         onEditTrack={handleEditTrack}
                         isDubbingService={isDubbingService}
+                        onTrackChange={handleTrackChange}
                       />
                     ) : (
                       <TrackList

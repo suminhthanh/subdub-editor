@@ -128,81 +128,26 @@ export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
 export const loadDubbedAudioChunksFromUUID = async (
   uuid: string,
   tracks: Track[]
-): Promise<AudioBuffer> => {
-  const audioContext = new AudioContext();
-  const dubbedTracks = tracks
-    .filter((track) => track.dubbed_path && track.for_dubbing)
-    .sort((a, b) => a.start - b.start);
-
-  if (dubbedTracks.length === 0) {
-    throw new Error("No dubbed tracks found");
-  }
-
-  const audioBuffers: AudioBuffer[] = [];
-  let currentTime = 0;
-
-  // Add initial silence if the first track doesn't start at 0
-  if (dubbedTracks[0].start > 0) {
-    const initialSilence = await createSilentAudioBuffer(
-      audioContext,
-      dubbedTracks[0].start
-    );
-    audioBuffers.push(initialSilence);
-    currentTime = dubbedTracks[0].start;
-  }
+): Promise<{ [key: string]: ArrayBuffer }> => {
+  const chunkBuffers: { [key: string]: ArrayBuffer } = {};
+  const dubbedTracks = tracks.filter(
+    (track) => track.dubbed_path && track.for_dubbing
+  );
 
   for (const track of dubbedTracks) {
-    // Add silence if there's a gap
-    if (track.start > currentTime) {
-      const silenceDuration = track.start - currentTime;
-      const silenceBuffer = await createSilentAudioBuffer(
-        audioContext,
-        silenceDuration
+    const chunkName = track.dubbed_path.split("/").pop();
+    if (chunkName) {
+      const response = await fetch(
+        `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunkName}`
       );
-      audioBuffers.push(silenceBuffer);
+      if (!response.ok) {
+        throw new Error(`Failed to load dubbed audio chunk: ${chunkName}`);
+      }
+      chunkBuffers[chunkName] = await response.arrayBuffer();
     }
-
-    // Load and add the dubbed audio chunk
-    const response = await fetch(
-      `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${track.dubbed_path
-        .split("/")
-        .pop()}`
-    );
-    if (!response.ok) {
-      throw new Error(
-        `Failed to load dubbed audio chunk: ${track.dubbed_path}`
-      );
-    }
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-
-    // Adjust the audio buffer based on the speed
-    const speedAdjustedBuffer = await adjustAudioSpeed(
-      audioContext,
-      audioBuffer,
-      track.speed
-    );
-    audioBuffers.push(speedAdjustedBuffer);
-
-    // Update currentTime based on the adjusted duration
-    const adjustedDuration = speedAdjustedBuffer.duration;
-    currentTime = track.start + adjustedDuration;
   }
 
-  // Add silence at the end if the last track ends before the video duration
-  const videoDuration = tracks[tracks.length - 1].end; // Assuming the last track's end time is the video duration
-  if (currentTime < videoDuration) {
-    const finalSilenceDuration = videoDuration - currentTime;
-    const finalSilence = await createSilentAudioBuffer(
-      audioContext,
-      finalSilenceDuration
-    );
-    audioBuffers.push(finalSilence);
-  }
-
-  // Concatenate all audio buffers
-  const result = await concatenateAudioBuffers(audioContext, audioBuffers);
-  return result;
+  return chunkBuffers;
 };
 
 export const DubbingAPIService: DubbingAPIServiceInterface = {

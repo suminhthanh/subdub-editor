@@ -18,5 +18,5 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   loadDubbedAudioChunksFromUUID: (
     uuid: string,
     tracks: Track[]
-  ) => Promise<AudioBuffer>;
+  ) => Promise<{ [key: string]: ArrayBuffer }>;
 }

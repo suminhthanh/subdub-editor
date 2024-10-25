@@ -54,6 +54,34 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
 
   if (!track) return null;
 
+  const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStartTime = Number(e.target.value);
+    setStartTime(newStartTime);
+    if (track) {
+      onSave({
+        ...track,
+        text,
+        translated_text: translatedText,
+        start: newStartTime,
+        end: endTime
+      });
+    }
+  };
+
+  const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newEndTime = Number(e.target.value);
+    setEndTime(newEndTime);
+    if (track) {
+      onSave({
+        ...track,
+        text,
+        translated_text: translatedText,
+        start: startTime,
+        end: newEndTime
+      });
+    }
+  };
+
   return (
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
@@ -75,14 +103,14 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({ track, onSave, onClose,
         <Input
           type="number"
           value={startTime}
-          onChange={(e) => setStartTime(Number(e.target.value))}
+          onChange={handleStartTimeChange}
           step="0.1"
         />
         <label>{t('endTime')}</label>
         <Input
           type="number"
           value={endTime}
-          onChange={(e) => setEndTime(Number(e.target.value))}
+          onChange={handleEndTimeChange}
           step="0.1"
         />
         <ButtonContainer>
