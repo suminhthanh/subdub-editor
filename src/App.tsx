@@ -12,7 +12,7 @@ import { Track } from './types/Track';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
 import { audioService } from './services/AudioService';
-import AudioOptions from './components/AudioOptions';
+import VideoOptions from './components/VideoOptions';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -457,7 +457,7 @@ function App() {
                         isDubbingService={isDubbingService}
                       />
                     ) : (
-                      <AudioOptions
+                      <VideoOptions
                         audioTracks={audioTracks}
                         selectedTracks={selectedAudioTracks}
                         onAudioTrackToggle={handleAudioTrackToggle}

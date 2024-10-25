@@ -29,12 +29,12 @@ interface AudioOptionsProps {
   onAudioTrackToggle: (index: number) => void;
 }
 
-const AudioOptions: React.FC<AudioOptionsProps> = ({ audioTracks, selectedTracks, onAudioTrackToggle }) => {
+const VideoOptions: React.FC<AudioOptionsProps> = ({ audioTracks, selectedTracks, onAudioTrackToggle }) => {
   const { t } = useTranslation();
 
   return (
     <OptionsContainer>
-      <h3>{t('audioOptions')}</h3>
+      <h3>{t('audioTracks')}</h3>
       {audioTracks.map((track, index) => (
         <CheckboxContainer key={index}>
           <Checkbox
@@ -50,4 +50,4 @@ const AudioOptions: React.FC<AudioOptionsProps> = ({ audioTracks, selectedTracks
   );
 };
 
-export default AudioOptions;
+export default VideoOptions;

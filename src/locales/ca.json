@@ -20,6 +20,6 @@
   "text": "Text",
   "speed": "Velocitat",
   "options": "Opcions",
-  "audioOptions": "Opcions d'Àudio",
+  "audioTracks": "Pistes d'Àudio",
   "deleteTrack": "Eliminar"
 }
