@@ -129,6 +129,7 @@ function App() {
   const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer | AudioBuffer; label: string }[]>([]);
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([0, 1]); // Default to first two tracks
+  const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -390,6 +391,10 @@ function App() {
     });
   }, [recreateConstructedAudio]);
 
+  const handleSubtitlesChange = (subtitles: string) => {
+    setSelectedSubtitles(subtitles);
+  };
+
   const isDubbingService = serviceParam === 'dubbing';
 
 
@@ -427,6 +432,7 @@ function App() {
                   mediaType={mediaType} 
                   audioTracks={audioTracks}
                   selectedAudioTracks={selectedAudioTracks}
+                  selectedSubtitles={selectedSubtitles}
                 />
               </VideoContainer>
               <TrackContainer>
@@ -461,6 +467,8 @@ function App() {
                         audioTracks={audioTracks}
                         selectedTracks={selectedAudioTracks}
                         onAudioTrackToggle={handleAudioTrackToggle}
+                        selectedSubtitles={selectedSubtitles}
+                        onSubtitlesChange={handleSubtitlesChange}
                       />
                     )}
                   </>

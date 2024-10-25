@@ -21,5 +21,9 @@
   "speed": "Speed",
   "options": "Options",
   "audioTracks": "Audio Tracks",
-  "deleteTrack": "Delete"
+  "deleteTrack": "Delete",
+  "subtitles": "Subtitles",
+  "noSubtitles": "No Subtitles",
+  "originalSubtitles": "Original Subtitles",
+  "dubbedSubtitles": "Dubbed Subtitles"
 }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 import { formatTime } from '../utils/timeUtils';
@@ -17,10 +17,6 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
-interface AudioTrack {
-  buffer: ArrayBuffer | AudioBuffer;
-  label: string;
-}
 
 interface Subtitle {
   startTime: number;
@@ -30,23 +26,25 @@ interface Subtitle {
 
 
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
-  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks }, ref) => {
+  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const trackRef = useRef<HTMLTrackElement>(null);
+    const originalTrackRef = useRef<HTMLTrackElement>(null);
+    const dubbedTrackRef = useRef<HTMLTrackElement>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
     const audioBuffersRef = useRef<AudioBuffer[]>([]);
 
-    const subtitlesUrl = useMemo(() => {
-      if (tracks.length === 0) return '';
+    const [originalSubtitlesUrl, dubbedSubtitlesUrl] = useMemo(() => {
+      if (tracks.length === 0) return ['', ''];
 
-      const subtitles: Subtitle[] = tracks.map(track => ({
-        startTime: track.start,
-        duration: track.end - track.start,
-        text: track.translated_text
-      }));
+      const createSubtitlesUrl = (textKey: 'text' | 'translated_text') => {
+        const subtitles = tracks.map(track => ({
+          startTime: track.start,
+          duration: track.end - track.start,
+          text: track[textKey]
+        }));
 
-      const vttContent = `WEBVTT
+        const vttContent = `WEBVTT
 
 ${subtitles.map((subtitle, index) => `
 ${index + 1}
@@ -55,8 +53,11 @@ ${subtitle.text}
 `).join('\n')}
 `;
 
-      const blob = new Blob([vttContent], { type: 'text/vtt' });
-      return URL.createObjectURL(blob);
+        const blob = new Blob([vttContent], { type: 'text/vtt' });
+        return URL.createObjectURL(blob);
+      };
+
+      return [createSubtitlesUrl('text'), createSubtitlesUrl('translated_text')];
     }, [tracks]);
 
     const playSelectedTracks = (startTime: number) => {
@@ -100,11 +101,20 @@ ${subtitle.text}
     }));
 
     useEffect(() => {
-      if (trackRef.current) {
-        trackRef.current.src = subtitlesUrl;
-        trackRef.current.track.mode = 'showing'; // Ensure the track is showing
+      if (originalTrackRef.current) {
+        originalTrackRef.current.src = originalSubtitlesUrl;
       }
-    }, [subtitlesUrl]);
+      if (dubbedTrackRef.current) {
+        dubbedTrackRef.current.src = dubbedSubtitlesUrl;
+      }
+    }, [originalSubtitlesUrl, dubbedSubtitlesUrl]);
+
+    useEffect(() => {
+      if (originalTrackRef.current && dubbedTrackRef.current) {
+        originalTrackRef.current.track.mode = selectedSubtitles === 'original' ? 'showing' : 'hidden';
+        dubbedTrackRef.current.track.mode = selectedSubtitles === 'dubbed' ? 'showing' : 'hidden';
+      }
+    }, [selectedSubtitles]);
 
     useEffect(() => {
       if (videoRef.current) {
@@ -191,7 +201,12 @@ ${subtitle.text}
       <MediaContainer>
         <StyledVideo ref={videoRef} controls preload="auto">
           <source src={src} type={mediaType} />
-          {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
+          {originalSubtitlesUrl && (
+            <track ref={originalTrackRef} kind="captions" srcLang="original" label="Original" />
+          )}
+          {dubbedSubtitlesUrl && (
+            <track ref={dubbedTrackRef} kind="captions" srcLang="dubbed" label="Dubbed" />
+          )}
           Your browser does not support the video tag.
         </StyledVideo>
       </MediaContainer>

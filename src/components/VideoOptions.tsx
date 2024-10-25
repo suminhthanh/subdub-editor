@@ -23,13 +23,31 @@ const Label = styled.label`
   color: ${colors.text};
 `;
 
-interface AudioOptionsProps {
+const RadioContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+`;
+
+const RadioButton = styled.input`
+  margin-right: 10px;
+`;
+
+interface VideoOptionsProps {
   audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[];
   selectedTracks: number[];
   onAudioTrackToggle: (index: number) => void;
+  selectedSubtitles: string;
+  onSubtitlesChange: (subtitles: string) => void;
 }
 
-const VideoOptions: React.FC<AudioOptionsProps> = ({ audioTracks, selectedTracks, onAudioTrackToggle }) => {
+const VideoOptions: React.FC<VideoOptionsProps> = ({
+  audioTracks,
+  selectedTracks,
+  onAudioTrackToggle,
+  selectedSubtitles,
+  onSubtitlesChange
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -46,6 +64,43 @@ const VideoOptions: React.FC<AudioOptionsProps> = ({ audioTracks, selectedTracks
           <Label htmlFor={`audio-track-${index}`}>{track.label}</Label>
         </CheckboxContainer>
       ))}
+
+      <h3>{t('subtitles')}</h3>
+      <RadioContainer>
+        <CheckboxContainer>
+          <RadioButton
+            type="radio"
+            id="subtitles-none"
+            name="subtitles"
+            value="none"
+            checked={selectedSubtitles === 'none'}
+            onChange={() => onSubtitlesChange('none')}
+          />
+          <Label htmlFor="subtitles-none">{t('noSubtitles')}</Label>
+        </CheckboxContainer>
+        <CheckboxContainer>
+          <RadioButton
+            type="radio"
+            id="subtitles-original"
+            name="subtitles"
+            value="original"
+            checked={selectedSubtitles === 'original'}
+            onChange={() => onSubtitlesChange('original')}
+          />
+          <Label htmlFor="subtitles-original">{t('originalSubtitles')}</Label>
+        </CheckboxContainer>
+        <CheckboxContainer>
+          <RadioButton
+            type="radio"
+            id="subtitles-dubbed"
+            name="subtitles"
+            value="dubbed"
+            checked={selectedSubtitles === 'dubbed'}
+            onChange={() => onSubtitlesChange('dubbed')}
+          />
+          <Label htmlFor="subtitles-dubbed">{t('dubbedSubtitles')}</Label>
+        </CheckboxContainer>
+      </RadioContainer>
     </OptionsContainer>
   );
 };
