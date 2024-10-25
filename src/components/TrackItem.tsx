@@ -22,7 +22,7 @@ const TrackBox = styled.div`
 
 interface TrackItemProps {
   track: Track;
-  onChange: (updatedTrack: Track) => void;
+  onChange: (updatedTrack: Track, recreateAudio: boolean) => void;
   zoomLevel: number;
   onEdit: (track: Track) => void;
   isDubbingService: boolean;
@@ -74,15 +74,24 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
     const newStart = Math.max(0, d.x / zoomLevel);
     const newTrack = { ...track, start: newStart, end: newStart + (track.end - track.start) };
     console.log("Track dragged:", newTrack);
-    onChange(newTrack);
+    onChange(newTrack, true); // Trigger audio recreation when dragging
     setIsDragging(false);
   };
 
-  const handleResize = (e: any, direction: string, ref: any, delta: { width: number }) => {
-    const newDuration = Math.max(0.1, (track.end - track.start) + delta.width / zoomLevel);
-    const newTrack = { ...track, end: track.start + newDuration };
+  const handleResize = (e: any, direction: string, ref: any, delta: { width: number, height: number }, position: { x: number, y: number }) => {
+    let newStart = track.start;
+    let newEnd = track.end;
+
+    if (direction.includes('left')) {
+      newStart = Math.max(0, position.x / zoomLevel);
+    }
+    if (direction.includes('right')) {
+      newEnd = Math.max(newStart + 0.1, (position.x + ref.offsetWidth) / zoomLevel);
+    }
+
+    const newTrack = { ...track, start: newStart, end: newEnd };
     console.log("Track resized:", newTrack);
-    onChange(newTrack);
+    onChange(newTrack, false); // Don't trigger audio recreation when resizing
   };
 
   return (
@@ -91,10 +100,10 @@ const TrackItem: React.FC<TrackItemProps> = ({ track, onChange, zoomLevel, onEdi
       size={{ width: (track.end - track.start) * zoomLevel, height: 30 }}
       onDragStart={handleDragStart}
       onDragStop={handleDragStop}
-      onResizeStop={handleResize}
+      onResize={handleResize}
       dragAxis="x"
       bounds="parent"
-      enableResizing={{ right: true }}
+      enableResizing={{ left: true, right: true }}
       minWidth={10}
     >
       <TrackBox

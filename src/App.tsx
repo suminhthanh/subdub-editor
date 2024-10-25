@@ -351,13 +351,15 @@ function App() {
     }
   }, [editingTrack, recreateConstructedAudio]);
 
-  const handleTrackChange = useCallback((index: number, updatedTrack: Track) => {
+  const handleTrackChange = useCallback((index: number, updatedTrack: Track, recreateAudio: boolean = false) => {
     console.log(`Track ${index} changed:`, updatedTrack);
     setTracks(prevTracks => {
       const newTracks = [...prevTracks];
       newTracks[index] = updatedTrack;
-      console.log("Tracks updated, calling recreateConstructedAudio...");
-      recreateConstructedAudio(newTracks);
+      if (recreateAudio) {
+        console.log("Track changed, calling recreateConstructedAudio...");
+        recreateConstructedAudio(newTracks);
+      }
       return newTracks;
     });
   }, [recreateConstructedAudio]);
