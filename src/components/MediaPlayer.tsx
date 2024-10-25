@@ -3,11 +3,18 @@ import VideoPlayer from './VideoPlayer';
 import AudioPlayer from './AudioPlayer';
 import { Track } from '../types/Track';
 
+
+interface AudioTrack {
+  buffer: ArrayBuffer | AudioBuffer;
+  label: string;
+}
+
 export interface MediaPlayerProps {
   src: string;
   tracks: Track[];
   mediaType: string;
-  audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[];
+  audioTracks: AudioTrack[];
+  selectedAudioTracks: number[];
 }
 
 export interface MediaPlayerRef {

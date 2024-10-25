@@ -18,5 +18,7 @@
   "startTime": "Tiempo Inicial",
   "endTime": "Tiempo Final",
   "text": "Texto",
-  "speed": "Velocidad"
+  "speed": "Velocidad",
+  "options": "Opciones",
+  "audioOptions": "Opciones de Audio"
 }

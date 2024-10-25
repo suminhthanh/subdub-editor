@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 import { formatTime } from '../utils/timeUtils';
@@ -9,7 +9,6 @@ const MediaContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  position: relative; /* Establish positioning context */
 `;
 
 const StyledVideo = styled.video`
@@ -18,25 +17,10 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
-const TrackSelectorContainer = styled.div`
-  position: absolute;
-  bottom: 10px;
-  left: 10px;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 5px;
-  border-radius: 5px;
-`;
-
-const CheckboxLabel = styled.label`
-  display: block;
-  margin-bottom: 5px;
-  cursor: pointer;
-`;
-
-const Checkbox = styled.input`
-  margin-right: 5px;
-`;
+interface AudioTrack {
+  buffer: ArrayBuffer | AudioBuffer;
+  label: string;
+}
 
 interface Subtitle {
   startTime: number;
@@ -44,73 +28,25 @@ interface Subtitle {
   text: string;
 }
 
-interface AudioTrack {
-  buffer: ArrayBuffer | AudioBuffer;
-  label: string;
-}
 
-interface VideoPlayerProps extends MediaPlayerProps {
-  audioTracks: AudioTrack[];
-}
+const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
+  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks }, ref) => {
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const trackRef = useRef<HTMLTrackElement>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+    const audioBuffersRef = useRef<AudioBuffer[]>([]);
 
-const VideoPlayer = forwardRef<MediaPlayerRef, VideoPlayerProps>(({ src, tracks, mediaType, audioTracks }, ref) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const trackRef = useRef<HTMLTrackElement>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
-  const audioBuffersRef = useRef<AudioBuffer[]>([]);
-  const [selectedTracks, setSelectedTracks] = useState<number[]>([1, 2]); // Default to original and background
+    const subtitlesUrl = useMemo(() => {
+      if (tracks.length === 0) return '';
 
-  const playSelectedTracks = (startTime: number) => {
-    if (!audioContextRef.current) return;
+      const subtitles: Subtitle[] = tracks.map(track => ({
+        startTime: track.start,
+        duration: track.end - track.start,
+        text: track.translated_text
+      }));
 
-    // Stop all currently playing tracks
-    audioBufferSourcesRef.current.forEach(source => {
-      source.stop();
-      source.disconnect();
-    });
-    audioBufferSourcesRef.current = [];
-
-    // Play only selected tracks
-    selectedTracks.forEach(index => {
-      if (audioBuffersRef.current[index]) {
-        const source = audioContextRef.current!.createBufferSource();
-        source.buffer = audioBuffersRef.current[index];
-        source.connect(audioContextRef.current!.destination);
-        source.start(0, startTime);
-        audioBufferSourcesRef.current.push(source);
-      }
-    });
-  };
-
-  useImperativeHandle(ref, () => ({
-    get currentTime() {
-      return videoRef.current ? videoRef.current.currentTime : 0;
-    },
-    setCurrentTime(time: number) {
-      if (videoRef.current) {
-        videoRef.current.currentTime = time;
-        playSelectedTracks(time);
-      }
-    },
-    play() {
-      videoRef.current?.play();
-    },
-    pause() {
-      videoRef.current?.pause();
-    },
-  }));
-
-  const subtitlesUrl = useMemo(() => {
-    if (tracks.length === 0) return '';
-
-    const subtitles: Subtitle[] = tracks.map(track => ({
-      startTime: track.start,
-      duration: track.end - track.start,
-      text: track.translated_text
-    }));
-
-    const vttContent = `WEBVTT
+      const vttContent = `WEBVTT
 
 ${subtitles.map((subtitle, index) => `
 ${index + 1}
@@ -119,128 +55,148 @@ ${subtitle.text}
 `).join('\n')}
 `;
 
-    const blob = new Blob([vttContent], { type: 'text/vtt' });
-    return URL.createObjectURL(blob);
-  }, [tracks]);
+      const blob = new Blob([vttContent], { type: 'text/vtt' });
+      return URL.createObjectURL(blob);
+    }, [tracks]);
 
-  useEffect(() => {
-    if (trackRef.current) {
-      trackRef.current.src = subtitlesUrl;
-      trackRef.current.track.mode = 'showing'; // Ensure the track is showing
-    }
-  }, [subtitlesUrl]);
+    const playSelectedTracks = (startTime: number) => {
+      if (!audioContextRef.current) return;
 
-  useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.src = src;
-    }
-  }, [src]);
+      // Stop all currently playing tracks
+      audioBufferSourcesRef.current.forEach(source => {
+        source.stop();
+        source.disconnect();
+      });
+      audioBufferSourcesRef.current = [];
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video) {
-      video.onerror = () => {
-        console.error("Video error:", video.error);
-      };
-    }
-  }, []);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (video && audioTracks.length > 0) {
-      console.log("Received new audio tracks in VideoPlayer:", audioTracks);
-      if (!audioContextRef.current) {
-        audioContextRef.current = new AudioContext();
-      }
-      const audioContext = audioContextRef.current;
-
-      const loadAudioTracks = async () => {
-        for (let i = 0; i < audioTracks.length; i++) {
-          try {
-            let buffer: AudioBuffer;
-            const trackBuffer = audioTracks[i].buffer;
-            if (trackBuffer instanceof AudioBuffer) {
-              buffer = trackBuffer;
-            } else {
-              const audioData = trackBuffer.slice(0);
-              buffer = await audioContext.decodeAudioData(audioData);
-            }
-            audioBuffersRef.current[i] = buffer;
-            console.log(`Successfully loaded audio track ${i}: ${audioTracks[i].label}`);
-          } catch (error) {
-            console.error(`Error decoding audio track ${i}:`, error);
-          }
+      // Play only selected tracks
+      selectedAudioTracks.forEach(index => {
+        if (audioBuffersRef.current[index]) {
+          const source = audioContextRef.current!.createBufferSource();
+          source.buffer = audioBuffersRef.current[index];
+          source.connect(audioContextRef.current!.destination);
+          source.start(0, startTime);
+          audioBufferSourcesRef.current.push(source);
         }
-      };
+      });
+    };
 
-      loadAudioTracks();
+    useImperativeHandle(ref, () => ({
+      get currentTime() {
+        return videoRef.current ? videoRef.current.currentTime : 0;
+      },
+      setCurrentTime(time: number) {
+        if (videoRef.current) {
+          videoRef.current.currentTime = time;
+          playSelectedTracks(time);
+        }
+      },
+      play() {
+        videoRef.current?.play();
+      },
+      pause() {
+        videoRef.current?.pause();
+      },
+    }));
 
-      const handlePlay = () => {
-        playSelectedTracks(video.currentTime);
-        video.play();
-      };
+    useEffect(() => {
+      if (trackRef.current) {
+        trackRef.current.src = subtitlesUrl;
+        trackRef.current.track.mode = 'showing'; // Ensure the track is showing
+      }
+    }, [subtitlesUrl]);
 
-      const handlePause = () => {
-        audioBufferSourcesRef.current.forEach(source => source.stop());
-      };
+    useEffect(() => {
+      if (videoRef.current) {
+        videoRef.current.src = src;
+      }
+    }, [src]);
 
-      const handleSeeked = () => {
-        playSelectedTracks(video.currentTime);
-        video.play();
-      };
+    useEffect(() => {
+      const video = videoRef.current;
+      if (video) {
+        video.onerror = () => {
+          console.error("Video error:", video.error);
+        };
+      }
+    }, []);
 
-      video.addEventListener('play', handlePlay);
-      video.addEventListener('pause', handlePause);
-      video.addEventListener('seeked', handleSeeked);
+    useEffect(() => {
+      const video = videoRef.current;
+      if (video && audioTracks.length > 0) {
+        console.log("Received new audio tracks in VideoPlayer:", audioTracks);
+        if (!audioContextRef.current) {
+          audioContextRef.current = new AudioContext();
+        }
+        const audioContext = audioContextRef.current;
 
-      return () => {
-        video.removeEventListener('play', handlePlay);
-        video.removeEventListener('pause', handlePause);
-        video.removeEventListener('seeked', handleSeeked);
-        audioBufferSourcesRef.current.forEach(source => {
-          source.stop();
-          source.disconnect();
-        });
-      };
-    }
-  }, [audioTracks, selectedTracks]);
+        const loadAudioTracks = async () => {
+          for (let i = 0; i < audioTracks.length; i++) {
+            try {
+              let buffer: AudioBuffer;
+              const trackBuffer = audioTracks[i].buffer;
+              if (trackBuffer instanceof AudioBuffer) {
+                buffer = trackBuffer;
+              } else {
+                const audioData = trackBuffer.slice(0);
+                buffer = await audioContext.decodeAudioData(audioData);
+              }
+              audioBuffersRef.current[i] = buffer;
+              console.log(`Successfully loaded audio track ${i}: ${audioTracks[i].label}`);
+            } catch (error) {
+              console.error(`Error decoding audio track ${i}:`, error);
+            }
+          }
+        };
 
-  useEffect(() => {
-    if (videoRef.current && !videoRef.current.paused) {
-      playSelectedTracks(videoRef.current.currentTime);
-    }
-  }, [selectedTracks]);
+        loadAudioTracks();
 
-  const handleTrackChange = (index: number) => {
-    setSelectedTracks(prevSelectedTracks => {
-      const newSelectedTracks = prevSelectedTracks.includes(index)
-        ? prevSelectedTracks.filter(i => i !== index)
-        : [...prevSelectedTracks, index];
-      return newSelectedTracks;
-    });
-  };
+        const handlePlay = () => {
+          playSelectedTracks(video.currentTime);
+          video.play();
+        };
 
-  return (
-    <MediaContainer>
-      <StyledVideo ref={videoRef} controls preload="auto">
-        <source src={src} type={mediaType} />
-        {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
-        Your browser does not support the video tag.
-      </StyledVideo>
-      <TrackSelectorContainer>
-        {audioTracks.map((track, index) => (
-          <CheckboxLabel key={index}>
-            <Checkbox
-              type="checkbox"
-              checked={selectedTracks.includes(index)}
-              onChange={() => handleTrackChange(index)}
-            />
-            {track.label}
-          </CheckboxLabel>
-        ))}
-      </TrackSelectorContainer>
-    </MediaContainer>
-  );
-});
+        const handlePause = () => {
+          audioBufferSourcesRef.current.forEach(source => source.stop());
+        };
+
+        const handleSeeked = () => {
+          playSelectedTracks(video.currentTime);
+          video.play();
+        };
+
+        video.addEventListener('play', handlePlay);
+        video.addEventListener('pause', handlePause);
+        video.addEventListener('seeked', handleSeeked);
+
+        return () => {
+          video.removeEventListener('play', handlePlay);
+          video.removeEventListener('pause', handlePause);
+          video.removeEventListener('seeked', handleSeeked);
+          audioBufferSourcesRef.current.forEach(source => {
+            source.stop();
+            source.disconnect();
+          });
+        };
+      }
+    }, [audioTracks, selectedAudioTracks]);
+
+    useEffect(() => {
+      if (videoRef.current && !videoRef.current.paused) {
+        playSelectedTracks(videoRef.current.currentTime);
+      }
+    }, [selectedAudioTracks]);
+
+    return (
+      <MediaContainer>
+        <StyledVideo ref={videoRef} controls preload="auto">
+          <source src={src} type={mediaType} />
+          {subtitlesUrl && <track ref={trackRef} default kind="captions" srcLang="ca" label="Català" />}
+          Your browser does not support the video tag.
+        </StyledVideo>
+      </MediaContainer>
+    );
+  }
+);
 
 export default VideoPlayer;

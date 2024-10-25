@@ -14,7 +14,7 @@ const StyledAudio = styled.audio`
   width: 100%;
 `;
 
-const AudioPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, mediaType, tracks }, ref) => {
+const AudioPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(({ src, mediaType }, ref) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   useImperativeHandle(ref, () => ({

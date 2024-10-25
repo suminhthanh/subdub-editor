@@ -4,16 +4,15 @@ import { useTranslation } from 'react-i18next';
 import MediaPlayer, { MediaPlayerRef } from './components/MediaPlayer';
 import TrackTimeline from './components/TrackTimeline';
 import TrackList from './components/TrackList';
-import { extractTracks, rebuildMedia, mergeMediaWithFFmpeg } from './services/FFmpegService';
+import { extractTracks, rebuildMedia } from './services/FFmpegService';
 import TrackEditModal from './components/TrackEditModal';
 import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
 import { Input } from './styles/designSystem';
 import { Track } from './types/Track';
-import { APIServiceInterface, DubbingAPIServiceInterface } from './services/APIServiceInterface';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
-import { audioBufferToArrayBuffer, adjustAudioSpeed, concatenateAudioBuffers, createSilentAudioBuffer } from './utils/audioUtils';
 import { audioService } from './services/AudioService';
+import AudioOptions from './components/AudioOptions';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -116,7 +115,7 @@ function App() {
   const [mediaUrl, setMediaUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'list'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'list' | 'options'>('timeline');
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
@@ -129,6 +128,7 @@ function App() {
   const initialLoadRef = useRef(false);
   const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer | AudioBuffer; label: string }[]>([]);
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
+  const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([0, 1]); // Default to first two tracks
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -374,6 +374,12 @@ function App() {
     }
   };
 
+  const handleAudioTrackToggle = (index: number) => {
+    setSelectedAudioTracks(prev => 
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
+  };
+
   const isDubbingService = serviceParam === 'dubbing';
 
 
@@ -404,7 +410,14 @@ function App() {
           ) : mediaUrl ? (
             <>
               <VideoContainer>
-                <MediaPlayer src={mediaUrl} tracks={tracks} ref={mediaRef} mediaType={mediaType} audioTracks={audioTracks} />
+                <MediaPlayer 
+                  src={mediaUrl} 
+                  tracks={tracks} 
+                  ref={mediaRef} 
+                  mediaType={mediaType} 
+                  audioTracks={audioTracks}
+                  selectedAudioTracks={selectedAudioTracks}
+                />
               </VideoContainer>
               <TrackContainer>
                 {tracks.length > 0 && (
@@ -412,6 +425,7 @@ function App() {
                     <TabContainer>
                       <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
                       <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
+                      <Tab active={activeTab === 'options'} onClick={() => setActiveTab('options')}>{t('options')}</Tab>
                     </TabContainer>
                     {activeTab === 'timeline' ? (
                       <TrackTimeline
@@ -423,13 +437,19 @@ function App() {
                         isDubbingService={isDubbingService}
                         onTrackChange={handleTrackChange}
                       />
-                    ) : (
+                    ) : activeTab === 'list' ? (
                       <TrackList
                         tracks={tracks}
                         onTrackChange={handleTrackChange}
                         onTimeChange={handleTimeChange}
                         onEditTrack={handleEditTrack}
                         isDubbingService={isDubbingService}
+                      />
+                    ) : (
+                      <AudioOptions
+                        audioTracks={audioTracks}
+                        selectedTracks={selectedAudioTracks}
+                        onAudioTrackToggle={handleAudioTrackToggle}
                       />
                     )}
                   </>

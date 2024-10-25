@@ -2,11 +2,6 @@ import { Track } from "../types/Track";
 import { DubbingAPIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
-import {
-  createSilentAudioBuffer,
-  concatenateAudioBuffers,
-  adjustAudioSpeed,
-} from "../utils/audioUtils";
 
 const API_BASE_URL = "http://192.168.178.152:8700";
 
