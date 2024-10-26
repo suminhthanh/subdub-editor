@@ -31,6 +31,7 @@ export default defineConfig(({ mode }) => {
         env.TRANSCRIPTION_API_BASE_URL
       ),
       "process.env.MATXA_API_BASE_URL": JSON.stringify(env.MATXA_API_BASE_URL),
+      "process.env.APP_MODE": JSON.stringify(env.APP_MODE),
     },
   };
 });

@@ -138,6 +138,9 @@ function App() {
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [isRebuilding, setIsRebuilding] = useState(false);
+  const [appMode, setAppMode] = useState<'dubbing' | 'transcription' | 'file' | null>(
+    process.env.APP_MODE as 'dubbing' | 'transcription' | 'file' | null
+  );
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -145,14 +148,35 @@ function App() {
 
     const params = new URLSearchParams(window.location.search);
     const uuidParam = params.get('uuid');
-    const serviceParam = params.get('service');
+    const serviceParam = params.get('service') as 'dubbing' | 'transcription' | null;
+
     console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam);
-    if (uuidParam) {
-      setIsUUIDMode(true);
-      setServiceParam(serviceParam || 'dubbing');
-      handleFileOrUUIDSelect(null, uuidParam);
+
+    if (appMode) {
+      // Environment variable is set, use it to determine the mode
+      if (appMode === 'dubbing' || appMode === 'transcription') {
+        if (uuidParam) {
+          setIsUUIDMode(true);
+          setServiceParam(appMode);
+          handleFileOrUUIDSelect(null, uuidParam);
+        } else {
+          setLoadError('missingUUID');
+        }
+      } else if (appMode === 'file') {
+        setIsUUIDMode(false);
+        // Ignore UUID if present in file mode
+      }
+    } else {
+      // No environment variable set, use dynamic behavior
+      if (uuidParam) {
+        setIsUUIDMode(true);
+        setServiceParam(serviceParam || 'dubbing');
+        handleFileOrUUIDSelect(null, uuidParam);
+      } else {
+        setIsUUIDMode(false);
+      }
     }
-  }, []);
+  }, [appMode]);
 
   const handleCloseMedia = () => {
     setMediaFile(null);
@@ -538,7 +562,7 @@ function App() {
             </>
           ) : loadError ? (
             <CenteredMessage>{t(loadError)}</CenteredMessage>
-          ) : !isUUIDMode ? (
+          ) : (!appMode || appMode === 'file') && !isUUIDMode ? (
             <CenteredContent>
               <Input type="file" onChange={handleFileChange} />
               <Button onClick={handleSubmit} disabled={!selectedFile}>{t('openFile')}</Button>
