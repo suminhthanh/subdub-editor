@@ -15,6 +15,9 @@ import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
 import DownloadModal from './components/DownloadModal';
 import LoadingOverlay from './components/LoadingOverlay';
+import { speakerService } from './services/SpeakerService';
+import { synthesisService } from './services/SynthesisService';
+import { Voice } from './types/Voice';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -422,6 +425,33 @@ function App() {
     }
   };
 
+  const handleSpeakerVoiceChange = useCallback(async (speakerId: string, newVoice: Voice) => {
+    setIsRebuilding(true);
+    try {
+      // Update the speaker's voice in the SpeakerService
+      await speakerService.updateSpeaker(speakerId, { voice: newVoice });
+
+      // Update tracks associated with this speaker
+      const updatedTracks = tracks.map(track => {
+        if (track.speaker_id === speakerId) {
+          // Set needsResynthesis flag to true for affected tracks
+          return { ...track, needsResynthesis: true };
+        }
+        return track;
+      });
+
+      setTracks(updatedTracks);
+
+      // Recreate constructed audio
+      await recreateConstructedAudio(updatedTracks);
+    } catch (error) {
+      console.error("Error updating speaker voice:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsRebuilding(false);
+    }
+  }, [tracks, recreateConstructedAudio]);
+
   return (
     <>
       <GlobalStyle />
@@ -497,6 +527,9 @@ function App() {
                         onSubtitlesChange={handleSubtitlesChange}
                         showSpeakerColors={showSpeakerColors}
                         onShowSpeakerColorsChange={handleShowSpeakerColorsChange}
+                        tracks={tracks}
+                        onTracksChange={setTracks}
+                        onSpeakerVoiceChange={handleSpeakerVoiceChange}
                       />
                     )}
                   </>

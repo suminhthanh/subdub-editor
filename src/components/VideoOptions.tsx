@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { colors, Button } from '../styles/designSystem';
 import { speakerService, Speaker } from '../services/SpeakerService';
-import { matxaSynthesisProvider } from '../services/MatxaSynthesisProvider';
+import { synthesisService } from '../services/SynthesisService';
+import { Voice } from '../types/Voice';
+import { Track } from '../types/Track';
 
 const OptionsContainer = styled.div`
   padding: 20px;
@@ -72,6 +74,13 @@ const ColorInput = styled.input`
   margin-left: 10px;
 `;
 
+const VoiceSelect = styled.select`
+  margin-left: 10px;
+  padding: 5px;
+  border: 1px solid ${colors.border};
+  border-radius: 4px;
+`;
+
 interface VideoOptionsProps {
   audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[];
   selectedTracks: number[];
@@ -80,6 +89,9 @@ interface VideoOptionsProps {
   onSubtitlesChange: (subtitles: string) => void;
   showSpeakerColors: boolean;
   onShowSpeakerColorsChange: (show: boolean) => void;
+  tracks: Track[];
+  onTracksChange: (tracks: Track[]) => void;
+  onSpeakerVoiceChange: (speakerId: string, newVoice: Voice) => void;
 }
 
 const VideoOptions: React.FC<VideoOptionsProps> = ({
@@ -90,10 +102,20 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
   onSubtitlesChange,
   showSpeakerColors,
   onShowSpeakerColorsChange,
+  onSpeakerVoiceChange,
 }) => {
   const { t } = useTranslation();
   const [newSpeakerName, setNewSpeakerName] = useState('');
   const [speakers, setSpeakers] = useState<Speaker[]>(speakerService.getSpeakers());
+  const [voices, setVoices] = useState<Voice[]>([]);
+
+  useEffect(() => {
+    const loadVoices = async () => {
+      const availableVoices = await synthesisService.voices();
+      setVoices(availableVoices);
+    };
+    loadVoices();
+  }, []);
 
   const handleSpeakerNameChange = (id: string, newName: string) => {
     speakerService.updateSpeaker(id, { name: newName });
@@ -105,12 +127,17 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
     setSpeakers([...speakerService.getSpeakers()]);
   };
 
+  const handleSpeakerVoiceChange = async (speakerId: string, newVoiceId: string) => {
+    const newVoice = voices.find(voice => voice.id === newVoiceId);
+    if (newVoice) {
+      await onSpeakerVoiceChange(speakerId, newVoice);
+      setSpeakers([...speakerService.getSpeakers()]);
+    }
+  };
+
   const handleAddSpeaker = () => {
-    if (newSpeakerName.trim()) {
-      speakerService.addSpeaker(
-        newSpeakerName.trim(),
-        matxaSynthesisProvider.getVoice("0")
-      );
+    if (newSpeakerName.trim() && voices.length > 0) {
+      speakerService.addSpeaker(newSpeakerName.trim(), voices[0]);
       setSpeakers([...speakerService.getSpeakers()]);
       setNewSpeakerName("");
     }
@@ -192,12 +219,22 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
               value={speaker.name}
               onChange={(e) => handleSpeakerNameChange(speaker.id, e.target.value)}
             />
-            <span>{speaker.voice.label}</span>
+            <VoiceSelect
+              value={speaker.voice.id}
+              onChange={(e) => handleSpeakerVoiceChange(speaker.id, e.target.value)}
+            >
+              {voices.map(voice => (
+                <option key={voice.id} value={voice.id}>
+                  {voice.label}
+                </option>
+              ))}
+            </VoiceSelect>
             <ColorInput
               id={`color-${speaker.id}`}
               type="color"
               value={speaker.color}
               onChange={(e) => handleSpeakerColorChange(speaker.id, e.target.value)}
+              hidden
             />
           </SpeakerItem>
         ))}
