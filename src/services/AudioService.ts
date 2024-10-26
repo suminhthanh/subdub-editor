@@ -7,6 +7,7 @@ import {
 } from "../utils/audioUtils";
 import { synthesisService } from "./SynthesisService";
 import { Voice } from "../types/Voice";
+import { speakerService } from "./SpeakerService";
 
 export class AudioService {
   private audioContext: AudioContext;
@@ -112,12 +113,10 @@ export class AudioService {
 
   private async resynthesizeTrack(track: Track): Promise<ArrayBuffer> {
     console.log(`Resynthesizing track: ${track.id}`);
-    const voice: Voice = {
-      id: track.assigned_voice,
-      label: "",
-      provider: "matxa",
-    };
-    return await synthesisService.speak(track.translated_text || "", voice);
+    return await synthesisService.speak(
+      track.translated_text || "",
+      speakerService.getSpeakerById(track.speaker_id).voice
+    );
   }
 
   audioBufferToArrayBuffer(audioBuffer: AudioBuffer): ArrayBuffer {

@@ -13,7 +13,6 @@ import { TranscriptionAPIService } from './services/TranscriptionAPIService';
 import { DubbingAPIService } from './services/DubbingAPIService';
 import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
-import { speakerService } from './services/SpeakerService';
 import DownloadModal from './components/DownloadModal';
 import LoadingOverlay from './components/LoadingOverlay';
 

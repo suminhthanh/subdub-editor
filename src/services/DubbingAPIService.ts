@@ -2,12 +2,28 @@ import { Track } from "../types/Track";
 import { DubbingAPIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
-import { speakerService } from "./SpeakerService";
+import { Speaker, speakerService } from "./SpeakerService";
+import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
+import { getI18n } from "react-i18next";
 
 const API_BASE_URL = "http://192.168.178.152:8700";
 
 interface DubbingJSON {
-  utterances: Track[];
+  utterances: {
+    start: number;
+    end: number;
+    speaker_id: string;
+    path: string;
+    text: string;
+    for_dubbing: boolean;
+    ssml_gender: string;
+    translated_text: string;
+    assigned_voice: string;
+    pitch: number;
+    speed: number;
+    volume_gain_db: number;
+    dubbed_path: string;
+  }[];
   source_language: string;
 }
 
@@ -101,39 +117,34 @@ export const loadTracksFromUUID = async (
 export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
   const utterances = json.utterances;
 
-  // Extract unique speakers from the utterances
-  const uniqueSpeakers = Array.from(
-    new Set(utterances.map((item) => item.speaker_id))
-  ).map((speakerId) => {
-    const speaker = utterances.find((u) => u.speaker_id === speakerId);
-    return {
-      id: speakerId,
-      name: speakerId, // Use the speaker_id as the name
-      voice: speaker?.assigned_voice || "default",
-    };
-  });
+  const tracks: Track[] = [];
+  for (const utterance of utterances) {
+    speakerService.setSpeaker({
+      id: utterance.speaker_id,
+      name: `${getI18n().t("speaker")} ${utterance.speaker_id.slice(-2)}`,
+      voice: matxaSynthesisProvider.getVoice(utterance.assigned_voice),
+    });
 
-  // Set the speakers in the SpeakerService
-  speakerService.setSpeakers(uniqueSpeakers);
+    tracks.push({
+      id: uuidv4(),
+      start: utterance.start || 0,
+      end: utterance.end || 0,
+      speaker_id: utterance.speaker_id,
+      path: utterance.path || "",
+      text: utterance.text || "",
+      for_dubbing: utterance.for_dubbing || false,
+      ssml_gender: utterance.ssml_gender || "",
+      translated_text: utterance.translated_text || "",
+      pitch: utterance.pitch || 0,
+      speed: utterance.speed || 1,
+      volume_gain_db: utterance.volume_gain_db || 0,
+      dubbed_path: utterance.dubbed_path,
+      chunk_size: 0,
+      needsResynthesis: false,
+    });
+  }
 
-  return utterances.map((item: any) => ({
-    id: item.id || uuidv4(),
-    start: item.start || 0,
-    end: item.end || 0,
-    speaker_id: item.speaker_id || "",
-    path: item.path || "",
-    text: item.text || "",
-    for_dubbing: item.for_dubbing || false,
-    ssml_gender: item.ssml_gender || "",
-    translated_text: item.translated_text || "",
-    assigned_voice: item.assigned_voice || "",
-    pitch: item.pitch || 0,
-    speed: item.speed || 1,
-    volume_gain_db: item.volume_gain_db || 0,
-    dubbed_path: item.dubbed_path,
-    chunk_size: item.chunk_size,
-    needsResynthesis: false,
-  }));
+  return tracks;
 };
 
 // Add this new function to load dubbed audio chunks

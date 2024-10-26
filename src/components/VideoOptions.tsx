@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { colors, Button } from '../styles/designSystem';
 import { speakerService, Speaker } from '../services/SpeakerService';
+import { matxaSynthesisProvider } from '../services/MatxaSynthesisProvider';
 
 const OptionsContainer = styled.div`
   padding: 20px;
@@ -106,9 +107,12 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
 
   const handleAddSpeaker = () => {
     if (newSpeakerName.trim()) {
-      speakerService.addSpeaker(newSpeakerName.trim());
+      speakerService.addSpeaker(
+        newSpeakerName.trim(),
+        matxaSynthesisProvider.getVoice("0")
+      );
       setSpeakers([...speakerService.getSpeakers()]);
-      setNewSpeakerName('');
+      setNewSpeakerName("");
     }
   };
 
@@ -188,7 +192,7 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
               value={speaker.name}
               onChange={(e) => handleSpeakerNameChange(speaker.id, e.target.value)}
             />
-            <span>{speaker.voice}</span>
+            <span>{speaker.voice.label}</span>
             <ColorInput
               id={`color-${speaker.id}`}
               type="color"

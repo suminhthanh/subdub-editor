@@ -2,6 +2,8 @@ import { createFFmpeg, fetchFile } from "@ffmpeg/ffmpeg";
 import { v4 as uuidv4 } from "uuid";
 import { Track } from "../types/Track";
 import { encodeWAV } from "../utils/audioUtils"; // Make sure to implement this function
+import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
+import { speakerService } from "./SpeakerService";
 
 const ffmpeg = createFFmpeg({ log: true });
 
@@ -148,7 +150,6 @@ const parseSRT = (srtContent: string): Track[] => {
         for_dubbing: false,
         ssml_gender: "",
         translated_text: "",
-        assigned_voice: "",
         pitch: 0,
         speed: 1,
         volume_gain_db: 0,

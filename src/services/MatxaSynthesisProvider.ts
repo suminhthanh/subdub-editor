@@ -9,8 +9,8 @@ interface MatxaVoice extends Voice {
   name: string;
 }
 
-export class MatxaSynthesisProvider implements SynthesisProvider {
-  static providerName = "matxa";
+class MatxaSynthesisProvider implements SynthesisProvider {
+  private providerName = "matxa";
   private voiceList: MatxaVoice[] = [
     {
       name: "quim-balear",
@@ -19,7 +19,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "balear",
       label: "Quim (Balear)",
-      provider: MatxaSynthesisProvider.name,
+      provider: this.providerName,
     },
     {
       name: "olga-balear",
@@ -28,7 +28,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "balear",
       label: "Olga (Balear)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "grau-central",
@@ -37,7 +37,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "central",
       label: "Grau (Central)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "elia-central",
@@ -46,7 +46,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "central",
       label: "Elia (Central)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "pere-nord",
@@ -55,7 +55,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "nord",
       label: "Pere (Nord)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "emma-nord",
@@ -64,7 +64,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "nord",
       label: "Emma (Nord)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "lluc-valencia",
@@ -73,7 +73,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "valencia",
       label: "Lluc (València)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
     {
       name: "gina-valencia",
@@ -82,7 +82,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       language: "cat",
       region: "valencia",
       label: "Gina (València)",
-      provider: MatxaSynthesisProvider.providerName,
+      provider: this.providerName,
     },
   ];
 
@@ -106,4 +106,14 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       throw error;
     }
   }
+
+  getVoice(id: string): Voice {
+    return this.voiceList.find((voice) => voice.id === id) || this.voiceList[0];
+  }
+
+  getProviderName(): string {
+    return this.providerName;
+  }
 }
+
+export const matxaSynthesisProvider = new MatxaSynthesisProvider();

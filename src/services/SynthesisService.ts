@@ -1,5 +1,5 @@
 import { Voice } from "../types/Voice";
-import { MatxaSynthesisProvider } from "./MatxaSynthesisProvider";
+import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 
 export interface SynthesisProvider {
   speak(text: string, voice: Voice): Promise<ArrayBuffer>;
@@ -10,11 +10,9 @@ export class SynthesisService {
   private providers: Map<string, SynthesisProvider> = new Map();
 
   constructor() {
-    // Register the Matxa provider
-
     this.registerProvider(
-      MatxaSynthesisProvider.providerName,
-      new MatxaSynthesisProvider()
+      matxaSynthesisProvider.getProviderName(),
+      matxaSynthesisProvider
     );
   }
 

@@ -1,9 +1,11 @@
 import { v4 as uuidv4 } from "uuid";
+import { Voice } from "../types/Voice";
+import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 
 export interface Speaker {
   id: string;
   name: string;
-  voice: string;
+  voice: Voice;
   color: string;
 }
 
@@ -20,19 +22,34 @@ class SpeakerService {
   private speakers: Speaker[] = [];
 
   setSpeakers(speakersData: Partial<Speaker>[]): void {
-    this.speakers = speakersData.map((speaker) => ({
-      id: speaker.id || uuidv4(),
-      name: speaker.name || "",
-      voice: speaker.voice || "default",
-      color: speaker.color || getRandomColor(),
-    }));
+    this.speakers = speakersData
+      .map((speaker) => ({
+        id: speaker.id || uuidv4(),
+        name: speaker.name || "",
+        voice: speaker.voice || matxaSynthesisProvider.getVoice("0"),
+        color: speaker.color || getRandomColor(),
+      }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  setSpeaker(speaker: Partial<Speaker> & { id: string }): void {
+    if (this.speakers.find((s) => s.id === speaker.id)) {
+      this.updateSpeaker(speaker.id, speaker);
+    } else {
+      this.speakers.push({
+        id: speaker.id,
+        name: speaker.name || "",
+        voice: speaker.voice || matxaSynthesisProvider.getVoice("0"),
+        color: speaker.color || getRandomColor(),
+      });
+    }
   }
 
   getSpeakers(): Speaker[] {
     return this.speakers;
   }
 
-  addSpeaker(name: string, voice: string = "default"): void {
+  addSpeaker(name: string, voice: Voice): void {
     this.speakers.push({
       id: uuidv4(),
       name,
@@ -48,8 +65,10 @@ class SpeakerService {
     }
   }
 
-  getSpeakerById(id: string): Speaker | undefined {
-    return this.speakers.find((speaker) => speaker.id === id);
+  getSpeakerById(id: string): Speaker {
+    return (
+      this.speakers.find((speaker) => speaker.id === id) || this.speakers[0]
+    );
   }
 }
 

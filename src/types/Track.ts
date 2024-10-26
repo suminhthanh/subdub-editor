@@ -1,3 +1,5 @@
+import { Voice } from "./Voice";
+
 export interface Track {
   // A unique identifier for the track
   id: string;
@@ -31,9 +33,6 @@ export interface Track {
 
   // The gender of the voice for SSML
   ssml_gender: string;
-
-  // The assigned voice for dubbing
-  assigned_voice: string;
 
   // The pitch adjustment for the voice
   pitch: number;
