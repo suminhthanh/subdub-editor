@@ -95,7 +95,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 onChange={() => handleSubtitleToggle(subtitle)}
                 disabled={isRebuilding}
               />
-              <Label htmlFor={subtitle}>{subtitle}</Label>
+              <Label htmlFor={subtitle}>{t(`${subtitle}Subtitles`)}</Label>
             </TrackItem>
           ))}
         </TrackList>
