@@ -25,12 +25,14 @@ jobs:
           echo "DUBBING_API_BASE_URL=$(grep DUBBING_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
           echo "TRANSCRIPTION_API_BASE_URL=$(grep TRANSCRIPTION_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
           echo "MATXA_API_BASE_URL=$(grep MATXA_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
+          echo "APP_MODE=$(grep APP_MODE .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
       - name: Build
         run: npm run build:prod
         env:
           DUBBING_API_BASE_URL: ${{ env.DUBBING_API_BASE_URL }}
           TRANSCRIPTION_API_BASE_URL: ${{ env.TRANSCRIPTION_API_BASE_URL }}
           MATXA_API_BASE_URL: ${{ env.MATXA_API_BASE_URL }}
+          APP_MODE: ${{ env.APP_MODE }}
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
