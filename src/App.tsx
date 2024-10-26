@@ -48,6 +48,17 @@ const Header = styled.div`
   gap: 10px;
 `;
 
+const HeaderRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ProgressMessage = styled.div`
+  font-size: 14px;
+  color: ${colors.primary};
+`;
+
 const TabContainer = styled.div`
   display: flex;
   border-bottom: 1px solid #ff6b6b;
@@ -141,6 +152,8 @@ function App() {
   const [appMode, setAppMode] = useState<'dubbing' | 'transcription' | 'file' | null>(
     process.env.APP_MODE as 'dubbing' | 'transcription' | 'file' | null
   );
+  const [chunkLoadingProgress, setChunkLoadingProgress] = useState(0);
+  const [reconstructionMessage, setReconstructionMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -268,29 +281,17 @@ function App() {
 
           const parsedTracks = DubbingAPIService.parseTracksFromJSON(tracksDataResponse);
           
-          // Load dubbed audio chunks
-          const chunkBuffers = await DubbingAPIService.loadDubbedAudioChunksFromUUID(newUuid, parsedTracks);
-          setChunkBuffers(chunkBuffers);
-
-          const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(parsedTracks, chunkBuffers);
-
-          console.log("API calls completed for UUID:", newUuid);
-
           setMediaUrl(silentVideoResponse.url);
           setMediaType('video/mp4');
-          setAudioTracks(tracks => {
-            const newTracks = [
-              { buffer: originalAudioBuffer, label: 'Original Audio' },
-              { buffer: backgroundAudioBuffer, label: 'Background Audio' },
-              { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals (Original)' },
-              { buffer: constructedDubbedAudioBuffer, label: 'Dubbed Audio (Constructed)' }
-            ];
-            newTracks.forEach((track, index) => {
-              console.log(`Audio track ${index} (${track.label}):`, track.buffer);
-            });
-            return newTracks;
-          });
+          setAudioTracks([
+            { buffer: originalAudioBuffer, label: 'Original Audio' },
+            { buffer: backgroundAudioBuffer, label: 'Background Audio' },
+            { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals (Original)' },
+          ]);
           setTracks(parsedTracks);
+
+          // Load dubbed audio chunks in the background
+          loadChunksInBackground(newUuid, parsedTracks);
         } else if (serviceParam === "transcription") {
           const [videoDataResponse, tracksDataResponse] = await Promise.all([
             TranscriptionAPIService.loadVideoFromUUID(newUuid),
@@ -323,6 +324,35 @@ function App() {
     setIsLoading(false);
   }, [mediaUrl, serviceParam]);
 
+  const loadChunksInBackground = useCallback(async (uuid: string, tracks: Track[]) => {
+    const dubbedTracks = tracks.filter(track => track.dubbed_path && track.for_dubbing);
+    const totalChunks = dubbedTracks.length;
+    let loadedChunks = 0;
+
+    const newChunkBuffers: { [key: string]: ArrayBuffer } = {};
+
+    for (const track of dubbedTracks) {
+      const chunkName = track.dubbed_path.split("/").pop();
+      if (chunkName) {
+        try {
+          const buffer = await DubbingAPIService.loadSingleChunk(uuid, chunkName);
+          newChunkBuffers[chunkName] = buffer;
+          loadedChunks++;
+          setChunkLoadingProgress((loadedChunks / totalChunks) * 100);
+        } catch (error) {
+          console.error(`Failed to load chunk: ${chunkName}`, error);
+        }
+      }
+    }
+
+    setChunkBuffers(newChunkBuffers);
+    const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
+    setAudioTracks(prevTracks => [
+      ...prevTracks,
+      { buffer: constructedDubbedAudioBuffer, label: 'Dubbed Audio (Constructed)' }
+    ]);
+  }, []);
+
   const handleEditTrack = (track: Track) => {
     setEditingTrack(track);
   };
@@ -330,19 +360,27 @@ function App() {
   const recreateConstructedAudio = useCallback(async (updatedTracks: Track[]) => {
     if (serviceParam === "dubbing") {
       try {
+        setReconstructionMessage(t('reconstructingAudio'));
         console.log("Recreating constructed audio...");
         const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
         console.log("Audio reconstruction complete. Updating audio tracks...");
         setAudioTracks(prevTracks => {
           const newTracks = [...prevTracks];
-          newTracks[3] = { buffer: result, label: 'Dubbed Audio (Constructed)' };
+          const constructedAudioIndex = newTracks.findIndex(track => track.label === 'Dubbed Audio (Constructed)');
+          if (constructedAudioIndex !== -1) {
+            newTracks[constructedAudioIndex] = { buffer: result, label: 'Dubbed Audio (Constructed)' };
+          } else {
+            newTracks.push({ buffer: result, label: 'Dubbed Audio (Constructed)' });
+          }
           return newTracks;
         });
       } catch (error) {
         console.error("Error recreating constructed audio:", error);
+      } finally {
+        setReconstructionMessage(null);
       }
     }
-  }, [serviceParam, chunkBuffers]);
+  }, [serviceParam, chunkBuffers, t]);
 
   const handleSaveTrack = useCallback(async (updatedTrack: Track, needsReconstruction: boolean) => {
     console.log("handleSaveTrack called with updatedTrack:", updatedTrack, "needsReconstruction:", needsReconstruction);
@@ -481,21 +519,29 @@ function App() {
       <GlobalStyle />
       <AppContainer>
         <Header>
-          {mediaUrl && (
-            <>
-              {!isUUIDMode && (
-                <Button onClick={() => {
-                  handleCloseMedia();
-                }}>{t('closeMedia')}</Button>
-              )}
-              <Button onClick={handleDownloadClick}>{t('downloadResult')}</Button>
-            </>
+          {(chunkLoadingProgress > 0 && chunkLoadingProgress < 100) && (
+            <ProgressMessage>
+              {t('loadingChunks')}: {chunkLoadingProgress.toFixed(0)}%
+            </ProgressMessage>
           )}
-          <Select onChange={changeLanguage} value={i18n.language}>
-            <option value="en">English</option>
-            <option value="es">Español</option>
-            <option value="ca">Català</option>
-          </Select>
+          {reconstructionMessage && (
+            <ProgressMessage>{reconstructionMessage}</ProgressMessage>
+          )}
+          <HeaderRight>
+            {mediaUrl && (
+              <>
+                {!isUUIDMode && (
+                  <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
+                )}
+                <Button onClick={handleDownloadClick}>{t('downloadResult')}</Button>
+              </>
+            )}
+            <Select onChange={changeLanguage} value={i18n.language}>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="ca">Català</option>
+            </Select>
+          </HeaderRight>
         </Header>
         <ContentContainer>
           {isLoading ? (

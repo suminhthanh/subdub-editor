@@ -33,5 +33,7 @@
   "showSpeakerColors": "Mostrar colors de parlants",
   "selectTracksForDownload": "Selecciona les pistes per descarregar",
   "rebuildingMedia": "Reconstruint el vídeo, si us plau, espera...",
-  "loading": "Carregant..."
+  "loading": "Carregant...",
+  "loadingChunks": "Carregant fitxers, si us plau, espera...",
+  "reconstructingAudio": "Reconstruint àudio, si us plau, espera..."
 }

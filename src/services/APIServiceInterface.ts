@@ -19,4 +19,5 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
     uuid: string,
     tracks: Track[]
   ) => Promise<{ [key: string]: ArrayBuffer }>;
+  loadSingleChunk: (uuid: string, chunkName: string) => Promise<ArrayBuffer>;
 }

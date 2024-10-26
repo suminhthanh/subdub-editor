@@ -174,6 +174,19 @@ export const loadDubbedAudioChunksFromUUID = async (
   return chunkBuffers;
 };
 
+export const loadSingleChunk = async (
+  uuid: string,
+  chunkName: string
+): Promise<ArrayBuffer> => {
+  const response = await fetch(
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunkName}`
+  );
+  if (!response.ok) {
+    throw new Error(`Failed to load dubbed audio chunk: ${chunkName}`);
+  }
+  return response.arrayBuffer();
+};
+
 export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadVideoFromUUID,
   loadSilentVideoFromUUID,
@@ -183,4 +196,5 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadTracksFromUUID,
   parseTracksFromJSON,
   loadDubbedAudioChunksFromUUID,
+  loadSingleChunk,
 };

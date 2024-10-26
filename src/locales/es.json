@@ -33,5 +33,7 @@
   "showSpeakerColors": "Mostrar colores de hablantes",
   "selectTracksForDownload": "Selecciona las pistas para descargar",
   "rebuildingMedia": "Reconstruyendo el video, por favor, espera...",
-  "loading": "Cargando..."
+  "loading": "Cargando...",
+  "loadingChunks": "Cargando archivos, por favor, espera...",
+  "reconstructingAudio": "Reconstruyendo audio, por favor, espera..."
 }
