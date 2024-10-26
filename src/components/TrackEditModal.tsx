@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
-import { Button, Input, ModalContent, TextArea, Select } from '../styles/designSystem';
+import { Button, Input, ModalContent, TextArea, Select, Label, colors } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
 import { speakerService, Speaker } from '../services/SpeakerService';
 
@@ -11,10 +11,16 @@ const ButtonContainer = styled.div`
 `;
 
 const DeleteButton = styled(Button)`
-  background-color: #ff4136;
+  background-color: ${colors.tertiary};
   &:hover {
-    background-color: #ff7066;
+    background-color: ${colors.tertiaryLight};
   }
+`;
+
+const RightButtons = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 `;
 
 interface TrackEditModalProps {
@@ -98,33 +104,33 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
       <ModalContent>
         {isDubbingService && (
           <>
-            <label>{t('originalText')}</label>
+            <Label>{t('originalText')}</Label>
             <TextArea value={text} onChange={(e) => setText(e.target.value)} readOnly />
-            <label>{t('translatedText')}</label>
+            <Label>{t('translatedText')}</Label>
             <TextArea value={translatedText} onChange={(e) => setTranslatedText(e.target.value)} />
           </>
         )}
         {!isDubbingService && (
           <>
-            <label>{t('text')}</label>
+            <Label>{t('text')}</Label>
             <TextArea value={text} onChange={(e) => setText(e.target.value)} />
           </>
         )}
-        <label>{t('startTime')}</label>
+        <Label>{t('startTime')}</Label>
         <Input
           type="number"
           value={startTime}
           onChange={(e) => setStartTime(Number(e.target.value))}
           step="0.1"
         />
-        <label>{t('endTime')}</label>
+        <Label>{t('endTime')}</Label>
         <Input
           type="number"
           value={endTime}
           onChange={(e) => setEndTime(Number(e.target.value))}
           step="0.1"
         />
-        <label>{t('speed')}</label>
+        <Label>{t('speed')}</Label>
         <Input
           type="number"
           value={speed}
@@ -133,7 +139,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
           min="0.1"
           max="2"
         />
-        <label>{t('speaker')}</label>
+        <Label>{t('speaker')}</Label>
         <Select
           value={selectedSpeakerId}
           onChange={(e) => setSelectedSpeakerId(e.target.value)}
@@ -147,10 +153,10 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
         </Select>
         <ButtonContainer>
           <DeleteButton onClick={handleDelete}>{t('deleteTrack')}</DeleteButton>
-          <div>
+          <RightButtons>
             <Button onClick={onClose}>{t('cancel')}</Button>
             <Button onClick={handleSave}>{t('save')}</Button>
-          </div>
+          </RightButtons>
         </ButtonContainer>
       </ModalContent>
     </ModalOverlay>

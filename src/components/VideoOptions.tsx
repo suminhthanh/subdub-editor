@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { colors, Button } from '../styles/designSystem';
+import { colors, Button, Label } from '../styles/designSystem';
 import { speakerService, Speaker } from '../services/SpeakerService';
 import { synthesisService } from '../services/SynthesisService';
 import { Voice } from '../types/Voice';
@@ -23,11 +23,6 @@ const CheckboxContainer = styled.div`
 
 const Checkbox = styled.input`
   margin-right: 10px;
-`;
-
-const Label = styled.label`
-  font-size: 14px;
-  color: ${colors.text};
 `;
 
 const RadioContainer = styled.div`

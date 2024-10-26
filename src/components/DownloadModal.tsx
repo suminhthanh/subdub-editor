@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { Button, ModalOverlay, colors } from '../styles/designSystem';
+import { Button, Label, ModalOverlay, colors } from '../styles/designSystem';
 import { AudioTrack } from '../types/AudioTrack';
 
 const ModalContent = styled.div`
@@ -81,7 +81,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 onChange={() => handleAudioTrackToggle(id)}
                 disabled={isRebuilding}
               />
-              <span>{track.label}</span>
+              <Label htmlFor={id}>{track.label}</Label>
             </TrackItem>
           ))}
         </TrackList>
@@ -95,13 +95,13 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 onChange={() => handleSubtitleToggle(subtitle)}
                 disabled={isRebuilding}
               />
-              <span>{subtitle}</span>
+              <Label htmlFor={subtitle}>{subtitle}</Label>
             </TrackItem>
           ))}
         </TrackList>
         <ButtonContainer>
           <Button onClick={onClose} disabled={isRebuilding}>{t('cancel')}</Button>
-          <Button onClick={handleDownload} disabled={isRebuilding}>{t('download')}</Button>
+          <Button onClick={handleDownload} disabled={isRebuilding}>{t('downloadResult')}</Button>
         </ButtonContainer>
       </ModalContent>
     </ModalOverlay>

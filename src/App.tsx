@@ -44,7 +44,6 @@ const Header = styled.div`
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  margin-bottom: 10px;
   padding: 5px;
   gap: 10px;
 `;
@@ -509,7 +508,7 @@ function App() {
   };
 
   const handleSpeakerVoiceChange = useCallback(async (speakerId: string, newVoice: Voice) => {
-    setIsRebuilding(true);
+    setReconstructionMessage(t('reconstructingAudio'));
     try {
       // Update the speaker's voice in the SpeakerService
       await speakerService.updateSpeaker(speakerId, { voice: newVoice });
@@ -531,7 +530,7 @@ function App() {
       console.error("Error updating speaker voice:", error);
       // You might want to show an error message to the user here
     } finally {
-      setIsRebuilding(false);
+      setReconstructionMessage(null);
     }
   }, [tracks, recreateConstructedAudio]);
 
@@ -557,7 +556,7 @@ function App() {
                 <Button onClick={handleDownloadClick}>{t('downloadResult')}</Button>
               </>
             )}
-            <Select onChange={changeLanguage} value={i18n.language}>
+            <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>
               <option value="en">English</option>
               <option value="es">Español</option>
               <option value="ca">Català</option>

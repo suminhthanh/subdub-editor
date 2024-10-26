@@ -69,7 +69,9 @@ export const Input = styled.input`
 `;
 
 export const Select = styled.select`
-  padding: 5px;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 10px;
   font-size: ${typography.fontSize.medium};
   border: 1px solid ${colors.border};
   border-radius: 5px;
@@ -110,5 +112,10 @@ export const ModalContent = styled.div`
   border-radius: 5px;
   width: 90vw;
   max-width: 1000px;
+  color: ${colors.text};
+`;
+
+export const Label = styled.label`
+  font-size: 14px;
   color: ${colors.text};
 `;
