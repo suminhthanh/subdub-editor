@@ -15,6 +15,7 @@ import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
 import { speakerService } from './services/SpeakerService';
 import DownloadModal from './components/DownloadModal';
+import LoadingOverlay from './components/LoadingOverlay';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -134,6 +135,7 @@ function App() {
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [isRebuilding, setIsRebuilding] = useState(false);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -149,33 +151,6 @@ function App() {
       handleFileOrUUIDSelect(null, uuidParam);
     }
   }, []);
-
-  const handleDownloadResult = async () => {
-    if (mediaUrl && tracks.length > 0) {
-      try {
-        let fileToProcess: File;
-        if (mediaFile) {
-          fileToProcess = mediaFile;
-        } else {
-          // In case of UUID, use the existing mediaUrl (silent video)
-          const response = await fetch(mediaUrl);
-          const blob = await response.blob();
-          fileToProcess = new File([blob], `dubbed_final.mp4`, { type: mediaType });
-        }
-        const newMediaBlob = await rebuildMedia(fileToProcess, tracks, audioTracks);
-        const url = URL.createObjectURL(newMediaBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `output_${mediaFileName}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading result:", error);
-      }
-    }
-  };
 
   const handleCloseMedia = () => {
     setMediaFile(null);
@@ -416,6 +391,7 @@ function App() {
   const handleDownloadWithSelectedTracks = async (selectedAudioTracks: number[], selectedSubtitles: string[]) => {
     if (mediaUrl && tracks.length > 0) {
       try {
+        setIsRebuilding(true);
         let fileToProcess: File;
         if (mediaFile) {
           fileToProcess = mediaFile;
@@ -437,6 +413,9 @@ function App() {
         URL.revokeObjectURL(url);
       } catch (error) {
         console.error("Error downloading result:", error);
+      } finally {
+        setIsRebuilding(false);
+        setShowDownloadModal(false);
       }
     }
   };
@@ -546,8 +525,10 @@ function App() {
           subtitles={['original', 'dubbed']}
           onClose={handleDownloadModalClose}
           onDownload={handleDownloadWithSelectedTracks}
+          isRebuilding={isRebuilding}
         />
       )}
+      {isRebuilding && <LoadingOverlay message={t('rebuildingMedia')} />}
     </>
   );
 }

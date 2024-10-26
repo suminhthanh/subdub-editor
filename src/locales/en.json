@@ -31,5 +31,6 @@
   "speaker": "Speaker",
   "selectSpeaker": "Select a speaker",
   "showSpeakerColors": "Show speaker colors",
-  "selectTracksForDownload": "Select tracks for download"
+  "selectTracksForDownload": "Select tracks for download",
+  "rebuildingMedia": "Rebuilding media, please wait..."
 }

@@ -41,9 +41,10 @@ interface DownloadModalProps {
   subtitles: string[];
   onClose: () => void;
   onDownload: (selectedAudioTracks: number[], selectedSubtitles: string[]) => void;
+  isRebuilding: boolean;
 }
 
-const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, onClose, onDownload }) => {
+const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, onClose, onDownload, isRebuilding }) => {
   const { t } = useTranslation();
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([]);
   const [selectedSubtitles, setSelectedSubtitles] = useState<string[]>([]);
@@ -77,6 +78,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 type="checkbox"
                 checked={selectedAudioTracks.includes(index)}
                 onChange={() => handleAudioTrackToggle(index)}
+                disabled={isRebuilding}
               />
               <span>{track.label}</span>
             </TrackItem>
@@ -90,14 +92,15 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 type="checkbox"
                 checked={selectedSubtitles.includes(subtitle)}
                 onChange={() => handleSubtitleToggle(subtitle)}
+                disabled={isRebuilding}
               />
               <span>{subtitle}</span>
             </TrackItem>
           ))}
         </TrackList>
         <ButtonContainer>
-          <Button onClick={onClose}>{t('cancel')}</Button>
-          <Button onClick={handleDownload}>{t('download')}</Button>
+          <Button onClick={onClose} disabled={isRebuilding}>{t('cancel')}</Button>
+          <Button onClick={handleDownload} disabled={isRebuilding}>{t('download')}</Button>
         </ButtonContainer>
       </ModalContent>
     </ModalOverlay>
