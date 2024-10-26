@@ -1,5 +1,6 @@
 import { Voice } from "../types/Voice";
 import { SynthesisProvider } from "./SynthesisService";
+import { decodeWAV } from "../utils/audioUtils";
 
 interface MatxaVoice extends Voice {
   gender: string;
@@ -89,7 +90,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
     return this.voiceList;
   }
 
-  async speak(text: string, voice: Voice): Promise<AudioBuffer> {
+  async speak(text: string, voice: Voice): Promise<ArrayBuffer> {
     const url = `https://api.softcatala.org/dubbing-service/v1/speak/?text=${encodeURIComponent(
       text
     )}&voice=${voice.id}`;
@@ -99,10 +100,7 @@ export class MatxaSynthesisProvider implements SynthesisProvider {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      const arrayBuffer = await response.arrayBuffer();
-      const audioContext = new window.AudioContext();
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-      return audioBuffer;
+      return await response.arrayBuffer();
     } catch (error) {
       console.error("Error generating speech:", error);
       throw error;

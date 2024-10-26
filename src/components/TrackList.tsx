@@ -1,8 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
 import { Button, colors, typography } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
+import { debounce } from 'lodash';
 
 const ListContainer = styled.div`
   background-color: ${colors.background};
@@ -65,7 +66,7 @@ const IconButton = styled(Button)`
 
 interface TrackListProps {
   tracks: Track[];
-  onTrackChange: (index: number, updatedTrack: Track) => void;
+  onTrackChange: (index: number, updatedTrack: Track, recreateAudio: boolean) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
   onDeleteTrack: (trackId: string) => void;
@@ -73,7 +74,15 @@ interface TrackListProps {
   showSpeakerColors: boolean;
 }
 
-const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChange, onEditTrack, onDeleteTrack, isDubbingService, showSpeakerColors }) => {
+const TrackList: React.FC<TrackListProps> = ({
+  tracks,
+  onTrackChange,
+  onTimeChange,
+  onEditTrack,
+  onDeleteTrack,
+  isDubbingService,
+  showSpeakerColors,
+}) => {
   const { t } = useTranslation();
 
   const handleTimeClick = (time: number) => {
@@ -85,21 +94,40 @@ const TrackList: React.FC<TrackListProps> = ({ tracks, onTrackChange, onTimeChan
     textarea.style.height = `${Math.max(textarea.scrollHeight, textarea.clientHeight)}px`;
   };
 
-  const handleTextareaChange = (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const updatedTrack = { ...tracks[index] };
-    if (isDubbingService) {
-      updatedTrack.translated_text = e.target.value;
-    } else {
-      updatedTrack.text = e.target.value;
-    }
-    onTrackChange(index, updatedTrack);
-    adjustTextareaHeight(e.target);
-  };
+  const debouncedTrackChange = useMemo(
+    () => debounce((index: number, updatedTrack: Track) => {
+      onTrackChange(index, updatedTrack, true);
+    }, 1000),
+    [onTrackChange]
+  );
+
+  const handleTextareaChange = useCallback(
+    (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const updatedTrack = { ...tracks[index] };
+      if (isDubbingService) {
+        updatedTrack.translated_text = e.target.value;
+        updatedTrack.needsResynthesis = updatedTrack.translated_text !== tracks[index].translated_text;
+      } else {
+        updatedTrack.text = e.target.value;
+      }
+      onTrackChange(index, updatedTrack, false);
+      adjustTextareaHeight(e.target);
+
+      debouncedTrackChange(index, updatedTrack);
+    },
+    [tracks, isDubbingService, onTrackChange, debouncedTrackChange]
+  );
 
   useEffect(() => {
     const textareas = document.querySelectorAll<HTMLTextAreaElement>('.track-textarea');
     textareas.forEach(adjustTextareaHeight);
   }, [tracks]);
+
+  useEffect(() => {
+    return () => {
+      debouncedTrackChange.cancel();
+    };
+  }, [debouncedTrackChange]);
 
   return (
     <ListContainer>

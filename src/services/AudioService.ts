@@ -3,7 +3,11 @@ import {
   adjustAudioSpeed,
   concatenateAudioBuffers,
   createSilentAudioBuffer,
+  audioBufferToArrayBuffer,
+  decodeWAV,
 } from "../utils/audioUtils";
+import { synthesisService } from "./SynthesisService";
+import { Voice } from "../types/Voice";
 
 export class AudioService {
   private audioContext: AudioContext;
@@ -53,15 +57,15 @@ export class AudioService {
 
       // Get the chunk buffer for this track
       const chunkKey = track.dubbed_path.split("/").pop() || "";
-      const chunkBuffer = chunkBuffers[chunkKey];
+      let chunkBuffer = chunkBuffers[chunkKey];
 
-      if (!chunkBuffer) {
-        console.error(`Chunk buffer not found for track: ${track.id}`);
-        continue;
+      if (!chunkBuffer || track.needsResynthesis) {
+        chunkBuffer = await this.resynthesizeTrack(track);
+        chunkBuffers[chunkKey] = chunkBuffer;
       }
 
       // Decode the chunk buffer
-      const chunkAudioBuffer = await this.audioContext.decodeAudioData(
+      let chunkAudioBuffer = await this.audioContext.decodeAudioData(
         chunkBuffer.slice(0)
       );
 
@@ -87,6 +91,20 @@ export class AudioService {
 
     console.log("Finished recreating constructed audio");
     return await concatenateAudioBuffers(this.audioContext, audioBuffers);
+  }
+
+  private async resynthesizeTrack(track: Track): Promise<ArrayBuffer> {
+    console.log(`Resynthesizing track: ${track.id}`);
+    const voice: Voice = {
+      id: track.assigned_voice,
+      label: "",
+      provider: "matxa",
+    };
+    return await synthesisService.speak(track.translated_text || "", voice);
+  }
+
+  audioBufferToArrayBuffer(audioBuffer: AudioBuffer): ArrayBuffer {
+    return audioBufferToArrayBuffer(audioBuffer);
   }
 }
 
