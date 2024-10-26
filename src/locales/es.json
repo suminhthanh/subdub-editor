@@ -21,5 +21,16 @@
   "speed": "Velocidad",
   "options": "Opciones",
   "audioTracks": "Pistas de Audio",
-  "deleteTrack": "Eliminar"
+  "deleteTrack": "Eliminar",
+  "subtitles": "Subtítulos",
+  "noSubtitles": "Sin Subtítulos",
+  "originalSubtitles": "Subtítulos Originales",
+  "dubbedSubtitles": "Subtítulos Doblados",
+  "speakers": "Parelladors",
+  "newSpeakerName": "Nombre del nuevo hablante",
+  "speaker": "Parlante",
+  "selectSpeaker": "Selecciona un hablante",
+  "showSpeakerColors": "Mostrar colores de hablantes",
+  "selectTracksForDownload": "Selecciona las pistas para descargar",
+  "rebuildingMedia": "Reconstruyendo el video, por favor, espera..."
 }
