@@ -1,7 +1,7 @@
 {
   "timeline": "Timeline",
   "list": "List",
-  "downloadResult": "Download Result",
+  "downloadResult": "Download",
   "zoomOut": "Zoom Out",
   "zoomIn": "Zoom In",
   "resetZoom": "Reset Zoom",
@@ -30,5 +30,6 @@
   "newSpeakerName": "New speaker name",
   "speaker": "Speaker",
   "selectSpeaker": "Select a speaker",
-  "showSpeakerColors": "Show speaker colors"
+  "showSpeakerColors": "Show speaker colors",
+  "selectTracksForDownload": "Select tracks for download"
 }

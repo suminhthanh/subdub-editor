@@ -14,6 +14,7 @@ import { DubbingAPIService } from './services/DubbingAPIService';
 import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
 import { speakerService } from './services/SpeakerService';
+import DownloadModal from './components/DownloadModal';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -132,6 +133,7 @@ function App() {
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([0, 1]); // Default to first two tracks
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -403,6 +405,41 @@ function App() {
 
   const isDubbingService = serviceParam === 'dubbing';
 
+  const handleDownloadClick = () => {
+    setShowDownloadModal(true);
+  };
+
+  const handleDownloadModalClose = () => {
+    setShowDownloadModal(false);
+  };
+
+  const handleDownloadWithSelectedTracks = async (selectedAudioTracks: number[], selectedSubtitles: string[]) => {
+    if (mediaUrl && tracks.length > 0) {
+      try {
+        let fileToProcess: File;
+        if (mediaFile) {
+          fileToProcess = mediaFile;
+        } else {
+          const response = await fetch(mediaUrl);
+          const blob = await response.blob();
+          fileToProcess = new File([blob], `dubbed_final.mp4`, { type: mediaType });
+        }
+
+        const selectedAudioBuffers = selectedAudioTracks.map(index => audioTracks[index]);
+        const newMediaBlob = await rebuildMedia(fileToProcess, tracks, selectedAudioBuffers, selectedSubtitles);
+        const url = URL.createObjectURL(newMediaBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `output_${mediaFileName}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        console.error("Error downloading result:", error);
+      }
+    }
+  };
 
   return (
     <>
@@ -416,7 +453,7 @@ function App() {
                   handleCloseMedia();
                 }}>{t('closeMedia')}</Button>
               )}
-              <Button onClick={handleDownloadResult}>{t('downloadResult')}</Button>
+              <Button onClick={handleDownloadClick}>{t('downloadResult')}</Button>
             </>
           )}
           <Select onChange={changeLanguage} value={i18n.language}>
@@ -503,6 +540,14 @@ function App() {
         ModalOverlay={ModalOverlay}
         isDubbingService={isDubbingService}
       />
+      {showDownloadModal && (
+        <DownloadModal
+          audioTracks={audioTracks}
+          subtitles={['original', 'dubbed']}
+          onClose={handleDownloadModalClose}
+          onDownload={handleDownloadWithSelectedTracks}
+        />
+      )}
     </>
   );
 }

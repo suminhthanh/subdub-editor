@@ -35,7 +35,8 @@ export const extractTracks = async (mediaFile: File): Promise<Track[]> => {
 export const rebuildMedia = async (
   mediaFile: File,
   tracks: Track[],
-  audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[]
+  selectedAudioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[],
+  selectedSubtitles: string[]
 ): Promise<Blob> => {
   if (!ffmpeg.isLoaded()) {
     await ffmpeg.load();
@@ -47,27 +48,30 @@ export const rebuildMedia = async (
   ffmpeg.FS("writeFile", inputFileName, await fetchFile(mediaFile));
 
   // Write subtitle files
-  const originalSubtitles = generateSRT(tracks, false);
-  const dubbedSubtitles = generateSRT(tracks, true);
-  ffmpeg.FS("writeFile", "original_subtitles.srt", originalSubtitles);
-  ffmpeg.FS("writeFile", "dubbed_subtitles.srt", dubbedSubtitles);
+  if (selectedSubtitles.includes("original")) {
+    const originalSubtitles = generateSRT(tracks, false);
+    ffmpeg.FS("writeFile", "original_subtitles.srt", originalSubtitles);
+  }
+  if (selectedSubtitles.includes("dubbed")) {
+    const dubbedSubtitles = generateSRT(tracks, true);
+    ffmpeg.FS("writeFile", "dubbed_subtitles.srt", dubbedSubtitles);
+  }
 
-  const ffmpegArgs = [
-    "-i",
-    inputFileName,
-    "-i",
-    "original_subtitles.srt",
-    "-i",
-    "dubbed_subtitles.srt",
-  ];
+  const ffmpegArgs = ["-i", inputFileName];
+
+  if (selectedSubtitles.includes("original")) {
+    ffmpegArgs.push("-i", "original_subtitles.srt");
+  }
+  if (selectedSubtitles.includes("dubbed")) {
+    ffmpegArgs.push("-i", "dubbed_subtitles.srt");
+  }
 
   // Write audio files
-  for (let i = 0; i < audioTracks.length; i++) {
-    const audioBuffer = audioTracks[i].buffer;
+  for (let i = 0; i < selectedAudioTracks.length; i++) {
+    const audioBuffer = selectedAudioTracks[i].buffer;
     let audioData: Uint8Array;
 
     if (audioBuffer instanceof AudioBuffer) {
-      // Convert AudioBuffer to WAV format
       audioData = encodeWAV(audioBuffer);
       ffmpeg.FS("writeFile", `audio_${i}.wav`, audioData);
       ffmpegArgs.push("-i", `audio_${i}.wav`);
@@ -85,30 +89,30 @@ export const rebuildMedia = async (
     "copy" // Copy video codec
   );
 
-  // Map all audio tracks
-  audioTracks.forEach((_, i) => {
-    ffmpegArgs.push("-map", `${i + 3}:a`, "-c:a", "aac");
+  // Map selected audio tracks
+  selectedAudioTracks.forEach((_, i) => {
+    ffmpegArgs.push(
+      "-map",
+      `${i + 1 + selectedSubtitles.length}:a`,
+      "-c:a",
+      "aac"
+    );
   });
 
-  // Map subtitles
-  ffmpegArgs.push(
-    "-map",
-    "1", // Map original subtitles
-    "-map",
-    "2", // Map dubbed subtitles
-    "-c:s",
-    "mov_text" // Use mov_text codec for subtitles
-  );
-
-  ffmpegArgs.push(
-    "-metadata:s:s:0",
-    "language=es", // Set language metadata for original subtitles
-    "-metadata:s:s:1",
-    "language=ca" // Set language metadata for dubbed subtitles
-  );
+  // Map selected subtitles
+  let subtitleIndex = 0;
+  if (selectedSubtitles.includes("original")) {
+    ffmpegArgs.push("-map", `${1 + subtitleIndex}`, "-c:s", "mov_text");
+    ffmpegArgs.push("-metadata:s:s:0", "language=es");
+    subtitleIndex++;
+  }
+  if (selectedSubtitles.includes("dubbed")) {
+    ffmpegArgs.push("-map", `${1 + subtitleIndex}`, "-c:s", "mov_text");
+    ffmpegArgs.push("-metadata:s:s:1", "language=ca");
+  }
 
   // Set audio track titles
-  audioTracks.forEach((track, i) => {
+  selectedAudioTracks.forEach((track, i) => {
     ffmpegArgs.push(`-metadata:s:a:${i}`, `title=${track.label}`);
   });
 
