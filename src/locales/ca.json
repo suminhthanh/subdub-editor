@@ -35,5 +35,9 @@
   "rebuildingMedia": "Reconstruint el vídeo, si us plau, espera...",
   "loading": "Carregant...",
   "loadingChunks": "Carregant fitxers, si us plau, espera...",
-  "reconstructingAudio": "Reconstruint àudio, si us plau, espera..."
+  "reconstructingAudio": "Reconstruint àudio, si us plau, espera...",
+  "originalVocals": "Veus Originals",
+  "dubbedVocals": "Veus Doblades",
+  "backgroundAudio": "Àudio de Fons",
+  "missingUUID": "Falta UUID"
 }

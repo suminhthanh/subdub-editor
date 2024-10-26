@@ -9,11 +9,12 @@ import { synthesisService } from "./SynthesisService";
 import { Voice } from "../types/Voice";
 import { speakerService } from "./SpeakerService";
 
-export class AudioService {
+class AudioService {
   private audioContext: AudioContext;
 
   constructor() {
-    this.audioContext = new AudioContext();
+    this.audioContext = new (window.AudioContext ||
+      (window as any).webkitAudioContext)();
   }
 
   async recreateConstructedAudio(
@@ -121,6 +122,109 @@ export class AudioService {
 
   audioBufferToArrayBuffer(audioBuffer: AudioBuffer): ArrayBuffer {
     return audioBufferToArrayBuffer(audioBuffer);
+  }
+
+  decodeAudioData(arrayBuffer: ArrayBuffer): Promise<AudioBuffer> {
+    return this.audioContext.decodeAudioData(arrayBuffer);
+  }
+
+  async mixAudioBuffers(
+    buffer1: AudioBuffer,
+    buffer2: AudioBuffer
+  ): Promise<AudioBuffer> {
+    const numberOfChannels = Math.max(
+      buffer1.numberOfChannels,
+      buffer2.numberOfChannels
+    );
+    const length = Math.max(buffer1.length, buffer2.length);
+    const mixedBuffer = this.audioContext.createBuffer(
+      numberOfChannels,
+      length,
+      buffer1.sampleRate
+    );
+
+    for (let channel = 0; channel < numberOfChannels; channel++) {
+      const mixedChannelData = mixedBuffer.getChannelData(channel);
+      const buffer1ChannelData = buffer1.getChannelData(
+        channel % buffer1.numberOfChannels
+      );
+      const buffer2ChannelData = buffer2.getChannelData(
+        channel % buffer2.numberOfChannels
+      );
+
+      for (let i = 0; i < length; i++) {
+        mixedChannelData[i] =
+          (buffer1ChannelData[i] || 0) + (buffer2ChannelData[i] || 0);
+      }
+    }
+
+    return mixedBuffer;
+  }
+
+  audioBufferToWav(buffer: AudioBuffer): ArrayBuffer {
+    const interleaved = this.interleave(buffer);
+    const dataView = this.createWavFileHeader(
+      interleaved.length,
+      buffer.numberOfChannels,
+      buffer.sampleRate
+    );
+    return this.mergeBuffers(dataView, interleaved);
+  }
+
+  private interleave(buffer: AudioBuffer): Float32Array {
+    const numberOfChannels = buffer.numberOfChannels;
+    const length = buffer.length * numberOfChannels;
+    const result = new Float32Array(length);
+
+    let index = 0;
+    let inputIndex = 0;
+
+    while (index < length) {
+      for (let channel = 0; channel < numberOfChannels; channel++) {
+        result[index++] = buffer.getChannelData(channel)[inputIndex];
+      }
+      inputIndex++;
+    }
+    return result;
+  }
+
+  private createWavFileHeader(
+    dataLength: number,
+    numChannels: number,
+    sampleRate: number
+  ): DataView {
+    const buffer = new ArrayBuffer(44);
+    const view = new DataView(buffer);
+
+    const writeString = (view: DataView, offset: number, string: string) => {
+      for (let i = 0; i < string.length; i++) {
+        view.setUint8(offset + i, string.charCodeAt(i));
+      }
+    };
+
+    writeString(view, 0, "RIFF");
+    view.setUint32(4, 36 + dataLength * 2, true);
+    writeString(view, 8, "WAVE");
+    writeString(view, 12, "fmt ");
+    view.setUint32(16, 16, true);
+    view.setUint16(20, 1, true);
+    view.setUint16(22, numChannels, true);
+    view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * numChannels * 2, true);
+    view.setUint16(32, numChannels * 2, true);
+    view.setUint16(34, 16, true);
+    writeString(view, 36, "data");
+    view.setUint32(40, dataLength * 2, true);
+
+    return view;
+  }
+
+  private mergeBuffers(wav0: DataView, wav1: ArrayBuffer): ArrayBuffer {
+    const result = new ArrayBuffer(wav0.buffer.byteLength + wav1.byteLength);
+    const resultView = new Uint8Array(result);
+    resultView.set(new Uint8Array(wav0.buffer), 0);
+    resultView.set(new Uint8Array(wav1), wav0.buffer.byteLength);
+    return result;
   }
 }
 

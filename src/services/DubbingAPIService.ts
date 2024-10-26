@@ -67,11 +67,11 @@ export const loadSilentVideoFromUUID = async (
   return { url };
 };
 
-export const loadOriginalAudioFromUUID = async (
+export const loadOriginalVocalsFromUUID = async (
   uuid: string
 ): Promise<ArrayBuffer> => {
   const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_audio.mp3`
+    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/vocals.mp3`
   );
   if (!response.ok) {
     throw new Error("Failed to load original audio");
@@ -190,7 +190,7 @@ export const loadSingleChunk = async (
 export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadVideoFromUUID,
   loadSilentVideoFromUUID,
-  loadOriginalAudioFromUUID,
+  loadOriginalVocalsFromUUID,
   loadBackgroundAudioFromUUID,
   loadDubbedVocalsFromUUID,
   loadTracksFromUUID,

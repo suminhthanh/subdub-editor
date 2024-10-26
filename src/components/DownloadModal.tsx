@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Button, ModalOverlay, colors } from '../styles/designSystem';
+import { AudioTrack } from '../types/AudioTrack';
 
 const ModalContent = styled.div`
   background-color: ${colors.background};
@@ -37,21 +38,21 @@ const ButtonContainer = styled.div`
 `;
 
 interface DownloadModalProps {
-  audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[];
+  audioTracks: { [key: string]: AudioTrack };
   subtitles: string[];
   onClose: () => void;
-  onDownload: (selectedAudioTracks: number[], selectedSubtitles: string[]) => void;
+  onDownload: (selectedAudioTracks: string[], selectedSubtitles: string[]) => void;
   isRebuilding: boolean;
 }
 
 const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, onClose, onDownload, isRebuilding }) => {
   const { t } = useTranslation();
-  const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([]);
+  const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>([]);
   const [selectedSubtitles, setSelectedSubtitles] = useState<string[]>([]);
 
-  const handleAudioTrackToggle = (index: number) => {
+  const handleAudioTrackToggle = (id: string) => {
     setSelectedAudioTracks(prev =>
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
@@ -72,12 +73,12 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
         <Title>{t('selectTracksForDownload')}</Title>
         <TrackList>
           <h3>{t('audioTracks')}</h3>
-          {audioTracks.map((track, index) => (
+          {Object.entries(audioTracks).filter(([id, track]) => id !== 'background').map(([id, track], index) => (
             <TrackItem key={index}>
               <Checkbox
                 type="checkbox"
-                checked={selectedAudioTracks.includes(index)}
-                onChange={() => handleAudioTrackToggle(index)}
+                checked={selectedAudioTracks.includes(id)}
+                onChange={() => handleAudioTrackToggle(id)}
                 disabled={isRebuilding}
               />
               <span>{track.label}</span>

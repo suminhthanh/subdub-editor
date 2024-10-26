@@ -12,7 +12,7 @@ export interface APIServiceInterface {
 
 export interface DubbingAPIServiceInterface extends APIServiceInterface {
   loadSilentVideoFromUUID: (uuid: string) => Promise<{ url: string }>;
-  loadOriginalAudioFromUUID: (uuid: string) => Promise<ArrayBuffer>;
+  loadOriginalVocalsFromUUID: (uuid: string) => Promise<ArrayBuffer>;
   loadBackgroundAudioFromUUID: (uuid: string) => Promise<ArrayBuffer>;
   loadDubbedVocalsFromUUID: (uuid: string) => Promise<ArrayBuffer>;
   loadDubbedAudioChunksFromUUID: (

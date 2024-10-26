@@ -6,6 +6,7 @@ import { speakerService, Speaker } from '../services/SpeakerService';
 import { synthesisService } from '../services/SynthesisService';
 import { Voice } from '../types/Voice';
 import { Track } from '../types/Track';
+import { AudioTrack } from '../types/AudioTrack';
 
 const OptionsContainer = styled.div`
   padding: 20px;
@@ -82,9 +83,9 @@ const VoiceSelect = styled.select`
 `;
 
 interface VideoOptionsProps {
-  audioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[];
-  selectedTracks: number[];
-  onAudioTrackToggle: (index: number) => void;
+  audioTracks: { [key: string]: AudioTrack };
+  selectedTracks: string[];
+  onAudioTrackToggle: (index: string) => void;
   selectedSubtitles: string;
   onSubtitlesChange: (subtitles: string) => void;
   showSpeakerColors: boolean;
@@ -146,13 +147,13 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
   return (
     <OptionsContainer>
       <h3>{t('audioTracks')}</h3>
-      {audioTracks.map((track, index) => (
-        <CheckboxContainer key={index}>
+      {Object.entries(audioTracks).filter(([id]) => id !== 'background').map(([id, track], index) => (
+        <CheckboxContainer key={id}>
           <Checkbox
             type="checkbox"
             id={`audio-track-${index}`}
-            checked={selectedTracks.includes(index)}
-            onChange={() => onAudioTrackToggle(index)}
+            checked={selectedTracks.includes(id)}
+            onChange={() => onAudioTrackToggle(id)}
           />
           <Label htmlFor={`audio-track-${index}`}>{track.label}</Label>
         </CheckboxContainer>

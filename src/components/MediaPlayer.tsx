@@ -2,19 +2,15 @@ import React, { forwardRef } from 'react';
 import VideoPlayer from './VideoPlayer';
 import AudioPlayer from './AudioPlayer';
 import { Track } from '../types/Track';
+import { AudioTrack } from '../types/AudioTrack';
 
-
-interface AudioTrack {
-  buffer: ArrayBuffer | AudioBuffer;
-  label: string;
-}
 
 export interface MediaPlayerProps {
   src: string;
   tracks: Track[];
   mediaType: string;
-  audioTracks: AudioTrack[];
-  selectedAudioTracks: number[];
+  audioTracks: { [key: string]: AudioTrack };
+  selectedAudioTracks: string[];
   selectedSubtitles: string;
 }
 

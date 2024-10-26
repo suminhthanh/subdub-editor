@@ -18,6 +18,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 import { speakerService } from './services/SpeakerService';
 import { synthesisService } from './services/SynthesisService';
 import { Voice } from './types/Voice';
+import { AudioTrack } from './types/AudioTrack';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -142,9 +143,9 @@ function App() {
   const [serviceParam, setServiceParam] = useState<string>('dubbing');
   const [isLoading, setIsLoading] = useState(false);
   const initialLoadRef = useRef(false);
-  const [audioTracks, setAudioTracks] = useState<{ buffer: ArrayBuffer | AudioBuffer; label: string }[]>([]);
+  const [audioTracks, setAudioTracks] = useState<{ [key: string]: AudioTrack }>({});
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
-  const [selectedAudioTracks, setSelectedAudioTracks] = useState<number[]>([0, 1]); // Default to first two tracks
+  const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>(['background', 'dubbed']); // Default to first two tracks
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
@@ -273,7 +274,7 @@ function App() {
         if (serviceParam === "dubbing") {
           const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, dubbedVocalsBuffer, tracksDataResponse] = await Promise.all([
             DubbingAPIService.loadSilentVideoFromUUID(newUuid),
-            DubbingAPIService.loadOriginalAudioFromUUID(newUuid),
+            DubbingAPIService.loadOriginalVocalsFromUUID(newUuid),
             DubbingAPIService.loadBackgroundAudioFromUUID(newUuid),
             DubbingAPIService.loadDubbedVocalsFromUUID(newUuid),
             DubbingAPIService.loadTracksFromUUID(newUuid)
@@ -283,11 +284,11 @@ function App() {
           
           setMediaUrl(silentVideoResponse.url);
           setMediaType('video/mp4');
-          setAudioTracks([
-            { buffer: originalAudioBuffer, label: 'Original Audio' },
-            { buffer: backgroundAudioBuffer, label: 'Background Audio' },
-            { buffer: dubbedVocalsBuffer, label: 'Dubbed Vocals (Original)' },
-          ]);
+          setAudioTracks({
+            background: { buffer: backgroundAudioBuffer, label: t('backgroundAudio') },
+            original: { buffer: originalAudioBuffer, label: t('originalVocals') },
+            dubbed: { buffer: dubbedVocalsBuffer, label: t('dubbedVocals') },
+          });
           setTracks(parsedTracks);
 
           // Load dubbed audio chunks in the background
@@ -347,10 +348,10 @@ function App() {
 
     setChunkBuffers(newChunkBuffers);
     const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
-    setAudioTracks(prevTracks => [
+    setAudioTracks(prevTracks => ({
       ...prevTracks,
-      { buffer: constructedDubbedAudioBuffer, label: 'Dubbed Audio (Constructed)' }
-    ]);
+      dubbed: { ...prevTracks.dubbed, buffer: constructedDubbedAudioBuffer },
+    }));
   }, []);
 
   const handleEditTrack = (track: Track) => {
@@ -364,16 +365,10 @@ function App() {
         console.log("Recreating constructed audio...");
         const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
         console.log("Audio reconstruction complete. Updating audio tracks...");
-        setAudioTracks(prevTracks => {
-          const newTracks = [...prevTracks];
-          const constructedAudioIndex = newTracks.findIndex(track => track.label === 'Dubbed Audio (Constructed)');
-          if (constructedAudioIndex !== -1) {
-            newTracks[constructedAudioIndex] = { buffer: result, label: 'Dubbed Audio (Constructed)' };
-          } else {
-            newTracks.push({ buffer: result, label: 'Dubbed Audio (Constructed)' });
-          }
-          return newTracks;
-        });
+        setAudioTracks(prevTracks => ({
+          ...prevTracks,
+          dubbed: { ...prevTracks.dubbed, buffer: result },
+        }));
       } catch (error) {
         console.error("Error recreating constructed audio:", error);
       } finally {
@@ -423,9 +418,9 @@ function App() {
     }
   };
 
-  const handleAudioTrackToggle = (index: number) => {
+  const handleAudioTrackToggle = (id: string) => {
     setSelectedAudioTracks(prev => 
-      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
 
@@ -455,7 +450,7 @@ function App() {
     setShowDownloadModal(false);
   };
 
-  const handleDownloadWithSelectedTracks = async (selectedAudioTracks: number[], selectedSubtitles: string[]) => {
+  const handleDownloadWithSelectedTracks = async (selectedAudioTracks: string[], selectedSubtitles: string[]) => {
     if (mediaUrl && tracks.length > 0) {
       try {
         setIsRebuilding(true);
@@ -468,7 +463,33 @@ function App() {
           fileToProcess = new File([blob], `dubbed_final.mp4`, { type: mediaType });
         }
 
-        const selectedAudioBuffers = selectedAudioTracks.map(index => audioTracks[index]);
+        const backgroundAudio = audioTracks.background;
+        const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
+
+        // Decode background audio once
+        const backgroundBuffer = backgroundAudio.buffer instanceof AudioBuffer 
+          ? backgroundAudio.buffer 
+          : await audioService.decodeAudioData(backgroundAudio.buffer.slice(0));
+
+        for (const selectedAudioTrack of selectedAudioTracks) {
+          const audioTrack = audioTracks[selectedAudioTrack];
+          if (audioTrack) {
+            // Create a fresh copy of the buffer for each iteration
+            const audioBuffer = audioTrack.buffer instanceof AudioBuffer
+              ? audioTrack.buffer
+              : await audioService.decodeAudioData(audioTrack.buffer.slice(0));
+
+            const finalAudioBuffer = await audioService.mixAudioBuffers(
+              backgroundBuffer,
+              audioBuffer
+            );
+            selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
+          } else {
+            throw new Error(`Audio track ${selectedAudioTrack} not found`);
+          }
+        }
+        console.log("selectedAudioBuffers", selectedAudioBuffers);
+
         const newMediaBlob = await rebuildMedia(fileToProcess, tracks, selectedAudioBuffers, selectedSubtitles);
         const url = URL.createObjectURL(newMediaBlob);
         const a = document.createElement('a');

@@ -35,5 +35,9 @@
   "rebuildingMedia": "Rebuilding media, please wait...",
   "loading": "Loading...",
   "loadingChunks": "Loading files, please wait...",
-  "reconstructingAudio": "Reconstructing audio, please wait..."
+  "reconstructingAudio": "Reconstructing audio, please wait...",
+  "originalVocals": "Original Vocals",
+  "dubbedVocals": "Dubbed Vocals",
+  "backgroundAudio": "Background Audio",
+  "missingUUID": "Missing UUID"
 }

@@ -17,14 +17,6 @@ const StyledVideo = styled.video`
   object-fit: contain;
 `;
 
-
-interface Subtitle {
-  startTime: number;
-  duration: number;
-  text: string;
-}
-
-
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
   ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,7 +24,7 @@ const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
     const dubbedTrackRef = useRef<HTMLTrackElement>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
-    const audioBuffersRef = useRef<AudioBuffer[]>([]);
+    const audioBuffersRef = useRef<{ [key: string]: AudioBuffer }>({});
 
     const [originalSubtitlesUrl, dubbedSubtitlesUrl] = useMemo(() => {
       if (tracks.length === 0) return ['', ''];
@@ -71,10 +63,10 @@ ${subtitle.text}
       audioBufferSourcesRef.current = [];
 
       // Play only selected tracks
-      selectedAudioTracks.forEach(index => {
-        if (audioBuffersRef.current[index]) {
+      selectedAudioTracks.forEach((value) => {
+        if (audioBuffersRef.current[value]) {
           const source = audioContextRef.current!.createBufferSource();
-          source.buffer = audioBuffersRef.current[index];
+          source.buffer = audioBuffersRef.current[value];
           source.connect(audioContextRef.current!.destination);
           source.start(0, startTime);
           audioBufferSourcesRef.current.push(source);
@@ -133,7 +125,7 @@ ${subtitle.text}
 
     useEffect(() => {
       const video = videoRef.current;
-      if (video && audioTracks.length > 0) {
+      if (video && Object.keys(audioTracks).length > 0) {
         console.log("Received new audio tracks in VideoPlayer:", audioTracks);
         if (!audioContextRef.current) {
           audioContextRef.current = new AudioContext();
@@ -141,20 +133,20 @@ ${subtitle.text}
         const audioContext = audioContextRef.current;
 
         const loadAudioTracks = async () => {
-          for (let i = 0; i < audioTracks.length; i++) {
+          for (const [id, track] of Object.entries(audioTracks)) {
             try {
               let buffer: AudioBuffer;
-              const trackBuffer = audioTracks[i].buffer;
+              const trackBuffer = track.buffer;
               if (trackBuffer instanceof AudioBuffer) {
                 buffer = trackBuffer;
               } else {
                 const audioData = trackBuffer.slice(0);
                 buffer = await audioContext.decodeAudioData(audioData);
               }
-              audioBuffersRef.current[i] = buffer;
-              console.log(`Successfully loaded audio track ${i}: ${audioTracks[i].label}`);
+              audioBuffersRef.current[id] = buffer;
+              console.log(`Successfully loaded audio track ${id}: ${track.label}`);
             } catch (error) {
-              console.error(`Error decoding audio track ${i}:`, error);
+              console.error(`Error decoding audio track ${id}:`, error);
             }
           }
         };

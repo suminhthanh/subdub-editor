@@ -35,5 +35,9 @@
   "rebuildingMedia": "Reconstruyendo el video, por favor, espera...",
   "loading": "Cargando...",
   "loadingChunks": "Cargando archivos, por favor, espera...",
-  "reconstructingAudio": "Reconstruyendo audio, por favor, espera..."
+  "reconstructingAudio": "Reconstruyendo audio, por favor, espera...",
+  "originalVocals": "Voces Originales",
+  "dubbedVocals": "Voces Dobladas",
+  "backgroundAudio": "Audio de Fondo",
+  "missingUUID": "Falta UUID"
 }
