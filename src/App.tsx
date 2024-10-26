@@ -318,13 +318,16 @@ function App() {
     }
   }, [serviceParam, chunkBuffers]);
 
-  const handleSaveTrack = useCallback((updatedTrack: Track) => {
+  const handleSaveTrack = useCallback(async (updatedTrack: Track, needsReconstruction: boolean) => {
+    console.log("handleSaveTrack called with updatedTrack:", updatedTrack, "needsReconstruction:", needsReconstruction);
     if (editingTrack) {
       setTracks(prevTracks => {
         const newTracks = prevTracks.map(t => 
           t.id === editingTrack.id ? updatedTrack : t
         );
-        recreateConstructedAudio(newTracks);
+        if (needsReconstruction) {
+          recreateConstructedAudio(newTracks);
+        }
         return newTracks;
       });
       setEditingTrack(null);

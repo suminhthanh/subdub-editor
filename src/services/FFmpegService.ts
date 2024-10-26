@@ -152,6 +152,7 @@ const parseSRT = (srtContent: string): Track[] => {
         pitch: 0,
         speed: 1,
         volume_gain_db: 0,
+        needsResynthesis: false,
       });
     }
   });

@@ -132,6 +132,7 @@ export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
     volume_gain_db: item.volume_gain_db || 0,
     dubbed_path: item.dubbed_path,
     chunk_size: item.chunk_size,
+    needsResynthesis: false,
   }));
 };
 

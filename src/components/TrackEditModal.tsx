@@ -19,7 +19,7 @@ const DeleteButton = styled(Button)`
 
 interface TrackEditModalProps {
   track: Track | null;
-  onSave: (updatedTrack: Track) => void;
+  onSave: (updatedTrack: Track, needsReconstruction: boolean) => void;
   onClose: () => void;
   onDelete: (trackId: string) => void;
   ModalOverlay: React.ComponentType<any>;
@@ -57,15 +57,23 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
 
   const handleSave = () => {
     if (track) {
-      onSave({
+      const updatedTrack = {
         ...track,
         text,
         translated_text: translatedText,
         start: startTime,
         end: endTime,
         speed: speed,
-        speaker_id: selectedSpeakerId
-      });
+        speaker_id: selectedSpeakerId,
+        needsResynthesis: translatedText !== track.translated_text || selectedSpeakerId !== track.speaker_id
+      };
+
+      const needsReconstruction = 
+        startTime !== track.start ||
+        speed !== track.speed ||
+        updatedTrack.needsResynthesis;
+
+      onSave(updatedTrack, needsReconstruction);
     }
     onClose();
   };

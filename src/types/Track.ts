@@ -45,5 +45,5 @@ export interface Track {
   volume_gain_db: number;
 
   // An optional boolean indicating if the track needs resynthesis
-  needsResynthesis?: boolean;
+  needsResynthesis: boolean;
 }
