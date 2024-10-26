@@ -1,11 +1,26 @@
 import { DubbingAPIService } from "./DubbingAPIService";
 import { speakerService } from "./SpeakerService";
+import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 
 // Mock the SpeakerService
 jest.mock("./SpeakerService", () => ({
   speakerService: {
-    setSpeakers: jest.fn(),
+    setSpeaker: jest.fn(),
   },
+}));
+
+// Mock the MatxaSynthesisProvider
+jest.mock("./MatxaSynthesisProvider", () => ({
+  matxaSynthesisProvider: {
+    getVoice: jest.fn().mockReturnValue("mockedVoice"),
+  },
+}));
+
+// Mock the react-i18next
+jest.mock("react-i18next", () => ({
+  getI18n: () => ({
+    t: jest.fn().mockReturnValue("Speaker"),
+  }),
 }));
 
 describe("DubbingAPIService", () => {
@@ -41,28 +56,28 @@ describe("DubbingAPIService", () => {
       const result = DubbingAPIService.parseTracksFromJSON(mockData);
 
       expect(result).toHaveLength(1);
-      expect(result[0]).toEqual(
-        expect.objectContaining({
-          id: "1",
-          start: 0,
-          end: 5,
-          speaker_id: "SPEAKER_01",
-          path: "path/to/audio.mp3",
-          text: "Hello, world!",
-          for_dubbing: true,
-          ssml_gender: "Female",
-          translated_text: "Hola, mundo!",
-          assigned_voice: "voice1",
-          pitch: 0,
-          speed: 1,
-          volume_gain_db: 0,
-          dubbed_path: "path/to/dubbed/audio.mp3",
-          chunk_size: 150,
-        })
-      );
-      expect(speakerService.setSpeakers).toHaveBeenCalledWith([
-        { id: "SPEAKER_01", name: "SPEAKER_01", voice: "voice1" },
-      ]);
+      expect(result[0]).toEqual({
+        id: expect.any(String),
+        start: 0,
+        end: 5,
+        speaker_id: "SPEAKER_01",
+        path: "path/to/audio.mp3",
+        text: "Hello, world!",
+        for_dubbing: true,
+        ssml_gender: "Female",
+        translated_text: "Hola, mundo!",
+        pitch: 0,
+        speed: 1,
+        volume_gain_db: 0,
+        dubbed_path: "path/to/dubbed/audio.mp3",
+        chunk_size: 0,
+        needsResynthesis: false,
+      });
+      expect(speakerService.setSpeaker).toHaveBeenCalledWith({
+        id: "SPEAKER_01",
+        name: "Speaker 01",
+        voice: "mockedVoice",
+      });
     });
 
     it("should handle missing properties", () => {
@@ -83,7 +98,7 @@ describe("DubbingAPIService", () => {
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(
         expect.objectContaining({
-          id: "1",
+          id: expect.any(String),
           start: 0,
           end: 5,
           speaker_id: "SPEAKER_01",
@@ -92,15 +107,17 @@ describe("DubbingAPIService", () => {
           for_dubbing: false,
           ssml_gender: "",
           translated_text: "",
-          assigned_voice: "",
           pitch: 0,
           speed: 1,
           volume_gain_db: 0,
+          needsResynthesis: false,
         })
       );
-      expect(speakerService.setSpeakers).toHaveBeenCalledWith([
-        { id: "SPEAKER_01", name: "SPEAKER_01", voice: "default" },
-      ]);
+      expect(speakerService.setSpeaker).toHaveBeenCalledWith({
+        id: "SPEAKER_01",
+        name: "Speaker 01",
+        voice: "mockedVoice",
+      });
     });
 
     it("should throw an error for invalid input", () => {
@@ -108,7 +125,7 @@ describe("DubbingAPIService", () => {
 
       expect(() =>
         DubbingAPIService.parseTracksFromJSON(mockData as any)
-      ).toThrow("Cannot read properties of undefined (reading 'map')");
+      ).toThrow("utterances is not iterable");
     });
   });
 
