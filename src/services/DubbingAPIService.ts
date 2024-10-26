@@ -6,7 +6,8 @@ import { Speaker, speakerService } from "./SpeakerService";
 import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 import { getI18n } from "react-i18next";
 
-const API_BASE_URL = "http://192.168.178.152:8700";
+const API_BASE_URL =
+  process.env.DUBBING_API_BASE_URL || "http://192.168.178.152:8700";
 
 interface DubbingJSON {
   utterances: {

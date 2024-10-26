@@ -20,8 +20,17 @@ jobs:
           node-version: "18"
       - name: Install dependencies
         run: npm ci
+      - name: Load .env.production
+        run: |
+          echo "DUBBING_API_BASE_URL=$(grep DUBBING_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
+          echo "TRANSCRIPTION_API_BASE_URL=$(grep TRANSCRIPTION_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
+          echo "MATXA_API_BASE_URL=$(grep MATXA_API_BASE_URL .env.production | cut -d '=' -f2)" >> $GITHUB_ENV
       - name: Build
-        run: npm run build
+        run: npm run build:prod
+        env:
+          DUBBING_API_BASE_URL: ${{ env.DUBBING_API_BASE_URL }}
+          TRANSCRIPTION_API_BASE_URL: ${{ env.TRANSCRIPTION_API_BASE_URL }}
+          MATXA_API_BASE_URL: ${{ env.MATXA_API_BASE_URL }}
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

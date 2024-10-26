@@ -1,6 +1,5 @@
 import { Voice } from "../types/Voice";
 import { SynthesisProvider } from "./SynthesisService";
-import { decodeWAV } from "../utils/audioUtils";
 
 interface MatxaVoice extends Voice {
   gender: string;
@@ -8,6 +7,10 @@ interface MatxaVoice extends Voice {
   region: string;
   name: string;
 }
+
+const API_BASE_URL =
+  process.env.MATXA_API_BASE_URL ||
+  "https://api.softcatala.org/dubbing-service/v1";
 
 class MatxaSynthesisProvider implements SynthesisProvider {
   private providerName = "matxa";
@@ -91,7 +94,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
   }
 
   async speak(text: string, voice: Voice): Promise<ArrayBuffer> {
-    const url = `https://api.softcatala.org/dubbing-service/v1/speak/?text=${encodeURIComponent(
+    const url = `${API_BASE_URL}/speak/?text=${encodeURIComponent(
       text
     )}&voice=${voice.id}`;
 

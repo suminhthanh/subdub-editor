@@ -2,7 +2,9 @@ import { Track } from "../types/Track";
 import { APIServiceInterface } from "./APIServiceInterface";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
 
-const API_BASE_URL = "https://api.softcatala.org/transcribe-service/v1";
+const API_BASE_URL =
+  process.env.TRANSCRIPTION_API_BASE_URL ||
+  "https://api.softcatala.org/transcribe-service/v1";
 
 export const loadVideoFromUUID = async (
   uuid: string
