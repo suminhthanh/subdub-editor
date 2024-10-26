@@ -4,7 +4,6 @@ import {
   concatenateAudioBuffers,
   createSilentAudioBuffer,
   audioBufferToArrayBuffer,
-  decodeWAV,
 } from "../utils/audioUtils";
 import { synthesisService } from "./SynthesisService";
 import { Voice } from "../types/Voice";
@@ -60,14 +59,32 @@ export class AudioService {
       let chunkBuffer = chunkBuffers[chunkKey];
 
       if (!chunkBuffer || track.needsResynthesis) {
-        chunkBuffer = await this.resynthesizeTrack(track);
-        chunkBuffers[chunkKey] = chunkBuffer;
+        try {
+          chunkBuffer = await this.resynthesizeTrack(track);
+          chunkBuffers[chunkKey] = chunkBuffer;
+          // Reset the needsResynthesis flag after successful resynthesis
+          track.needsResynthesis = false;
+        } catch (error) {
+          console.error(`Failed to resynthesize track ${track.id}:`, error);
+          // If resynthesis fails, we'll skip this track
+          continue;
+        }
       }
 
       // Decode the chunk buffer
-      let chunkAudioBuffer = await this.audioContext.decodeAudioData(
-        chunkBuffer.slice(0)
-      );
+      let chunkAudioBuffer: AudioBuffer;
+      try {
+        chunkAudioBuffer = await this.audioContext.decodeAudioData(
+          chunkBuffer.slice(0)
+        );
+      } catch (error) {
+        console.error(
+          `Failed to decode audio data for track ${track.id}:`,
+          error
+        );
+        // If decoding fails, we'll skip this track
+        continue;
+      }
 
       // Adjust the speed of the chunk
       const speedAdjustedBuffer = await adjustAudioSpeed(
