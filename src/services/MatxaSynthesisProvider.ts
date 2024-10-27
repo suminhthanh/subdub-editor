@@ -39,7 +39,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "male",
       language: "cat",
       region: "central",
-      label: "Dona - Central (Grau)",
+      label: "Home - Central (Grau)",
       provider: this.providerName,
     },
     {
