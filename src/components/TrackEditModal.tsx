@@ -136,7 +136,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
           value={speed}
           onChange={(e) => setSpeed(Number(e.target.value))}
           step="0.1"
-          min="0.1"
+          min="1"
           max="2"
         />
         <Label>{t('speaker')}</Label>

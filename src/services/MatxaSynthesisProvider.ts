@@ -21,7 +21,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "male",
       language: "cat",
       region: "balear",
-      label: "Quim (Balear)",
+      label: "Home - Balear (Quim)",
       provider: this.providerName,
     },
     {
@@ -30,7 +30,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "female",
       language: "cat",
       region: "balear",
-      label: "Olga (Balear)",
+      label: "Dona - Balear (Olga)",
       provider: this.providerName,
     },
     {
@@ -39,7 +39,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "male",
       language: "cat",
       region: "central",
-      label: "Grau (Central)",
+      label: "Dona - Central (Grau)",
       provider: this.providerName,
     },
     {
@@ -48,7 +48,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "female",
       language: "cat",
       region: "central",
-      label: "Elia (Central)",
+      label: "Dona - Central (Èlia)",
       provider: this.providerName,
     },
     {
@@ -57,7 +57,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "male",
       language: "cat",
       region: "nord",
-      label: "Pere (Nord)",
+      label: "Home - Nord-occidental (Pere)",
       provider: this.providerName,
     },
     {
@@ -66,7 +66,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "female",
       language: "cat",
       region: "nord",
-      label: "Emma (Nord)",
+      label: "Dona - Nord-occidental (Emma)",
       provider: this.providerName,
     },
     {
@@ -75,7 +75,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "male",
       language: "cat",
       region: "valencia",
-      label: "Lluc (València)",
+      label: "Home - Valencià (Lluc)",
       provider: this.providerName,
     },
     {
@@ -84,7 +84,7 @@ class MatxaSynthesisProvider implements SynthesisProvider {
       gender: "female",
       language: "cat",
       region: "valencia",
-      label: "Gina (València)",
+      label: "Dona - Valencià (Gina)",
       provider: this.providerName,
     },
   ];

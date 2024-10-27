@@ -131,7 +131,7 @@ function App() {
   const [mediaUrl, setMediaUrl] = useState<string>('');
   const [currentTime, setCurrentTime] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'timeline' | 'list' | 'options'>('timeline');
+  const [activeTab, setActiveTab] = useState<'timeline' | 'list' | 'options'>('list');
   const [mediaType, setMediaType] = useState<string>('');
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
