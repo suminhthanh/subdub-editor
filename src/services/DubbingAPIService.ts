@@ -37,7 +37,7 @@ export const uuidExists = async (uuid: string): Promise<boolean> => {
 };
 
 export const getMediaUrl = (uuid: string): string => {
-  return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`;
+  return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=dub`;
 };
 
 export const loadVideoFromUUID = async (

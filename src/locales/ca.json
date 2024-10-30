@@ -39,5 +39,6 @@
   "originalVocals": "Veus Originals",
   "dubbedVocals": "Veus Doblades",
   "backgroundAudio": "Àudio de Fons",
-  "missingUUID": "Falta UUID"
+  "missingUUID": "Falta UUID",
+  "loadingMedia": "Carregant vídeo, si us plau, espera..."
 }

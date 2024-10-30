@@ -39,5 +39,6 @@
   "originalVocals": "Voces Originales",
   "dubbedVocals": "Voces Dobladas",
   "backgroundAudio": "Audio de Fondo",
-  "missingUUID": "Falta UUID"
+  "missingUUID": "Falta UUID",
+  "loadingMedia": "Cargando vídeo, por favor, espera..."
 }

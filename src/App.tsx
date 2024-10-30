@@ -16,7 +16,6 @@ import VideoOptions from './components/VideoOptions';
 import DownloadModal from './components/DownloadModal';
 import LoadingOverlay from './components/LoadingOverlay';
 import { speakerService } from './services/SpeakerService';
-import { synthesisService } from './services/SynthesisService';
 import { Voice } from './types/Voice';
 import { AudioTrack } from './types/AudioTrack';
 
@@ -124,6 +123,34 @@ const CenteredContent = styled.div`
   gap: 10px;
 `;
 
+const loadDubbingMediaInBackground = async (uuid: string) => {
+  try {
+    const [
+      silentVideoResponse,
+      originalAudioBuffer,
+      backgroundAudioBuffer,
+      dubbedVocalsBuffer,
+      tracksDataResponse
+    ] = await Promise.all([
+      DubbingAPIService.loadSilentVideoFromUUID(uuid),
+      DubbingAPIService.loadOriginalVocalsFromUUID(uuid),
+      DubbingAPIService.loadBackgroundAudioFromUUID(uuid),
+      DubbingAPIService.loadDubbedVocalsFromUUID(uuid),
+      DubbingAPIService.loadTracksFromUUID(uuid)
+    ]);
+
+    return {
+      videoUrl: silentVideoResponse.url,
+      originalAudioBuffer,
+      backgroundAudioBuffer,
+      dubbedVocalsBuffer,
+      tracks: DubbingAPIService.parseTracksFromJSON(tracksDataResponse)
+    };
+  } catch (error) {
+    throw error;
+  }
+};
+
 function App() {
   const { t, i18n } = useTranslation();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -154,6 +181,8 @@ function App() {
   );
   const [chunkLoadingProgress, setChunkLoadingProgress] = useState(0);
   const [reconstructionMessage, setReconstructionMessage] = useState<string | null>(null);
+  const [isMediaFullyLoaded, setIsMediaFullyLoaded] = useState(false);
+  const [backgroundLoadingMessage, setBackgroundLoadingMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (initialLoadRef.current) return;
@@ -271,31 +300,42 @@ function App() {
         console.log("Starting API calls for UUID:", newUuid);
 
         if (serviceParam === "dubbing") {
+          // First verify UUID exists
           await DubbingAPIService.uuidExists(newUuid);
-
-          setMediaUrl(DubbingAPIService.getMediaUrl(newUuid));
-
-          const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, dubbedVocalsBuffer, tracksDataResponse] = await Promise.all([
-            DubbingAPIService.loadSilentVideoFromUUID(newUuid),
-            DubbingAPIService.loadOriginalVocalsFromUUID(newUuid),
-            DubbingAPIService.loadBackgroundAudioFromUUID(newUuid),
-            DubbingAPIService.loadDubbedVocalsFromUUID(newUuid),
-            DubbingAPIService.loadTracksFromUUID(newUuid)
-          ]);
-
-          const parsedTracks = DubbingAPIService.parseTracksFromJSON(tracksDataResponse);
           
-          setMediaUrl(silentVideoResponse.url);
+          // Set initial video URL
+          setMediaUrl(DubbingAPIService.getMediaUrl(newUuid));
           setMediaType('video/mp4');
-          setAudioTracks({
-            background: { buffer: backgroundAudioBuffer, label: t('backgroundAudio') },
-            original: { buffer: originalAudioBuffer, label: t('originalVocals') },
-            dubbed: { buffer: dubbedVocalsBuffer, label: t('dubbedVocals') },
-          });
-          setTracks(parsedTracks);
+          setIsMediaFullyLoaded(false); // Reset loading state
+          setBackgroundLoadingMessage(t('loadingMedia')); // Set loading message
 
-          // Load dubbed audio chunks in the background
-          loadChunksInBackground(newUuid, parsedTracks);
+          // Load everything else in the background
+          loadDubbingMediaInBackground(newUuid)
+            .then(({
+              videoUrl,
+              originalAudioBuffer,
+              backgroundAudioBuffer,
+              dubbedVocalsBuffer,
+              tracks
+            }) => {
+              setMediaUrl(videoUrl);
+              setAudioTracks({
+                background: { buffer: backgroundAudioBuffer, label: t('backgroundAudio') },
+                original: { buffer: originalAudioBuffer, label: t('originalVocals') },
+                dubbed: { buffer: dubbedVocalsBuffer, label: t('dubbedVocals') },
+              });
+              setTracks(tracks);
+              setBackgroundLoadingMessage(null); // Clear loading message
+
+              // Load dubbed audio chunks in the background
+              loadChunksInBackground(newUuid, tracks);
+            })
+            .catch(error => {
+              console.error("Error loading media in background:", error);
+              setLoadError('errorLoadingUUID');
+              setBackgroundLoadingMessage(null); // Clear loading message on error
+            });
+
         } else if (serviceParam === "transcription") {
           const [videoDataResponse, tracksDataResponse] = await Promise.all([
             TranscriptionAPIService.loadVideoFromUUID(newUuid),
@@ -355,6 +395,7 @@ function App() {
       ...prevTracks,
       dubbed: { ...prevTracks.dubbed, buffer: constructedDubbedAudioBuffer },
     }));
+    setIsMediaFullyLoaded(true); // Set to true when everything is loaded
   }, []);
 
   const handleEditTrack = (track: Track) => {
@@ -543,6 +584,11 @@ function App() {
       <GlobalStyle />
       <AppContainer>
         <Header>
+          {backgroundLoadingMessage && (
+            <ProgressMessage>
+              {backgroundLoadingMessage}
+            </ProgressMessage>
+          )}
           {(chunkLoadingProgress > 0 && chunkLoadingProgress < 100) && (
             <ProgressMessage>
               {t('loadingChunks')}: {chunkLoadingProgress.toFixed(0)}%
@@ -557,7 +603,12 @@ function App() {
                 {!isUUIDMode && (
                   <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
                 )}
-                <Button onClick={handleDownloadClick}>{t('downloadResult')}</Button>
+                <Button 
+                  onClick={handleDownloadClick} 
+                  disabled={!isMediaFullyLoaded}
+                >
+                  {t('downloadResult')}
+                </Button>
               </>
             )}
             <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>

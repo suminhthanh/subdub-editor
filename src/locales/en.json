@@ -39,5 +39,6 @@
   "originalVocals": "Original Vocals",
   "dubbedVocals": "Dubbed Vocals",
   "backgroundAudio": "Background Audio",
-  "missingUUID": "Missing UUID"
+  "missingUUID": "Missing UUID",
+  "loadingMedia": "Loading media, please wait..."
 }
