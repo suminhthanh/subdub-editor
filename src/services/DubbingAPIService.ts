@@ -28,6 +28,14 @@ interface DubbingJSON {
   source_language: string;
 }
 
+export const uuidExists = async (uuid: string): Promise<boolean> => {
+  const response = await fetch(`${API_BASE_URL}/uuid_exists/?uuid=${uuid}`);
+  if (!response.ok) {
+    throw new Error("UUID does not exist");
+  }
+  return response.json();
+};
+
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
@@ -197,4 +205,5 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   parseTracksFromJSON,
   loadDubbedAudioChunksFromUUID,
   loadSingleChunk,
+  uuidExists,
 };
