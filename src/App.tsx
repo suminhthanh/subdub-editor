@@ -579,6 +579,13 @@ function App() {
     }
   }, [tracks, recreateConstructedAudio]);
 
+  useEffect(() => {
+    const forcedLanguage = process.env.APP_LANGUAGE;
+    if (forcedLanguage) {
+      i18n.changeLanguage(forcedLanguage);
+    }
+  }, [i18n]);
+
   return (
     <>
       <GlobalStyle />
@@ -611,11 +618,13 @@ function App() {
                 </Button>
               </>
             )}
-            <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>
-              <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="ca">Català</option>
-            </Select>
+            {!process.env.APP_LANGUAGE && (
+              <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>
+                <option value="en">English</option>
+                <option value="es">Español</option>
+                <option value="ca">Català</option>
+              </Select>
+            )}
           </HeaderRight>
         </Header>
         <ContentContainer>
