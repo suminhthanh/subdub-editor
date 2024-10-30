@@ -273,6 +273,8 @@ function App() {
         if (serviceParam === "dubbing") {
           await DubbingAPIService.uuidExists(newUuid);
 
+          setMediaUrl(DubbingAPIService.getMediaUrl(newUuid));
+
           const [silentVideoResponse, originalAudioBuffer, backgroundAudioBuffer, dubbedVocalsBuffer, tracksDataResponse] = await Promise.all([
             DubbingAPIService.loadSilentVideoFromUUID(newUuid),
             DubbingAPIService.loadOriginalVocalsFromUUID(newUuid),

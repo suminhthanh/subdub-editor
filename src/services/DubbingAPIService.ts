@@ -36,6 +36,10 @@ export const uuidExists = async (uuid: string): Promise<boolean> => {
   return response.json();
 };
 
+export const getMediaUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`;
+};
+
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
@@ -206,4 +210,5 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadDubbedAudioChunksFromUUID,
   loadSingleChunk,
   uuidExists,
+  getMediaUrl,
 };
