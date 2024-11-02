@@ -11,10 +11,11 @@ const MediaContainer = styled.div`
   align-items: center;
 `;
 
-const StyledVideo = styled.video`
+const StyledVideo = styled.video<{ isEditMode: boolean }>`
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  width: 100%
 `;
 
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
@@ -191,7 +192,7 @@ ${subtitle.text}
 
     return (
       <MediaContainer>
-        <StyledVideo ref={videoRef} controls preload="auto">
+        <StyledVideo ref={videoRef} controls preload="auto" isEditMode={tracks.length > 0}>
           <source src={src} type={mediaType} />
           {originalSubtitlesUrl && (
             <track ref={originalTrackRef} kind="captions" srcLang="original" label="Original" />
