@@ -168,7 +168,6 @@ function App() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serviceParam, setServiceParam] = useState<string>('dubbing');
   const [isLoading, setIsLoading] = useState(false);
-  const initialLoadRef = useRef(false);
   const [audioTracks, setAudioTracks] = useState<{ [key: string]: AudioTrack }>({});
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>(['background', 'dubbed']); // Default to first two tracks
@@ -186,48 +185,20 @@ function App() {
   const [isEditMode, setIsEditMode] = useState(false);
 
   useEffect(() => {
-    if (initialLoadRef.current) return;
-    initialLoadRef.current = true;
-
     const params = new URLSearchParams(window.location.search);
     const uuidParam = params.get('uuid');
     const serviceParam = params.get('service') as 'dubbing' | 'transcription' | null;
-
-    console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam);
-
-    if (appMode) {
-      if (appMode === 'dubbing') {
-        if (uuidParam) {
-          setIsUUIDMode(true);
-          setServiceParam(appMode);
-          DubbingAPIService.uuidExists(uuidParam)
-            .then(() => {
-              setMediaUrl(DubbingAPIService.getMediaUrl(uuidParam));
-              setMediaType('video/mp4');
-            })
-            .catch(() => {
-              setLoadError('errorLoadingUUID');
-            });
-        } else {
-          setLoadError('missingUUID');
-        }
-      } else if (appMode === 'transcription') {
-        if (uuidParam) {
-          setIsUUIDMode(true);
-        } else {
-          setLoadError('missingUUID');
-        }
-      } else if (appMode === 'file') {
-        setIsUUIDMode(false);
-      }
+    if (serviceParam) {
+      setAppMode(serviceParam);
     } else {
-      if (uuidParam) {
-        setIsUUIDMode(true);
-        setServiceParam(serviceParam || 'dubbing');
-        handleFileOrUUIDSelect(null, uuidParam);
-      } else {
-        setIsUUIDMode(false);
-      }
+      setServiceParam(appMode || 'dubbing');
+    }
+
+    console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam, "App mode:", appMode);
+
+    if (uuidParam) {
+      setIsUUIDMode(true);
+      handleFileOrUUIDSelect(null, uuidParam);
     }
   }, [appMode]);
 
@@ -317,36 +288,6 @@ function App() {
           // Set initial video URL
           setMediaUrl(DubbingAPIService.getMediaUrl(newUuid));
           setMediaType('video/mp4');
-          setIsMediaFullyLoaded(false); // Reset loading state
-          setBackgroundLoadingMessage(t('loadingMedia')); // Set loading message
-
-          // Load everything else in the background
-          loadDubbingMediaInBackground(newUuid)
-            .then(({
-              videoUrl,
-              originalAudioBuffer,
-              backgroundAudioBuffer,
-              dubbedVocalsBuffer,
-              tracks
-            }) => {
-              setMediaUrl(videoUrl);
-              setAudioTracks({
-                background: { buffer: backgroundAudioBuffer, label: t('backgroundAudio') },
-                original: { buffer: originalAudioBuffer, label: t('originalVocals') },
-                dubbed: { buffer: dubbedVocalsBuffer, label: t('dubbedVocals') },
-              });
-              setTracks(tracks);
-              setBackgroundLoadingMessage(null); // Clear loading message
-
-              // Load dubbed audio chunks in the background
-              loadChunksInBackground(newUuid, tracks);
-            })
-            .catch(error => {
-              console.error("Error loading media in background:", error);
-              setLoadError('errorLoadingUUID');
-              setBackgroundLoadingMessage(null); // Clear loading message on error
-            });
-
         } else if (serviceParam === "transcription") {
           const [videoDataResponse, tracksDataResponse] = await Promise.all([
             TranscriptionAPIService.loadVideoFromUUID(newUuid),
@@ -377,7 +318,7 @@ function App() {
       }
     }
     setIsLoading(false);
-  }, [mediaUrl, serviceParam]);
+  }, [serviceParam]);
 
   const loadChunksInBackground = useCallback(async (uuid: string, tracks: Track[]) => {
     const dubbedTracks = tracks.filter(track => track.dubbed_path && track.for_dubbing);
@@ -598,7 +539,8 @@ function App() {
   }, [i18n]);
 
   const handleEditModeToggle = async () => {
-    setIsLoading(true);
+    setIsMediaFullyLoaded(false); // Reset loading state
+    setBackgroundLoadingMessage(t('loadingMedia')); // Set loading message
     try {
       const params = new URLSearchParams(window.location.search);
       const uuid = params.get('uuid');
@@ -617,7 +559,7 @@ function App() {
       console.error("Error loading edit mode:", error);
       setLoadError('errorLoadingUUID');
     } finally {
-      setIsLoading(false);
+      setBackgroundLoadingMessage(null); // Clear loading message
       setIsEditMode(true);
     }
   };
