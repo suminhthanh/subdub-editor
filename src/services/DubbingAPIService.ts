@@ -9,24 +9,21 @@ import { getI18n } from "react-i18next";
 const API_BASE_URL =
   process.env.DUBBING_API_BASE_URL || "http://192.168.178.152:8700";
 
-interface DubbingJSON {
-  utterances: {
-    start: number;
-    end: number;
-    speaker_id: string;
-    path: string;
-    text: string;
-    for_dubbing: boolean;
-    ssml_gender: string;
-    translated_text: string;
-    assigned_voice: string;
-    pitch: number;
-    speed: number;
-    volume_gain_db: number;
-    dubbed_path: string;
-  }[];
-  source_language: string;
-}
+type DubbingJSON = {
+  start: number;
+  end: number;
+  speaker_id: string;
+  path: string;
+  text: string;
+  for_dubbing: boolean;
+  gender: string;
+  translated_text: string;
+  assigned_voice: string;
+  pitch: number;
+  speed: number;
+  volume_gain_db: number;
+  dubbed_path: string;
+}[];
 
 export const uuidExists = async (uuid: string): Promise<boolean> => {
   const response = await fetch(`${API_BASE_URL}/uuid_exists/?uuid=${uuid}`);
@@ -118,18 +115,14 @@ export const loadBackgroundAudioFromUUID = async (
 export const loadTracksFromUUID = async (
   uuid: string
 ): Promise<DubbingJSON> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=json`
-  );
+  const response = await fetch(`${API_BASE_URL}/get_utterances?uuid=${uuid}`);
   if (!response.ok) {
     throw new Error("Failed to load dubbing data");
   }
   return response.json();
 };
 
-export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
-  const utterances = json.utterances;
-
+export const parseTracksFromJSON = (utterances: DubbingJSON): Track[] => {
   const tracks: Track[] = [];
   for (const utterance of utterances) {
     speakerService.setSpeaker({
@@ -146,7 +139,7 @@ export const parseTracksFromJSON = (json: DubbingJSON): Track[] => {
       path: utterance.path || "",
       text: utterance.text || "",
       for_dubbing: utterance.for_dubbing || false,
-      ssml_gender: utterance.ssml_gender || "",
+      ssml_gender: utterance.gender || "",
       translated_text: utterance.translated_text || "",
       pitch: utterance.pitch || 0,
       speed: utterance.speed || 1,
