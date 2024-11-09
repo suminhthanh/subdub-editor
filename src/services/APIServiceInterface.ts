@@ -14,3 +14,10 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   getSilentVideoUrl: (uuid: string) => string;
   loadDubbedUtterance: (uuid: string, id: number) => Promise<ArrayBuffer>;
 }
+
+export interface TranscriptionAPIServiceInterface extends APIServiceInterface {
+  getMediaMetadata: (uuid: string) => Promise<{
+    contentType: string;
+    filename: string;
+  }>;
+}

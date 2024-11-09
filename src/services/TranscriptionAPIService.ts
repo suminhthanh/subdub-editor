@@ -1,5 +1,5 @@
 import { Track } from "../types/Track";
-import { APIServiceInterface } from "./APIServiceInterface";
+import { TranscriptionAPIServiceInterface } from "./APIServiceInterface";
 import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
 
 const API_BASE_URL =
@@ -10,17 +10,15 @@ export const getMediaUrl = (uuid: string): string => {
   return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`;
 };
 
-export const loadVideoFromUUID = async (
+export const getMediaMetadata = async (
   uuid: string
-): Promise<{ url: string; contentType: string; filename: string }> => {
-  const response = await fetch(getMediaUrl(uuid));
+): Promise<{ contentType: string; filename: string }> => {
+  const response = await fetch(getMediaUrl(uuid), { method: "HEAD" });
   if (!response.ok) {
     throw new Error("Failed to load video");
   }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const contentType = response.headers.get("content-type") || "video/mp4";
 
+  const contentType = response.headers.get("content-type") || "video/mp4";
   const contentDisposition = response.headers.get("content-disposition");
   let filename = extractFilenameFromContentDisposition(contentDisposition);
 
@@ -29,7 +27,7 @@ export const loadVideoFromUUID = async (
     filename = `input.${ext}`;
   }
 
-  return { url, contentType, filename };
+  return { contentType, filename };
 };
 
 export const loadTracksFromUUID = async (uuid: string): Promise<any> => {
@@ -60,8 +58,9 @@ export const parseTracksFromJSON = (json: any): Track[] => {
   }));
 };
 
-export const TranscriptionAPIService: APIServiceInterface = {
+export const TranscriptionAPIService: TranscriptionAPIServiceInterface = {
   getMediaUrl,
   loadTracksFromUUID,
   parseTracksFromJSON,
+  getMediaMetadata,
 };

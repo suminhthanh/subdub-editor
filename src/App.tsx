@@ -288,11 +288,11 @@ function App() {
           setMediaType('video/mp4');
         } else if (serviceParam === "transcription") {
           const [videoDataResponse, tracksDataResponse] = await Promise.all([
-            TranscriptionAPIService.loadVideoFromUUID(newUuid),
+            TranscriptionAPIService.getMediaMetadata(newUuid),
             TranscriptionAPIService.loadTracksFromUUID(newUuid)
           ]);
 
-          setMediaUrl(videoDataResponse.url);
+          setMediaUrl(TranscriptionAPIService.getMediaUrl(newUuid));
           setMediaType(videoDataResponse.contentType);
           setMediaFileName(videoDataResponse.filename);
           setTracks(TranscriptionAPIService.parseTracksFromJSON(tracksDataResponse));
