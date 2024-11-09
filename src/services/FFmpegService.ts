@@ -35,7 +35,7 @@ export const extractTracks = async (mediaFile: File): Promise<Track[]> => {
 };
 
 export const rebuildMedia = async (
-  mediaFile: File,
+  mediaFile: File | string,
   tracks: Track[],
   selectedAudioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[],
   selectedSubtitles: string[]
@@ -123,7 +123,7 @@ export const rebuildMedia = async (
   await ffmpeg.run(...ffmpegArgs);
 
   const data = ffmpeg.FS("readFile", outputFileName);
-  return new Blob([data.buffer], { type: mediaFile.type });
+  return new Blob([data.buffer], { type: "video/mp4" });
 };
 
 const parseSRT = (srtContent: string): Track[] => {

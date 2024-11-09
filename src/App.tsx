@@ -448,14 +448,7 @@ function App() {
     if (mediaUrl && tracks.length > 0) {
       try {
         setIsRebuilding(true);
-        let fileToProcess: File;
-        if (mediaFile) {
-          fileToProcess = mediaFile;
-        } else {
-          const response = await fetch(mediaUrl);
-          const blob = await response.blob();
-          fileToProcess = new File([blob], `dubbed_final.mp4`, { type: mediaType });
-        }
+        let fileToProcess: File | string = mediaUrl || mediaUrl;
 
         const backgroundAudio = audioTracks.background;
         const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
