@@ -130,6 +130,7 @@ const parseSRT = (srtContent: string): Track[] => {
   const tracks: Track[] = [];
   const subtitleBlocks = srtContent.trim().split("\n\n");
 
+  let counter = 0;
   subtitleBlocks.forEach((block) => {
     const lines = block.split("\n");
     if (lines.length >= 3) {
@@ -139,7 +140,7 @@ const parseSRT = (srtContent: string): Track[] => {
       const text = lines.slice(2).join("\n");
 
       tracks.push({
-        id: uuidv4(),
+        id: ++counter,
         start,
         end,
         speaker_id: "",

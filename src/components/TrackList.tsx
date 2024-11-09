@@ -69,7 +69,7 @@ interface TrackListProps {
   onTrackChange: (index: number, updatedTrack: Track, recreateAudio: boolean) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
-  onDeleteTrack: (trackId: string) => void;
+  onDeleteTrack: (trackId: number) => void;
   isDubbingService: boolean;
   showSpeakerColors: boolean;
 }

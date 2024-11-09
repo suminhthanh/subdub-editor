@@ -27,7 +27,7 @@ interface TrackEditModalProps {
   track: Track | null;
   onSave: (updatedTrack: Track, needsReconstruction: boolean) => void;
   onClose: () => void;
-  onDelete: (trackId: string) => void;
+  onDelete: (trackId: number) => void;
   ModalOverlay: React.ComponentType<any>;
   isDubbingService: boolean;
 }

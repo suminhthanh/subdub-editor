@@ -2,7 +2,7 @@ import { Voice } from "./Voice";
 
 export interface Track {
   // A unique identifier for the track
-  id: string;
+  id: number;
 
   // The start time of the track in seconds
   start: number;

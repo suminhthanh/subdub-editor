@@ -329,7 +329,7 @@ function App() {
       const chunkName = track.dubbed_path.split("/").pop();
       if (chunkName) {
         try {
-          const buffer = await DubbingAPIService.loadSingleChunk(uuid, chunkName);
+          const buffer = await DubbingAPIService.loadDubbedUtterance(uuid, track.id);
           newChunkBuffers[chunkName] = buffer;
           loadedChunks++;
           setChunkLoadingProgress((loadedChunks / totalChunks) * 100);
@@ -418,7 +418,7 @@ function App() {
     );
   };
 
-  const handleDeleteTrack = useCallback((trackId: string) => {
+  const handleDeleteTrack = useCallback((trackId: number) => {
     setTracks(prevTracks => {
       const newTracks = prevTracks.filter(t => t.id !== trackId);
       recreateConstructedAudio(newTracks);
@@ -448,7 +448,7 @@ function App() {
     if (mediaUrl && tracks.length > 0) {
       try {
         setIsRebuilding(true);
-        let fileToProcess: File | string = mediaUrl || mediaUrl;
+        let fileToProcess: File | string = mediaFile || mediaUrl;
 
         const backgroundAudio = audioTracks.background;
         const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];

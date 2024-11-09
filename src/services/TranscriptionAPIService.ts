@@ -6,12 +6,14 @@ const API_BASE_URL =
   process.env.TRANSCRIPTION_API_BASE_URL ||
   "https://api.softcatala.org/transcribe-service/v1";
 
+export const getMediaUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`;
+};
+
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`
-  );
+  const response = await fetch(getMediaUrl(uuid));
   if (!response.ok) {
     throw new Error("Failed to load video");
   }
@@ -59,7 +61,7 @@ export const parseTracksFromJSON = (json: any): Track[] => {
 };
 
 export const TranscriptionAPIService: APIServiceInterface = {
-  loadVideoFromUUID,
+  getMediaUrl,
   loadTracksFromUUID,
   parseTracksFromJSON,
 };

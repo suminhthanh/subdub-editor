@@ -23,6 +23,7 @@ type DubbingJSON = {
   speed: number;
   volume_gain_db: number;
   dubbed_path: string;
+  id: number;
 }[];
 
 export const uuidExists = async (uuid: string): Promise<boolean> => {
@@ -39,43 +40,6 @@ export const getMediaUrl = (uuid: string): string => {
 
 export const getSilentVideoUrl = (uuid: string): string => {
   return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_video.mp4`;
-};
-
-export const loadVideoFromUUID = async (
-  uuid: string
-): Promise<{ url: string; contentType: string; filename: string }> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to load video");
-  }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  const contentType = response.headers.get("content-type") || "video/mp4";
-
-  const contentDisposition = response.headers.get("content-disposition");
-  let filename = extractFilenameFromContentDisposition(contentDisposition);
-
-  if (filename === "input") {
-    const ext = MIME_TO_EXT[contentType] || "mp4";
-    filename = `input.${ext}`;
-  }
-
-  return { url, contentType, filename };
-};
-
-export const loadSilentVideoFromUUID = async (
-  uuid: string
-): Promise<{ url: string }> => {
-  const response = await fetch(getSilentVideoUrl(uuid));
-  if (!response.ok) {
-    throw new Error("Failed to load silent video");
-  }
-  const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-
-  return { url };
 };
 
 export const loadOriginalVocalsFromUUID = async (
@@ -134,7 +98,7 @@ export const parseTracksFromJSON = (utterances: DubbingJSON): Track[] => {
     });
 
     tracks.push({
-      id: uuidv4(),
+      id: utterance.id,
       start: utterance.start || 0,
       end: utterance.end || 0,
       speaker_id: utterance.speaker_id,
@@ -155,56 +119,27 @@ export const parseTracksFromJSON = (utterances: DubbingJSON): Track[] => {
   return tracks;
 };
 
-// Add this new function to load dubbed audio chunks
-export const loadDubbedAudioChunksFromUUID = async (
+export const loadDubbedUtterance = async (
   uuid: string,
-  tracks: Track[]
-): Promise<{ [key: string]: ArrayBuffer }> => {
-  const chunkBuffers: { [key: string]: ArrayBuffer } = {};
-  const dubbedTracks = tracks.filter(
-    (track) => track.dubbed_path && track.for_dubbing
-  );
-
-  for (const track of dubbedTracks) {
-    const chunkName = track.dubbed_path.split("/").pop();
-    if (chunkName) {
-      const response = await fetch(
-        `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunkName}`
-      );
-      if (!response.ok) {
-        throw new Error(`Failed to load dubbed audio chunk: ${chunkName}`);
-      }
-      chunkBuffers[chunkName] = await response.arrayBuffer();
-    }
-  }
-
-  return chunkBuffers;
-};
-
-export const loadSingleChunk = async (
-  uuid: string,
-  chunkName: string
+  id: number
 ): Promise<ArrayBuffer> => {
   const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=${chunkName}`
+    `${API_BASE_URL}/get_dubbed_utterance/?uuid=${uuid}&id=${id}`
   );
   if (!response.ok) {
-    throw new Error(`Failed to load dubbed audio chunk: ${chunkName}`);
+    throw new Error(`Failed to load dubbed utterance: ${id}`);
   }
   return response.arrayBuffer();
 };
 
 export const DubbingAPIService: DubbingAPIServiceInterface = {
-  loadVideoFromUUID,
-  loadSilentVideoFromUUID,
   loadOriginalVocalsFromUUID,
   loadBackgroundAudioFromUUID,
   loadDubbedVocalsFromUUID,
   loadTracksFromUUID,
   parseTracksFromJSON,
-  loadDubbedAudioChunksFromUUID,
-  loadSingleChunk,
   uuidExists,
   getMediaUrl,
   getSilentVideoUrl,
+  loadDubbedUtterance,
 };
