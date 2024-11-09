@@ -126,13 +126,11 @@ const CenteredContent = styled.div`
 const loadDubbingMediaInBackground = async (uuid: string) => {
   try {
     const [
-      silentVideoResponse,
       originalAudioBuffer,
       backgroundAudioBuffer,
       dubbedVocalsBuffer,
       tracksDataResponse
     ] = await Promise.all([
-      DubbingAPIService.loadSilentVideoFromUUID(uuid),
       DubbingAPIService.loadOriginalVocalsFromUUID(uuid),
       DubbingAPIService.loadBackgroundAudioFromUUID(uuid),
       DubbingAPIService.loadDubbedVocalsFromUUID(uuid),
@@ -140,7 +138,7 @@ const loadDubbingMediaInBackground = async (uuid: string) => {
     ]);
 
     return {
-      videoUrl: silentVideoResponse.url,
+      videoUrl: DubbingAPIService.getSilentVideoUrl(uuid),
       originalAudioBuffer,
       backgroundAudioBuffer,
       dubbedVocalsBuffer,

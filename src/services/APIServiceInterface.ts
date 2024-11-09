@@ -22,4 +22,5 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   loadSingleChunk: (uuid: string, chunkName: string) => Promise<ArrayBuffer>;
   uuidExists: (uuid: string) => Promise<boolean>;
   getMediaUrl: (uuid: string) => string;
+  getSilentVideoUrl: (uuid: string) => string;
 }

@@ -37,6 +37,10 @@ export const getMediaUrl = (uuid: string): string => {
   return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=dub`;
 };
 
+export const getSilentVideoUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_video.mp4`;
+};
+
 export const loadVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string; contentType: string; filename: string }> => {
@@ -64,9 +68,7 @@ export const loadVideoFromUUID = async (
 export const loadSilentVideoFromUUID = async (
   uuid: string
 ): Promise<{ url: string }> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_video.mp4`
-  );
+  const response = await fetch(getSilentVideoUrl(uuid));
   if (!response.ok) {
     throw new Error("Failed to load silent video");
   }
@@ -204,4 +206,5 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadSingleChunk,
   uuidExists,
   getMediaUrl,
+  getSilentVideoUrl,
 };
