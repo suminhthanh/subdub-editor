@@ -158,6 +158,7 @@ function App() {
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
+  const [advancedEditMode, setAdvancedEditMode] = useState(false);
   const [uuidParam, setUuidParam] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -352,13 +353,24 @@ function App() {
     if (serviceParam === "dubbing") {
       try {
         setReconstructionMessage(t('reconstructingAudio'));
-        console.log("Recreating constructed audio...");
-        const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
-        console.log("Audio reconstruction complete. Updating audio tracks...");
-        setAudioTracks(prevTracks => ({
-          ...prevTracks,
-          dubbed: { ...prevTracks.dubbed, label: t('dubbedVocals'), buffer: result },
-        }));
+        if (advancedEditMode) {
+          console.log("Recreating constructed audio...");
+          const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
+          console.log("Audio reconstruction complete. Updating audio tracks...");
+          setAudioTracks(prevTracks => ({
+            ...prevTracks,
+            dubbed: { ...prevTracks.dubbed, label: t('dubbedVocals'), buffer: result },
+          }));
+        } else {
+          for (const track of updatedTracks) {
+            if (track.needsResynthesis) {
+              const resynthesizedBuffer = await audioService.resynthesizeTrack(track);
+              track.buffer = await audioService.decodeAudioData(resynthesizedBuffer);
+              track.needsResynthesis = false;
+            }
+          }
+          setTracks(updatedTracks)
+        }
       } catch (error) {
         console.error("Error recreating constructed audio:", error);
       } finally {
@@ -535,12 +547,13 @@ function App() {
         setTracks(parsedTracks);
 
         if (parsedTracks.length < 50) {
-        const result = await loadDubbingMediaInBackground(uuidParam);
-        setMediaUrl(result.videoUrl);
-        setAudioTracks({
-          background: { buffer: result.backgroundAudioBuffer, label: t('backgroundAudio') },
-          original: { buffer: result.originalAudioBuffer, label: t('originalVocals') },
-          dubbed: { buffer: result.dubbedVocalsBuffer, label: t('dubbedVocals') },
+          setAdvancedEditMode(true);
+          const result = await loadDubbingMediaInBackground(uuidParam);
+          setMediaUrl(result.videoUrl);
+          setAudioTracks({
+            background: { buffer: result.backgroundAudioBuffer, label: t('backgroundAudio') },
+            original: { buffer: result.originalAudioBuffer, label: t('originalVocals') },
+            dubbed: { buffer: result.dubbedVocalsBuffer, label: t('dubbedVocals') },
           });
           loadChunksInBackground(uuidParam , parsedTracks);
         }

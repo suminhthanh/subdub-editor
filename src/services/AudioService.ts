@@ -117,7 +117,7 @@ class AudioService {
     return concatenateAudioBuffers(this.audioContext, audioBuffers.slice(0));
   }
 
-  private async resynthesizeTrack(track: Track): Promise<ArrayBuffer> {
+  async resynthesizeTrack(track: Track): Promise<ArrayBuffer> {
     console.log(`Resynthesizing track: ${track.id}`);
     return await synthesisService.speak(
       track.translated_text || "",

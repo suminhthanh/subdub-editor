@@ -45,4 +45,7 @@ export interface Track {
 
   // An optional boolean indicating if the track needs resynthesis
   needsResynthesis: boolean;
+
+  // The buffer for the track
+  buffer?: AudioBuffer;
 }

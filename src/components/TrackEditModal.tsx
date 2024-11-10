@@ -63,6 +63,10 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
 
   const handleSave = () => {
     if (track) {
+
+      const newSpeaker = speakerService.getSpeakerById(selectedSpeakerId);
+      const oldSpeaker = speakerService.getSpeakerById(track.speaker_id);
+
       const updatedTrack = {
         ...track,
         text,
@@ -71,7 +75,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
         end: endTime,
         speed: speed,
         speaker_id: selectedSpeakerId,
-        needsResynthesis: translatedText !== track.translated_text || selectedSpeakerId !== track.speaker_id
+        needsResynthesis: translatedText !== track.translated_text || newSpeaker.voice !== oldSpeaker.voice
       };
 
       const needsReconstruction = 
@@ -147,7 +151,7 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
           <option value="">{t('selectSpeaker')}</option>
           {speakers.map(speaker => (
             <option key={speaker.id} value={speaker.id}>
-              {speaker.name}
+              {speaker.name} ({speaker.voice.label})
             </option>
           ))}
         </Select>
