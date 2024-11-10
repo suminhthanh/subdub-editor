@@ -131,7 +131,7 @@ const TrackList: React.FC<TrackListProps> = ({
 
   return (
     <ListContainer>
-      {tracks.map((track, index) => (
+      {tracks.filter(track => !track.deleted).map((track, index) => (
         <TrackRow key={track.id}>
           <TrackTime onClick={() => handleTimeClick(track.start)}>
             {formatTime(track.start)}

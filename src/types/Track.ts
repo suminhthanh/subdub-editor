@@ -48,4 +48,7 @@ export interface Track {
 
   // The buffer for the track
   buffer?: AudioBuffer;
+
+  // Add a deleted flag
+  deleted?: boolean;
 }

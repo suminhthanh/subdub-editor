@@ -199,7 +199,7 @@ const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, setTracks, curren
             {renderTimeMarkers()}
           </ClickableRuler>
           <CurrentTimeIndicator style={{ left: `${currentTime * zoomLevel}px` }} />
-          {tracks.map((track, index) => (
+          {tracks.filter(track => !track.deleted).map((track, index) => (
             <TrackRow key={track.id}>
               <TrackItem
                 track={track}

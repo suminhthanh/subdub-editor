@@ -428,11 +428,12 @@ function App() {
 
   const handleDeleteTrack = useCallback((trackId: number) => {
     setTracks(prevTracks => {
-      const newTracks = prevTracks.filter(t => t.id !== trackId);
-      recreateConstructedAudio(newTracks);
+      const newTracks = prevTracks.map(t => 
+        t.id === trackId ? { ...t, deleted: true } : t
+      );
       return newTracks;
     });
-  }, [recreateConstructedAudio]);
+  }, []);
 
   const handleSubtitlesChange = (subtitles: string) => {
     setSelectedSubtitles(subtitles);
