@@ -16,7 +16,7 @@ const StyledVideo = styled.video<{ isEditMode: boolean }>`
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  width: ${props => props.isEditMode ? '100%' : 'auto'};
+  width: ${props => props.isEditMode ? 'auto' : '100%'};
 `;
 
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(

@@ -88,6 +88,8 @@ interface VideoOptionsProps {
   tracks: Track[];
   onTracksChange: (tracks: Track[]) => void;
   onSpeakerVoiceChange: (speakerId: string, newVoice: Voice) => void;
+  timelineVisible: boolean;
+  onTimelineVisibleChange: (enabled: boolean) => void;
 }
 
 const VideoOptions: React.FC<VideoOptionsProps> = ({
@@ -99,6 +101,8 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
   showSpeakerColors,
   onShowSpeakerColorsChange,
   onSpeakerVoiceChange,
+  timelineVisible,
+  onTimelineVisibleChange,
 }) => {
   const { t } = useTranslation();
   const [newSpeakerName, setNewSpeakerName] = useState('');
@@ -243,6 +247,17 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
         />
         <AddSpeakerButton onClick={handleAddSpeaker}>+</AddSpeakerButton>
       </SpeakerItem>
+
+      <h3>{t('advanced')}</h3>
+      <CheckboxContainer>
+        <Checkbox
+          type="checkbox"
+          id="timeline-visible"
+          checked={timelineVisible}
+          onChange={(e) => onTimelineVisibleChange(e.target.checked)}
+        />
+        <Label htmlFor="timeline-visible">{t('enableTimeline')}</Label>
+      </CheckboxContainer>
     </OptionsContainer>
   );
 };

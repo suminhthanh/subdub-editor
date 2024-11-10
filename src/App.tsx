@@ -156,6 +156,7 @@ function App() {
   const [isMediaFullyLoaded, setIsMediaFullyLoaded] = useState(false);
   const [backgroundLoadingMessage, setBackgroundLoadingMessage] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [timelineVisible, setTimelineVisible] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -651,11 +652,28 @@ function App() {
                   {tracks.length > 0 && (
                     <>
                       <TabContainer>
-                        <Tab active={activeTab === 'timeline'} onClick={() => setActiveTab('timeline')}>{t('timeline')}</Tab>
-                        <Tab active={activeTab === 'list'} onClick={() => setActiveTab('list')}>{t('list')}</Tab>
-                        <Tab active={activeTab === 'options'} onClick={() => setActiveTab('options')}>{t('options')}</Tab>
+                        {timelineVisible && (
+                          <Tab 
+                            active={activeTab === 'timeline'} 
+                            onClick={() => setActiveTab('timeline')}
+                          >
+                            {t('timeline')}
+                          </Tab>
+                        )}
+                        <Tab 
+                          active={activeTab === 'list'} 
+                          onClick={() => setActiveTab('list')}
+                        >
+                          {t('list')}
+                        </Tab>
+                        <Tab 
+                          active={activeTab === 'options'} 
+                          onClick={() => setActiveTab('options')}
+                        >
+                          {t('options')}
+                        </Tab>
                       </TabContainer>
-                      {activeTab === 'timeline' ? (
+                      {activeTab === 'timeline' && timelineVisible ? (
                         <TrackTimeline
                           tracks={tracks}
                           setTracks={setTracks}
@@ -688,6 +706,13 @@ function App() {
                           tracks={tracks}
                           onTracksChange={setTracks}
                           onSpeakerVoiceChange={handleSpeakerVoiceChange}
+                          timelineVisible={timelineVisible}
+                          onTimelineVisibleChange={(enabled) => {
+                            setTimelineVisible(enabled);
+                            if (!enabled && activeTab === 'timeline') {
+                              setActiveTab('list');
+                            }
+                          }}
                         />
                       )}
                     </>

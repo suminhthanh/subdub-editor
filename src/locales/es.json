@@ -41,5 +41,8 @@
   "backgroundAudio": "Audio de Fondo",
   "missingUUID": "Falta UUID",
   "loadingMedia": "Cargando vídeo, por favor, espera...",
-  "edit": "Edita"
+  "edit": "Edita",
+  "advanced": "Avançat",
+  "enableTimeline": "Mostrar Línea de Tiempo",
+  "delete": "Eliminar"
 }

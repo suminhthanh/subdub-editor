@@ -41,5 +41,8 @@
   "backgroundAudio": "Background Audio",
   "missingUUID": "Missing UUID",
   "loadingMedia": "Loading media, please wait...",
-  "edit": "Edit"
+  "edit": "Edit",
+  "advanced": "Advanced",
+  "enableTimeline": "Enable Timeline",
+  "delete": "Delete"
 }

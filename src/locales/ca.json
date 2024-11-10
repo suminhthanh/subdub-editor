@@ -41,5 +41,8 @@
   "backgroundAudio": "Àudio de Fons",
   "missingUUID": "Error carregant el vídeo, manca l'UUID",
   "loadingMedia": "Carregant vídeo, si us plau, espereu...",
-  "edit": "Edita"
+  "edit": "Edita",
+  "advanced": "Avançat",
+  "enableTimeline": "Mostrar Línia de Temps",
+  "delete": "Eliminar"
 }
