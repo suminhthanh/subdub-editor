@@ -12,6 +12,7 @@ export interface MediaPlayerProps {
   audioTracks: { [key: string]: AudioTrack };
   selectedAudioTracks: string[];
   selectedSubtitles: string;
+  advancedEditMode?: boolean;
 }
 
 export interface MediaPlayerRef {

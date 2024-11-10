@@ -82,7 +82,7 @@ const VideoContainer = styled.div<{ isEditMode: boolean }>`
   justify-content: center;
   align-items: center;
   max-height: ${props => props.isEditMode ? '30vh' : 'none'};
-  width: 100%;
+  width: ${props => props.isEditMode ? '100%' : 'auto'};
   margin: 0px;
 `;
 
@@ -327,6 +327,7 @@ function App() {
   };
 
   const recreateConstructedAudio = useCallback(async (updatedTracks: Track[]) => {
+    console.log("serviceParam", serviceParam, "advancedEditMode", advancedEditMode);
     if (serviceParam === "dubbing") {
       try {
         setReconstructionMessage(t('reconstructingAudio'));
@@ -354,7 +355,7 @@ function App() {
         setReconstructionMessage(null);
       }
     }
-  }, [serviceParam, chunkBuffers, t]);
+  }, [serviceParam, chunkBuffers, t, advancedEditMode]);
 
   const handleSaveTrack = useCallback(async (updatedTrack: Track, needsReconstruction: boolean) => {
     console.log("handleSaveTrack called with updatedTrack:", updatedTrack, "needsReconstruction:", needsReconstruction);
@@ -372,11 +373,12 @@ function App() {
     }
   }, [editingTrack, recreateConstructedAudio]);
 
-  const handleTrackChange = useCallback((index: number, updatedTrack: Track, recreateAudio: boolean = false) => {
-    console.log(`Track ${index} changed:`, updatedTrack);
+  const handleTrackChange = useCallback((trackId: number, updatedTrack: Track, recreateAudio: boolean = false) => {
+    console.log(`Track ${trackId} changed:`, updatedTrack);
     setTracks(prevTracks => {
-      const newTracks = [...prevTracks];
-      newTracks[index] = updatedTrack;
+      const newTracks = prevTracks.map(t => 
+        t.id === trackId ? updatedTrack : t
+      );
       if (recreateAudio) {
         console.log("Track changed, calling recreateConstructedAudio...");
         recreateConstructedAudio(newTracks);
@@ -408,9 +410,14 @@ function App() {
       const newTracks = prevTracks.map(t => 
         t.id === trackId ? { ...t, deleted: true } : t
       );
+      console.log("advancedEditMode", advancedEditMode);
+      if (advancedEditMode) {
+        recreateConstructedAudio(newTracks);
+      }
       return newTracks;
     });
-  }, []);
+
+  }, [advancedEditMode]);
 
   const handleSubtitlesChange = (subtitles: string) => {
     setSelectedSubtitles(subtitles);
@@ -636,6 +643,7 @@ function App() {
                   audioTracks={audioTracks}
                   selectedAudioTracks={selectedAudioTracks}
                   selectedSubtitles={selectedSubtitles}
+                  advancedEditMode={advancedEditMode}
                 />
               </VideoContainer>
               {isEditMode && (

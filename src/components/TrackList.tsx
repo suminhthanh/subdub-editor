@@ -66,7 +66,7 @@ const IconButton = styled(Button)`
 
 interface TrackListProps {
   tracks: Track[];
-  onTrackChange: (index: number, updatedTrack: Track, recreateAudio: boolean) => void;
+  onTrackChange: (trackId: number, updatedTrack: Track, recreateAudio: boolean) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
   onDeleteTrack: (trackId: number) => void;
@@ -95,25 +95,27 @@ const TrackList: React.FC<TrackListProps> = ({
   };
 
   const debouncedTrackChange = useMemo(
-    () => debounce((index: number, updatedTrack: Track) => {
-      onTrackChange(index, updatedTrack, true);
+    () => debounce((trackId: number, updatedTrack: Track) => {
+      onTrackChange(trackId, updatedTrack, true);
     }, 1000),
     [onTrackChange]
   );
 
   const handleTextareaChange = useCallback(
-    (index: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const updatedTrack = { ...tracks[index] };
+    (trackId: number, e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const originalTrack = tracks.find(track => track.id === trackId);
+      if (!originalTrack) return;
+      const updatedTrack = { ...originalTrack };
       if (isDubbingService) {
         updatedTrack.translated_text = e.target.value;
-        updatedTrack.needsResynthesis = updatedTrack.translated_text !== tracks[index].translated_text;
+        updatedTrack.needsResynthesis = updatedTrack.translated_text !== originalTrack.translated_text;
       } else {
         updatedTrack.text = e.target.value;
       }
-      onTrackChange(index, updatedTrack, false);
+      onTrackChange(trackId, updatedTrack, false);
       adjustTextareaHeight(e.target);
 
-      debouncedTrackChange(index, updatedTrack);
+      debouncedTrackChange(trackId, updatedTrack);
     },
     [tracks, isDubbingService, onTrackChange, debouncedTrackChange]
   );
@@ -140,7 +142,7 @@ const TrackList: React.FC<TrackListProps> = ({
             <TrackTextArea
               className="track-textarea"
               value={isDubbingService ? track.translated_text : track.text}
-              onChange={(e) => handleTextareaChange(index, e)}
+              onChange={(e) => handleTextareaChange(track.id, e)}
               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
             />
             <IconButton onClick={() => onEditTrack(track)} title={t('edit')}>

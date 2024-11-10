@@ -16,11 +16,11 @@ const StyledVideo = styled.video<{ isEditMode: boolean }>`
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  width: 100%
+  width: ${props => props.isEditMode ? '100%' : 'auto'};
 `;
 
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
-  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles }, ref) => {
+  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles, advancedEditMode }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const originalTrackRef = useRef<HTMLTrackElement>(null);
     const dubbedTrackRef = useRef<HTMLTrackElement>(null);
@@ -28,6 +28,8 @@ const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
     const trackAudioContextRef = useRef<AudioContext | null>(null);
     const trackSourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
     const gainNodeRef = useRef<GainNode | null>(null);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
 
     const [originalSubtitlesUrl, dubbedSubtitlesUrl] = useMemo(() => {
       if (tracks.length === 0) return ['', ''];
@@ -125,96 +127,69 @@ ${subtitle.text}
       }
     }, []);
 
-    // Sync video and audio playback
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
+    const playBufferTracks = (startTime: number) => {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
 
-      const handlePlay = () => {
-        Object.values(audioElementsRef.current).forEach(audio => {
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(error => {
-              console.log("Audio play prevented:", error);
-            });
-          }
-        });
-      };
+      // Stop all currently playing buffer sources
+      audioBufferSourcesRef.current.forEach(source => {
+        try {
+          source.stop();
+          source.disconnect();
+        } catch (error) {
+          console.error("Error stopping audio source:", error);
+        }
+      });
+      audioBufferSourcesRef.current = [];
 
-      const handlePause = () => {
-        Object.values(audioElementsRef.current).forEach(audio => {
-          audio.pause();
-        });
-      };
-
-      const handleSeeked = () => {
-        const currentTime = video.currentTime;
-        Object.values(audioElementsRef.current).forEach(audio => {
-          audio.currentTime = currentTime;
-        });
-        checkAndPlayTracks();
-      };
-
-      const handleTimeUpdate = () => {
-        const currentTime = video.currentTime;
-        Object.values(audioElementsRef.current).forEach(audio => {
-          if (Math.abs(audio.currentTime - currentTime) > 0.1) {
-            audio.currentTime = currentTime;
-          }
-        });
-        checkAndPlayTracks();
-      };
-
-      video.addEventListener('play', handlePlay);
-      video.addEventListener('pause', handlePause);
-      video.addEventListener('seeked', handleSeeked);
-      video.addEventListener('timeupdate', handleTimeUpdate);
-
-      return () => {
-        video.removeEventListener('play', handlePlay);
-        video.removeEventListener('pause', handlePause);
-        video.removeEventListener('seeked', handleSeeked);
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-      };
-    }, []);
+      // Play selected tracks that have buffers
+      selectedAudioTracks.forEach((trackId) => {
+        const track = audioTracks[trackId];
+        if (track?.buffer instanceof AudioBuffer) {
+          const source = audioContextRef.current!.createBufferSource();
+          source.buffer = track.buffer;
+          source.connect(audioContextRef.current!.destination);
+          source.start(0, startTime);
+          audioBufferSourcesRef.current.push(source);
+        }
+      });
+    };
 
     // Update audio elements when tracks change
     useEffect(() => {
       // Clear existing audio elements
       Object.values(audioElementsRef.current).forEach(audio => {
         audio.pause();
-        audio.src = '';
       });
       audioElementsRef.current = {};
 
-      // Create new audio elements
+      // Create new audio elements for tracks with URLs
       Object.entries(audioTracks).forEach(([id, track]) => {
-        const audio = new Audio(track.url);
-        audio.preload = 'auto';
-        audio.muted = !selectedAudioTracks.includes(id);
-        
-        // Sync initial time with video if it exists
-        if (videoRef.current) {
-          audio.currentTime = videoRef.current.currentTime;
-        }
-        
-        // Start playing if video is playing
-        if (videoRef.current && !videoRef.current.paused) {
-          const playPromise = audio.play();
-          if (playPromise !== undefined) {
-            playPromise.catch(error => {
+        if (track.url && !track.buffer) {
+          const audio = new Audio(track.url);
+          audio.preload = 'auto';
+          audio.muted = !selectedAudioTracks.includes(id);
+          
+          // Sync initial time with video if it exists
+          if (videoRef.current) {
+            audio.currentTime = videoRef.current.currentTime;
+          }
+          
+          // Start playing if video is playing
+          if (videoRef.current && !videoRef.current.paused) {
+            audio.play().catch(error => {
               console.log("Audio play prevented:", error);
             });
           }
+          
+          audioElementsRef.current[id] = audio;
         }
-        
-        audioElementsRef.current[id] = audio;
       });
 
       return () => {
         Object.values(audioElementsRef.current).forEach(audio => {
           audio.pause();
-          audio.src = '';
         });
         audioElementsRef.current = {};
       };
@@ -222,10 +197,131 @@ ${subtitle.text}
 
     // Handle selected tracks changes
     useEffect(() => {
+      // Update HTML audio elements
       Object.entries(audioElementsRef.current).forEach(([id, audio]) => {
         audio.muted = !selectedAudioTracks.includes(id);
       });
+
+      // Update buffer-based tracks if video is playing
+      if (videoRef.current && !videoRef.current.paused) {
+        playBufferTracks(videoRef.current.currentTime);
+      }
     }, [selectedAudioTracks]);
+
+    // Sync video and audio playback
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handlePlay = () => {
+        // Play HTML audio elements
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.play().catch(error => {
+            console.log("Audio play prevented:", error);
+          });
+        });
+
+        // Play buffer-based tracks
+        playBufferTracks(video.currentTime);
+        video.play();
+      };
+
+      const handlePause = () => {
+        // Pause HTML audio elements
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.pause();
+        });
+
+        // Stop buffer-based tracks
+        audioBufferSourcesRef.current.forEach(source => {
+          try {
+            source.stop();
+            source.disconnect();
+          } catch (error) {
+            console.error("Error stopping audio source:", error);
+          }
+        });
+        audioBufferSourcesRef.current = [];
+        video.pause();
+      };
+
+      const handleSeeked = () => {
+        const currentTime = video.currentTime;
+        // Update HTML audio elements
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.currentTime = currentTime;
+        });
+        // Restart buffer-based tracks
+        if (!video.paused) {
+          playBufferTracks(currentTime);
+        }
+
+        video.play();
+      };
+
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+      video.addEventListener('seeked', handleSeeked);
+
+      return () => {
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+        video.removeEventListener('seeked', handleSeeked);
+        
+        // Cleanup audio context and sources
+        audioBufferSourcesRef.current.forEach(source => {
+          try {
+            source.stop();
+            source.disconnect();
+          } catch (error) {
+            console.error("Error cleaning up audio source:", error);
+          }
+        });
+        if (audioContextRef.current) {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+      };
+    }, [audioTracks, selectedAudioTracks]);
+
+    // Add timeupdate listener to check for tracks only in advanced edit mode
+    useEffect(() => {      
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handleTimeUpdate = () => {
+        checkAndPlayTracks();
+      };
+
+      video.addEventListener('timeupdate', handleTimeUpdate);
+      
+      return () => {
+        video.removeEventListener('timeupdate', handleTimeUpdate);
+        if (trackAudioContextRef.current) {
+          trackAudioContextRef.current.close();
+          trackAudioContextRef.current = null;
+        }
+      };
+    }, [tracks, advancedEditMode]);
+
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handleSeeked = () => {
+        if (trackSourceNodeRef.current) {
+          trackSourceNodeRef.current.stop();
+          trackSourceNodeRef.current.disconnect();
+        }
+        checkAndPlayTracks();
+      };
+
+      video.addEventListener('seeked', handleSeeked);
+      
+      return () => {
+        video.removeEventListener('seeked', handleSeeked);
+      };
+    }, [tracks, advancedEditMode]);
 
     const playTrackBuffer = (track: Track) => {
       if (!track.buffer) return;
@@ -343,46 +439,6 @@ ${subtitle.text}
         }
       }
     };
-
-    // Add timeupdate listener to check for tracks
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      const handleTimeUpdate = () => {
-        checkAndPlayTracks();
-      };
-
-      video.addEventListener('timeupdate', handleTimeUpdate);
-      
-      return () => {
-        video.removeEventListener('timeupdate', handleTimeUpdate);
-        if (trackAudioContextRef.current) {
-          trackAudioContextRef.current.close();
-          trackAudioContextRef.current = null;
-        }
-      };
-    }, [tracks]);
-
-    // Handle seeking
-    useEffect(() => {
-      const video = videoRef.current;
-      if (!video) return;
-
-      const handleSeeked = () => {
-        if (trackSourceNodeRef.current) {
-          trackSourceNodeRef.current.stop();
-          trackSourceNodeRef.current.disconnect();
-        }
-        checkAndPlayTracks();
-      };
-
-      video.addEventListener('seeked', handleSeeked);
-      
-      return () => {
-        video.removeEventListener('seeked', handleSeeked);
-      };
-    }, [tracks]);
 
     return (
       <MediaContainer>

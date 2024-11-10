@@ -23,7 +23,9 @@ class AudioService {
   ): Promise<AudioBuffer> {
     console.log("Recreating constructed audio in AudioService...");
     const dubbedTracks = tracks
-      .filter((track) => track.dubbed_path && track.for_dubbing)
+      .filter(
+        (track) => track.dubbed_path && track.for_dubbing && !track.deleted
+      )
       .sort((a, b) => a.start - b.start);
 
     if (dubbedTracks.length === 0) {
