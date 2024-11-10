@@ -123,29 +123,6 @@ const CenteredContent = styled.div`
   gap: 10px;
 `;
 
-const loadDubbingMediaInBackground = async (uuid: string) => {
-  try {
-    const [
-      originalAudioBuffer,
-      backgroundAudioBuffer,
-      dubbedVocalsBuffer,
-    ] = await Promise.all([
-      DubbingAPIService.loadOriginalVocalsFromUUID(uuid),
-      DubbingAPIService.loadBackgroundAudioFromUUID(uuid),
-      DubbingAPIService.loadDubbedVocalsFromUUID(uuid),
-    ]);
-
-    return {
-      videoUrl: DubbingAPIService.getSilentVideoUrl(uuid),
-      originalAudioBuffer,
-      backgroundAudioBuffer,
-      dubbedVocalsBuffer,
-    };
-  } catch (error) {
-    throw error;
-  }
-};
-
 function App() {
   const { t, i18n } = useTranslation();
   const [mediaFile, setMediaFile] = useState<File | null>(null);
@@ -560,6 +537,10 @@ function App() {
             label: t('dubbedVocals') 
           },
         });
+        if (parsedTracks.length < 100) {
+          setAdvancedEditMode(true);
+          loadChunksInBackground(uuidParam, parsedTracks);
+        }
         
         setIsMediaFullyLoaded(true);
       }
