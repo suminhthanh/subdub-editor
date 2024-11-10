@@ -132,6 +132,18 @@ export const loadDubbedUtterance = async (
   return response.arrayBuffer();
 };
 
+export const getBackgroundAudioUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/no_vocals.mp3`;
+};
+
+export const getOriginalVocalsUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/vocals.mp3`;
+};
+
+export const getDubbedVocalsUrl = (uuid: string): string => {
+  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=dubbed_vocals.mp3`;
+};
+
 export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadOriginalVocalsFromUUID,
   loadBackgroundAudioFromUUID,
@@ -142,4 +154,7 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   getMediaUrl,
   getSilentVideoUrl,
   loadDubbedUtterance,
+  getBackgroundAudioUrl,
+  getOriginalVocalsUrl,
+  getDubbedVocalsUrl,
 };

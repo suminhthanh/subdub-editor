@@ -13,6 +13,9 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   uuidExists: (uuid: string) => Promise<boolean>;
   getSilentVideoUrl: (uuid: string) => string;
   loadDubbedUtterance: (uuid: string, id: number) => Promise<ArrayBuffer>;
+  getBackgroundAudioUrl: (uuid: string) => string;
+  getOriginalVocalsUrl: (uuid: string) => string;
+  getDubbedVocalsUrl: (uuid: string) => string;
 }
 
 export interface TranscriptionAPIServiceInterface extends APIServiceInterface {

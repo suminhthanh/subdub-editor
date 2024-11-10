@@ -1,4 +1,4 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo, useState } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle, useMemo } from 'react';
 import styled from 'styled-components';
 import { MediaPlayerProps, MediaPlayerRef } from './MediaPlayer';
 import { formatTime } from '../utils/timeUtils';
@@ -23,9 +23,7 @@ const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
     const videoRef = useRef<HTMLVideoElement>(null);
     const originalTrackRef = useRef<HTMLTrackElement>(null);
     const dubbedTrackRef = useRef<HTMLTrackElement>(null);
-    const audioContextRef = useRef<AudioContext | null>(null);
-    const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
-    const audioBuffersRef = useRef<{ [key: string]: AudioBuffer }>({});
+    const audioElementsRef = useRef<{ [key: string]: HTMLAudioElement }>({});
 
     const [originalSubtitlesUrl, dubbedSubtitlesUrl] = useMemo(() => {
       if (tracks.length === 0) return ['', ''];
@@ -53,28 +51,6 @@ ${subtitle.text}
       return [createSubtitlesUrl('text'), createSubtitlesUrl('translated_text')];
     }, [tracks]);
 
-    const playSelectedTracks = (startTime: number) => {
-      if (!audioContextRef.current) return;
-
-      // Stop all currently playing tracks
-      audioBufferSourcesRef.current.forEach(source => {
-        source.stop();
-        source.disconnect();
-      });
-      audioBufferSourcesRef.current = [];
-
-      // Play only selected tracks
-      selectedAudioTracks.forEach((value) => {
-        if (audioBuffersRef.current[value]) {
-          const source = audioContextRef.current!.createBufferSource();
-          source.buffer = audioBuffersRef.current[value];
-          source.connect(audioContextRef.current!.destination);
-          source.start(0, startTime);
-          audioBufferSourcesRef.current.push(source);
-        }
-      });
-    };
-
     useImperativeHandle(ref, () => ({
       get currentTime() {
         return videoRef.current ? videoRef.current.currentTime : 0;
@@ -82,14 +58,18 @@ ${subtitle.text}
       setCurrentTime(time: number) {
         if (videoRef.current) {
           videoRef.current.currentTime = time;
-          playSelectedTracks(time);
+          Object.values(audioElementsRef.current).forEach(audio => {
+            audio.currentTime = time;
+          });
         }
       },
       play() {
         videoRef.current?.play();
+        Object.values(audioElementsRef.current).forEach(audio => audio.play());
       },
       pause() {
         videoRef.current?.pause();
+        Object.values(audioElementsRef.current).forEach(audio => audio.pause());
       },
     }));
 
@@ -125,69 +105,63 @@ ${subtitle.text}
     }, []);
 
     useEffect(() => {
-      const video = videoRef.current;
-      if (video && Object.keys(audioTracks).length > 0) {
-        if (!audioContextRef.current) {
-          audioContextRef.current = new AudioContext();
+      Object.entries(audioTracks).forEach(([id, track]) => {
+        if (!audioElementsRef.current[id]) {
+          const audio = new Audio(track.url);
+          audio.preload = 'auto';
+          audio.muted = !selectedAudioTracks.includes(id);
+          audioElementsRef.current[id] = audio;
         }
-        const audioContext = audioContextRef.current;
+      });
 
-        const loadAudioTracks = async () => {
-          for (const [id, track] of Object.entries(audioTracks)) {
-            try {
-              let buffer: AudioBuffer;
-              const trackBuffer = track.buffer;
-              if (trackBuffer instanceof AudioBuffer) {
-                buffer = trackBuffer;
-              } else {
-                const audioData = trackBuffer.slice(0);
-                buffer = await audioContext.decodeAudioData(audioData);
-              }
-              audioBuffersRef.current[id] = buffer;
-              console.log(`Successfully loaded audio track ${id}: ${track.label}`);
-            } catch (error) {
-              console.error(`Error decoding audio track ${id}:`, error);
-            }
-          }
-        };
-
-        loadAudioTracks();
-
-        const handlePlay = () => {
-          playSelectedTracks(video.currentTime);
-          video.play();
-        };
-
-        const handlePause = () => {
-          audioBufferSourcesRef.current.forEach(source => source.stop());
-        };
-
-        const handleSeeked = () => {
-          playSelectedTracks(video.currentTime);
-          video.play();
-        };
-
-        video.addEventListener('play', handlePlay);
-        video.addEventListener('pause', handlePause);
-        video.addEventListener('seeked', handleSeeked);
-
-        return () => {
-          video.removeEventListener('play', handlePlay);
-          video.removeEventListener('pause', handlePause);
-          video.removeEventListener('seeked', handleSeeked);
-          audioBufferSourcesRef.current.forEach(source => {
-            source.stop();
-            source.disconnect();
-          });
-        };
-      }
-    }, [audioTracks, selectedAudioTracks]);
+      return () => {
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.pause();
+          audio.src = '';
+        });
+        audioElementsRef.current = {};
+      };
+    }, [audioTracks]);
 
     useEffect(() => {
-      if (videoRef.current && !videoRef.current.paused) {
-        playSelectedTracks(videoRef.current.currentTime);
-      }
+      Object.entries(audioElementsRef.current).forEach(([id, audio]) => {
+        audio.muted = !selectedAudioTracks.includes(id);
+      });
     }, [selectedAudioTracks]);
+
+    useEffect(() => {
+      const video = videoRef.current;
+      if (!video) return;
+
+      const handlePlay = () => {
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.play();
+        });
+      };
+
+      const handlePause = () => {
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.pause();
+        });
+      };
+
+      const handleSeeked = () => {
+        const currentTime = video.currentTime;
+        Object.values(audioElementsRef.current).forEach(audio => {
+          audio.currentTime = currentTime;
+        });
+      };
+
+      video.addEventListener('play', handlePlay);
+      video.addEventListener('pause', handlePause);
+      video.addEventListener('seeked', handleSeeked);
+
+      return () => {
+        video.removeEventListener('play', handlePlay);
+        video.removeEventListener('pause', handlePause);
+        video.removeEventListener('seeked', handleSeeked);
+      };
+    }, []);
 
     return (
       <MediaContainer>

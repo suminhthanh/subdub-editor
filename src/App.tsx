@@ -462,23 +462,21 @@ function App() {
         const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
 
         // Decode background audio once
-        const backgroundBuffer = backgroundAudio.buffer instanceof AudioBuffer 
-          ? backgroundAudio.buffer 
-          : await audioService.decodeAudioData(backgroundAudio.buffer.slice(0));
+        const backgroundBuffer = backgroundAudio.buffer;
 
         for (const selectedAudioTrack of selectedAudioTracks) {
           const audioTrack = audioTracks[selectedAudioTrack];
           if (audioTrack) {
             // Create a fresh copy of the buffer for each iteration
-            const audioBuffer = audioTrack.buffer instanceof AudioBuffer
-              ? audioTrack.buffer
-              : await audioService.decodeAudioData(audioTrack.buffer.slice(0));
+            const audioBuffer = audioTrack.buffer;
 
-            const finalAudioBuffer = await audioService.mixAudioBuffers(
-              backgroundBuffer,
-              audioBuffer
-            );
-            selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
+            if (audioBuffer && backgroundBuffer) {
+              const finalAudioBuffer = await audioService.mixAudioBuffers(
+                backgroundBuffer,
+                audioBuffer
+              );
+              selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
+            }
           } else {
             throw new Error(`Audio track ${selectedAudioTrack} not found`);
           }
@@ -538,32 +536,37 @@ function App() {
   }, [i18n]);
 
   const handleEditModeToggle = async () => {
-    setIsMediaFullyLoaded(false); // Reset loading state
-    setBackgroundLoadingMessage(t('loadingMedia')); // Set loading message
+    setIsMediaFullyLoaded(false);
+    setBackgroundLoadingMessage(t('loadingMedia'));
     try {
       if (uuidParam) {
         const rawTracks = await DubbingAPIService.loadTracksFromUUID(uuidParam);
         const parsedTracks = DubbingAPIService.parseTracksFromJSON(rawTracks);
         setTracks(parsedTracks);
 
-        if (parsedTracks.length < 50) {
-          setAdvancedEditMode(true);
-          const result = await loadDubbingMediaInBackground(uuidParam);
-          setMediaUrl(result.videoUrl);
-          setAudioTracks({
-            background: { buffer: result.backgroundAudioBuffer, label: t('backgroundAudio') },
-            original: { buffer: result.originalAudioBuffer, label: t('originalVocals') },
-            dubbed: { buffer: result.dubbedVocalsBuffer, label: t('dubbedVocals') },
-          });
-          loadChunksInBackground(uuidParam , parsedTracks);
-        }
-        setIsMediaFullyLoaded(true); // Set to true when everything is loaded
+        setMediaUrl(DubbingAPIService.getSilentVideoUrl(uuidParam));
+        setAudioTracks({
+          background: { 
+            url: DubbingAPIService.getBackgroundAudioUrl(uuidParam), 
+            label: t('backgroundAudio') 
+          },
+          original: { 
+            url: DubbingAPIService.getOriginalVocalsUrl(uuidParam), 
+            label: t('originalVocals') 
+          },
+          dubbed: { 
+            url: DubbingAPIService.getDubbedVocalsUrl(uuidParam), 
+            label: t('dubbedVocals') 
+          },
+        });
+        
+        setIsMediaFullyLoaded(true);
       }
     } catch (error) {
       console.error("Error loading edit mode:", error);
       setLoadError('errorLoadingUUID');
     } finally {
-      setBackgroundLoadingMessage(null); // Clear loading message
+      setBackgroundLoadingMessage(null);
       setIsEditMode(true);
     }
   };

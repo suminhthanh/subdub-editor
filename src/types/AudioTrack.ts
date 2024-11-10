@@ -1,4 +1,5 @@
 export interface AudioTrack {
-  buffer: ArrayBuffer | AudioBuffer;
+  url: string;
+  buffer?: AudioBuffer;
   label: string;
 }
