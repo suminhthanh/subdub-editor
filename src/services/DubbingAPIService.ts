@@ -143,6 +143,47 @@ export const getDubbedVocalsUrl = (uuid: string): string => {
   return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=dubbed_vocals.mp3`;
 };
 
+export const regenerateVideo = async (
+  uuid: string,
+  tracks: Track[]
+): Promise<void> => {
+  // Filter out deleted tracks and convert to DubbingJSON format
+  const utteranceUpdate = tracks
+    .filter((track) => !track.deleted)
+    .map((track) => ({
+      id: track.id,
+      start: track.start,
+      end: track.end,
+      speaker_id: track.speaker_id,
+      path: track.path,
+      text: track.text,
+      for_dubbing: track.for_dubbing,
+      gender: track.ssml_gender,
+      translated_text: track.translated_text,
+      assigned_voice:
+        speakerService.getSpeakerById(track.speaker_id)?.voice?.id || "",
+      pitch: track.pitch,
+      speed: track.speed,
+      volume_gain_db: track.volume_gain_db,
+      dubbed_path: track.dubbed_path,
+    }));
+
+  const response = await fetch(`${API_BASE_URL}/regenerate_video`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      uuid,
+      utterance_update: utteranceUpdate,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to regenerate video");
+  }
+};
+
 export const DubbingAPIService: DubbingAPIServiceInterface = {
   loadOriginalVocalsFromUUID,
   loadBackgroundAudioFromUUID,
@@ -156,4 +197,5 @@ export const DubbingAPIService: DubbingAPIServiceInterface = {
   getBackgroundAudioUrl,
   getOriginalVocalsUrl,
   getDubbedVocalsUrl,
+  regenerateVideo,
 };

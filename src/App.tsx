@@ -18,6 +18,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 import { speakerService } from './services/SpeakerService';
 import { Voice } from './types/Voice';
 import { AudioTrack } from './types/AudioTrack';
+import RegenerateModal from './components/RegenerateModal';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -157,6 +158,7 @@ function App() {
   const [backgroundLoadingMessage, setBackgroundLoadingMessage] = useState<string | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [timelineVisible, setTimelineVisible] = useState(false);
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -575,6 +577,17 @@ function App() {
     }
   };
 
+  const handleRegenerateVideo = async () => {
+    if (uuidParam) {
+      try {
+        await DubbingAPIService.regenerateVideo(uuidParam, tracks);
+      } catch (error) {
+        console.error('Error regenerating video:', error);
+        // You might want to show an error message to the user
+      }
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
@@ -606,12 +619,27 @@ function App() {
                         {t('edit')}
                       </Button>
                     )}
-                    <Button 
-                      onClick={isEditMode ? handleDownloadClick : handleSimpleDownload}
-                      disabled={isEditMode && !isMediaFullyLoaded}
-                    >
-                      {t('downloadResult')}
-                    </Button>
+                    {isEditMode ? (
+                      advancedEditMode ? (
+                        <Button 
+                          onClick={handleDownloadClick}
+                          disabled={!isMediaFullyLoaded}
+                        >
+                          {t('downloadResult')}
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => setShowRegenerateModal(true)}
+                          disabled={!isMediaFullyLoaded}
+                        >
+                          {t('regenerate')}
+                        </Button>
+                      )
+                    ) : (
+                      <Button onClick={handleSimpleDownload}>
+                        {t('downloadResult')}
+                      </Button>
+                    )}
                   </>
                 )}
                 {!isDubbingService && (
@@ -748,6 +776,12 @@ function App() {
         />
       )}
       {isRebuilding && <LoadingOverlay message={t('rebuildingMedia')} />}
+      {showRegenerateModal && (
+        <RegenerateModal
+          onClose={() => setShowRegenerateModal(false)}
+          onRegenerate={handleRegenerateVideo}
+        />
+      )}
     </>
   );
 }

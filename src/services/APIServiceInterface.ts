@@ -16,6 +16,7 @@ export interface DubbingAPIServiceInterface extends APIServiceInterface {
   getBackgroundAudioUrl: (uuid: string) => string;
   getOriginalVocalsUrl: (uuid: string) => string;
   getDubbedVocalsUrl: (uuid: string) => string;
+  regenerateVideo: (uuid: string, tracks: Track[]) => Promise<void>;
 }
 
 export interface TranscriptionAPIServiceInterface extends APIServiceInterface {

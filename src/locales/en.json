@@ -44,5 +44,10 @@
   "edit": "Edit",
   "advanced": "Advanced",
   "enableTimeline": "Enable Timeline",
-  "delete": "Delete"
+  "delete": "Delete",
+  "regenerate": "Regenerate",
+  "regenerating": "Regenerating...",
+  "regenerateDescription": "Once you have made all the necessary edits you can send us back the modifications so we can regenrate the video. You will receive an email once the video is ready.",
+  "regenerateRequestSent": "Your request has been sent successfully. You will receive an email once the video is ready.",
+  "close": "Close"
 }
