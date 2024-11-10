@@ -46,6 +46,7 @@ class SpeakerService {
   }
 
   getSpeakers(): Speaker[] {
+    this.speakers.sort((a, b) => a.name.localeCompare(b.name));
     return this.speakers;
   }
 

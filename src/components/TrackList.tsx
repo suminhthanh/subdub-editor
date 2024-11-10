@@ -4,6 +4,7 @@ import { Track } from '../types/Track';
 import { Button, colors, typography } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
+import { speakerService } from '../services/SpeakerService';
 
 const ListContainer = styled.div`
   background-color: ${colors.background};
@@ -11,10 +12,21 @@ const ListContainer = styled.div`
   overflow-y: auto;
 `;
 
-const TrackRow = styled.div`
+const TrackRow = styled.div<{ speakerColor?: string }>`
   display: flex;
   align-items: stretch;
   border-bottom: 1px solid ${colors.border};
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background-color: ${props => props.speakerColor || 'transparent'};
+  }
 `;
 
 const TrackTime = styled.span`
@@ -26,6 +38,7 @@ const TrackTime = styled.span`
   align-items: center;
   justify-content: center;
   padding: 5px;
+  margin-left: 4px;
   color: ${colors.text};
   &:hover {
     background-color: ${colors.timeline};
@@ -134,7 +147,10 @@ const TrackList: React.FC<TrackListProps> = ({
   return (
     <ListContainer>
       {tracks.filter(track => !track.deleted).map((track, index) => (
-        <TrackRow key={track.id}>
+        <TrackRow 
+          key={track.id} 
+          speakerColor={showSpeakerColors ? speakerService.getSpeakerById(track.speaker_id)?.color : undefined}
+        >
           <TrackTime onClick={() => handleTimeClick(track.start)}>
             {formatTime(track.start)}
           </TrackTime>

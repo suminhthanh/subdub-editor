@@ -1,8 +1,7 @@
 import { Track } from "../types/Track";
 import { DubbingAPIServiceInterface } from "./APIServiceInterface";
 import { v4 as uuidv4 } from "uuid";
-import { extractFilenameFromContentDisposition, MIME_TO_EXT } from "./utils";
-import { Speaker, speakerService } from "./SpeakerService";
+import { speakerService } from "./SpeakerService";
 import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 import { getI18n } from "react-i18next";
 
