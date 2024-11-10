@@ -26,8 +26,6 @@ class AudioService {
       .filter((track) => track.dubbed_path && track.for_dubbing)
       .sort((a, b) => a.start - b.start);
 
-    console.log("Dubbed tracks:", dubbedTracks);
-
     if (dubbedTracks.length === 0) {
       throw new Error("No dubbed tracks found");
     }
@@ -54,13 +52,18 @@ class AudioService {
           silenceDuration
         );
         audioBuffers.push(silenceBuffer);
+        currentTime = track.start;
       }
 
       // Get the chunk buffer for this track
       const chunkKey = track.dubbed_path.split("/").pop() || "";
       let chunkBuffer = chunkBuffers[chunkKey];
 
-      if (!chunkBuffer || track.needsResynthesis) {
+      if (!chunkBuffer && !track.needsResynthesis) {
+        continue;
+      }
+
+      if (track.needsResynthesis) {
         try {
           chunkBuffer = await this.resynthesizeTrack(track);
           chunkBuffers[chunkKey] = chunkBuffer;
@@ -73,28 +76,30 @@ class AudioService {
         }
       }
 
-      // Decode the chunk buffer
-      let chunkAudioBuffer: AudioBuffer;
-      try {
-        chunkAudioBuffer = await this.audioContext.decodeAudioData(
-          chunkBuffer.slice(0)
-        );
-      } catch (error) {
-        console.error(
-          `Failed to decode audio data for track ${track.id}:`,
-          error
-        );
-        // If decoding fails, we'll skip this track
-        continue;
-      }
+      if (chunkBuffer) {
+        // Decode the chunk buffer
+        let chunkAudioBuffer: AudioBuffer;
+        try {
+          chunkAudioBuffer = await this.audioContext.decodeAudioData(
+            chunkBuffer.slice(0)
+          );
+        } catch (error) {
+          console.error(
+            `Failed to decode audio data for track ${track.id}:`,
+            error
+          );
+          // If decoding fails, we'll skip this track
+          continue;
+        }
 
-      // Adjust the speed of the chunk
-      const speedAdjustedBuffer = await adjustAudioSpeed(
-        chunkAudioBuffer,
-        track.speed || 1
-      );
-      audioBuffers.push(speedAdjustedBuffer);
-      currentTime = track.start + speedAdjustedBuffer.duration;
+        // Adjust the speed of the chunk
+        const speedAdjustedBuffer = await adjustAudioSpeed(
+          chunkAudioBuffer,
+          track.speed || 1
+        );
+        audioBuffers.push(speedAdjustedBuffer);
+        currentTime = track.start + speedAdjustedBuffer.duration;
+      }
     }
 
     // Add silence at the end if the last track ends before the video duration
@@ -109,7 +114,7 @@ class AudioService {
     }
 
     console.log("Finished recreating constructed audio");
-    return await concatenateAudioBuffers(this.audioContext, audioBuffers);
+    return concatenateAudioBuffers(this.audioContext, audioBuffers.slice(0));
   }
 
   private async resynthesizeTrack(track: Track): Promise<ArrayBuffer> {

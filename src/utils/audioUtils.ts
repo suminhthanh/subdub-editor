@@ -26,10 +26,10 @@ export const createSilentAudioBuffer = async (
   return buffer;
 };
 
-export const concatenateAudioBuffers = async (
+export const concatenateAudioBuffers = (
   audioContext: AudioContext,
   buffers: AudioBuffer[]
-): Promise<AudioBuffer> => {
+): AudioBuffer => {
   const totalLength = buffers.reduce((acc, buffer) => acc + buffer.length, 0);
   const result = audioContext.createBuffer(
     1,

@@ -129,12 +129,10 @@ const loadDubbingMediaInBackground = async (uuid: string) => {
       originalAudioBuffer,
       backgroundAudioBuffer,
       dubbedVocalsBuffer,
-      tracksDataResponse
     ] = await Promise.all([
       DubbingAPIService.loadOriginalVocalsFromUUID(uuid),
       DubbingAPIService.loadBackgroundAudioFromUUID(uuid),
       DubbingAPIService.loadDubbedVocalsFromUUID(uuid),
-      DubbingAPIService.loadTracksFromUUID(uuid)
     ]);
 
     return {
@@ -142,7 +140,6 @@ const loadDubbingMediaInBackground = async (uuid: string) => {
       originalAudioBuffer,
       backgroundAudioBuffer,
       dubbedVocalsBuffer,
-      tracks: DubbingAPIService.parseTracksFromJSON(tracksDataResponse)
     };
   } catch (error) {
     throw error;
@@ -161,7 +158,7 @@ function App() {
   const [mediaFileName, setMediaFileName] = useState<string>('');
   const mediaRef = useRef<MediaPlayerRef | null>(null);
   const [editingTrack, setEditingTrack] = useState<Track | null>(null);
-  const [isUUIDMode, setIsUUIDMode] = useState(false);
+  const [uuidParam, setUuidParam] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serviceParam, setServiceParam] = useState<string>('dubbing');
@@ -195,7 +192,7 @@ function App() {
     console.log("Initial useEffect - UUID param:", uuidParam, "Service param:", serviceParam, "App mode:", appMode);
 
     if (uuidParam) {
-      setIsUUIDMode(true);
+      setUuidParam(uuidParam);
       handleFileOrUUIDSelect(null, uuidParam);
     }
   }, [appMode]);
@@ -345,7 +342,6 @@ function App() {
       ...prevTracks,
       dubbed: { ...prevTracks.dubbed, buffer: constructedDubbedAudioBuffer },
     }));
-    setIsMediaFullyLoaded(true); // Set to true when everything is loaded
   }, []);
 
   const handleEditTrack = (track: Track) => {
@@ -361,7 +357,7 @@ function App() {
         console.log("Audio reconstruction complete. Updating audio tracks...");
         setAudioTracks(prevTracks => ({
           ...prevTracks,
-          dubbed: { ...prevTracks.dubbed, buffer: result },
+          dubbed: { ...prevTracks.dubbed, label: t('dubbedVocals'), buffer: result },
         }));
       } catch (error) {
         console.error("Error recreating constructed audio:", error);
@@ -533,18 +529,22 @@ function App() {
     setIsMediaFullyLoaded(false); // Reset loading state
     setBackgroundLoadingMessage(t('loadingMedia')); // Set loading message
     try {
-      const params = new URLSearchParams(window.location.search);
-      const uuid = params.get('uuid');
-      if (uuid) {
-        const result = await loadDubbingMediaInBackground(uuid);
+      if (uuidParam) {
+        const rawTracks = await DubbingAPIService.loadTracksFromUUID(uuidParam);
+        const parsedTracks = DubbingAPIService.parseTracksFromJSON(rawTracks);
+        setTracks(parsedTracks);
+
+        if (parsedTracks.length < 50) {
+        const result = await loadDubbingMediaInBackground(uuidParam);
         setMediaUrl(result.videoUrl);
         setAudioTracks({
           background: { buffer: result.backgroundAudioBuffer, label: t('backgroundAudio') },
           original: { buffer: result.originalAudioBuffer, label: t('originalVocals') },
           dubbed: { buffer: result.dubbedVocalsBuffer, label: t('dubbedVocals') },
-        });
-        setTracks(result.tracks);
-        loadChunksInBackground(uuid, result.tracks);
+          });
+          loadChunksInBackground(uuidParam , parsedTracks);
+        }
+        setIsMediaFullyLoaded(true); // Set to true when everything is loaded
       }
     } catch (error) {
       console.error("Error loading edit mode:", error);
@@ -590,7 +590,7 @@ function App() {
           <HeaderRight>
             {mediaUrl && (
               <>
-                {!isUUIDMode && (
+                {!uuidParam && (
                   <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
                 )}
                 {isDubbingService && (
@@ -691,7 +691,7 @@ function App() {
             </>
           ) : loadError ? (
             <CenteredMessage>{t(loadError)}</CenteredMessage>
-          ) : (!appMode || appMode === 'file') && !isUUIDMode ? (
+          ) : (!appMode || appMode === 'file') && !uuidParam ? (
             <CenteredContent>
               <Input type="file" onChange={handleFileChange} />
               <Button onClick={handleSubmit} disabled={!selectedFile}>{t('openFile')}</Button>
