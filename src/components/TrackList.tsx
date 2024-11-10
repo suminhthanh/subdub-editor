@@ -63,6 +63,11 @@ const TrackTextArea = styled.textarea`
   line-height: 1.5;
   min-height: 1.5em;
   color: ${colors.text};
+  
+  &:read-only {
+    cursor: default;
+    user-select: text;
+  }
 `;
 
 const IconButton = styled(Button)`
@@ -160,6 +165,7 @@ const TrackList: React.FC<TrackListProps> = ({
               value={isDubbingService ? track.translated_text : track.text}
               onChange={(e) => handleTextareaChange(track.id, e)}
               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
+              readOnly={isDubbingService}
             />
             <IconButton onClick={() => onEditTrack(track)} title={t('edit')}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
