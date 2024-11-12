@@ -86,7 +86,6 @@ interface VideoOptionsProps {
   showSpeakerColors: boolean;
   onShowSpeakerColorsChange: (show: boolean) => void;
   tracks: Track[];
-  onTracksChange: (tracks: Track[]) => void;
   onSpeakerVoiceChange: (speakerId: string, newVoice: Voice) => void;
   timelineVisible: boolean;
   onTimelineVisibleChange: (enabled: boolean) => void;

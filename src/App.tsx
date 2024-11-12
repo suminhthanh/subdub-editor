@@ -360,18 +360,9 @@ function App() {
     }
   }, [serviceParam, chunkBuffers, t, advancedEditMode]);
 
-  const handleSaveTrack = useCallback(async (updatedTrack: Track, needsReconstruction: boolean) => {
-    console.log("handleSaveTrack called with updatedTrack:", updatedTrack, "needsReconstruction:", needsReconstruction);
+  const handleSaveTrack = useCallback(async (updatedTrack: Track, recreateAudio: boolean) => {
     if (editingTrack) {
-      setTracks(prevTracks => {
-        const newTracks = prevTracks.map(t => 
-          t.id === editingTrack.id ? updatedTrack : t
-        );
-        if (needsReconstruction) {
-          recreateConstructedAudio(newTracks);
-        }
-        return newTracks;
-      });
+      handleTrackChange(editingTrack.id, updatedTrack, recreateAudio);
       setEditingTrack(null);
     }
   }, [editingTrack, recreateConstructedAudio]);
@@ -380,7 +371,7 @@ function App() {
     console.log(`Track ${trackId} changed:`, updatedTrack);
     setTracks(prevTracks => {
       const newTracks = prevTracks.map(t => 
-        t.id === trackId ? updatedTrack : t
+        t.id === trackId ? { ...updatedTrack, updated: true } : t
       );
       if (recreateAudio) {
         console.log("Track changed, calling recreateConstructedAudio...");
@@ -413,7 +404,6 @@ function App() {
       const newTracks = prevTracks.map(t => 
         t.id === trackId ? { ...t, deleted: true } : t
       );
-      console.log("advancedEditMode", advancedEditMode);
       if (advancedEditMode) {
         recreateConstructedAudio(newTracks);
       }
@@ -499,7 +489,7 @@ function App() {
       const updatedTracks = tracks.map(track => {
         if (track.speaker_id === speakerId) {
           // Set needsResynthesis flag to true for affected tracks
-          return { ...track, needsResynthesis: true };
+          return { ...track, needsResynthesis: true, updated: true };
         }
         return track;
       });
@@ -704,7 +694,6 @@ function App() {
                       {activeTab === 'timeline' && timelineVisible ? (
                         <TrackTimeline
                           tracks={tracks}
-                          setTracks={setTracks}
                           currentTime={currentTime}
                           onTimeChange={handleTimeChange}
                           onEditTrack={handleEditTrack}
@@ -732,7 +721,6 @@ function App() {
                           showSpeakerColors={showSpeakerColors}
                           onShowSpeakerColorsChange={handleShowSpeakerColorsChange}
                           tracks={tracks}
-                          onTracksChange={setTracks}
                           onSpeakerVoiceChange={handleSpeakerVoiceChange}
                           timelineVisible={timelineVisible}
                           onTimelineVisibleChange={(enabled) => {

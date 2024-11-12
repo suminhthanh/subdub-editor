@@ -13,8 +13,14 @@ export interface Track {
   // The original text content
   text: string;
 
+  // The original text content
+  original_text?: string;
+
   // The translated text content
   translated_text?: string;
+
+  // The original translated text content
+  original_translated_text?: string;
 
   // An identifier for the speaker
   speaker_id: string;
@@ -51,4 +57,7 @@ export interface Track {
 
   // Add a deleted flag
   deleted?: boolean;
+
+  // A boolean indicating if the track has been updated
+  updated?: boolean;
 }

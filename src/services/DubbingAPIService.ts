@@ -23,7 +23,11 @@ type DubbingJSON = {
   volume_gain_db: number;
   dubbed_path: string;
   id: number;
-}[];
+};
+
+type RegenerateDubbingJSON = DubbingJSON & {
+  operation: "update" | "delete";
+};
 
 export const uuidExists = async (uuid: string): Promise<boolean> => {
   const response = await fetch(`${API_BASE_URL}/uuid_exists/?uuid=${uuid}`);
@@ -87,7 +91,7 @@ export const loadTracksFromUUID = async (
   return response.json();
 };
 
-export const parseTracksFromJSON = (utterances: DubbingJSON): Track[] => {
+export const parseTracksFromJSON = (utterances: DubbingJSON[]): Track[] => {
   const tracks: Track[] = [];
   for (const utterance of utterances) {
     speakerService.setSpeaker({
@@ -103,9 +107,11 @@ export const parseTracksFromJSON = (utterances: DubbingJSON): Track[] => {
       speaker_id: utterance.speaker_id,
       path: utterance.path || "",
       text: utterance.text || "",
+      original_text: utterance.text || "",
       for_dubbing: utterance.for_dubbing || false,
       ssml_gender: utterance.gender || "",
       translated_text: utterance.translated_text || "",
+      original_translated_text: utterance.translated_text || "",
       pitch: utterance.pitch || 0,
       speed: utterance.speed || 1,
       volume_gain_db: utterance.volume_gain_db || 0,
@@ -148,9 +154,14 @@ export const regenerateVideo = async (
   tracks: Track[]
 ): Promise<void> => {
   // Filter out deleted tracks and convert to DubbingJSON format
-  const utteranceUpdate = tracks
-    .filter((track) => !track.deleted)
-    .map((track) => ({
+  const utteranceUpdate: RegenerateDubbingJSON[] = [];
+
+  for (const track of tracks) {
+    if (!track.updated && !track.deleted) {
+      continue;
+    }
+
+    utteranceUpdate.push({
       id: track.id,
       start: track.start,
       end: track.end,
@@ -159,14 +170,16 @@ export const regenerateVideo = async (
       text: track.text,
       for_dubbing: track.for_dubbing,
       gender: track.ssml_gender,
-      translated_text: track.translated_text,
+      translated_text: track.translated_text || "",
       assigned_voice:
         speakerService.getSpeakerById(track.speaker_id)?.voice?.id || "",
       pitch: track.pitch,
       speed: track.speed,
       volume_gain_db: track.volume_gain_db,
       dubbed_path: track.dubbed_path,
-    }));
+      operation: track.deleted ? "delete" : "update",
+    });
+  }
 
   const response = await fetch(`${API_BASE_URL}/regenerate_video`, {
     method: "POST",

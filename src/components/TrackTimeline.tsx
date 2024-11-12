@@ -90,7 +90,6 @@ const ClickableRuler = styled(Ruler)`
 
 interface TrackTimelineProps {
   tracks: Track[];
-  setTracks: React.Dispatch<React.SetStateAction<Track[]>>;
   currentTime: number;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
@@ -103,7 +102,7 @@ const DEFAULT_ZOOM = 10;
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 100;
 
-const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, setTracks, currentTime, onTimeChange, onEditTrack, isDubbingService, onTrackChange, showSpeakerColors }) => {
+const TrackTimeline: React.FC<TrackTimelineProps> = ({ tracks, currentTime, onTimeChange, onEditTrack, isDubbingService, onTrackChange, showSpeakerColors }) => {
   const { t } = useTranslation();
   const [zoomLevel, setZoomLevel] = useState(DEFAULT_ZOOM); // pixels per second
   const scrollContainerRef = useRef<HTMLDivElement>(null);
