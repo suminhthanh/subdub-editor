@@ -20,7 +20,7 @@ const StyledVideo = styled.video<{ isEditMode: boolean }>`
 `;
 
 const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
-  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles, advancedEditMode }, ref) => {
+  ({ src, tracks, mediaType, audioTracks, selectedAudioTracks, selectedSubtitles, advancedEditMode, dubbedAudioBuffer }, ref) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const originalTrackRef = useRef<HTMLTrackElement>(null);
     const dubbedTrackRef = useRef<HTMLTrackElement>(null);
@@ -64,9 +64,11 @@ ${subtitle.text}
       setCurrentTime(time: number) {
         if (videoRef.current) {
           videoRef.current.currentTime = time;
+          // Handle HTML audio elements
           Object.values(audioElementsRef.current).forEach(audio => {
             audio.currentTime = time;
           });
+          playBufferTracks(time);
         }
       },
       play() {
@@ -74,6 +76,7 @@ ${subtitle.text}
           const playPromise = videoRef.current.play();
           if (playPromise !== undefined) {
             playPromise.then(() => {
+              // Play HTML audio elements
               Object.values(audioElementsRef.current).forEach(audio => {
                 const audioPlayPromise = audio.play();
                 if (audioPlayPromise !== undefined) {
@@ -82,6 +85,9 @@ ${subtitle.text}
                   });
                 }
               });
+              
+              // Play buffer sources
+              playBufferTracks(videoRef.current!.currentTime);
             }).catch(error => {
               console.log("Video play prevented:", error);
             });
@@ -89,10 +95,23 @@ ${subtitle.text}
         }
       },
       pause() {
-        videoRef.current?.pause();
-        Object.values(audioElementsRef.current).forEach(audio => {
-          audio.pause();
-        });
+        if (videoRef.current) {
+          videoRef.current.pause();
+          // Pause HTML audio elements
+          Object.values(audioElementsRef.current).forEach(audio => {
+            audio.pause();
+          });
+          // Stop buffer sources
+          audioBufferSourcesRef.current.forEach(source => {
+            try {
+              source.stop();
+              source.disconnect();
+            } catch (error) {
+              console.error("Error stopping audio source:", error);
+            }
+          });
+          audioBufferSourcesRef.current = [];
+        }
       },
     }));
 
@@ -144,16 +163,13 @@ ${subtitle.text}
       audioBufferSourcesRef.current = [];
 
       // Play selected tracks that have buffers
-      selectedAudioTracks.forEach((trackId) => {
-        const track = audioTracks[trackId];
-        if (track?.buffer instanceof AudioBuffer) {
-          const source = audioContextRef.current!.createBufferSource();
-          source.buffer = track.buffer;
-          source.connect(audioContextRef.current!.destination);
-          source.start(0, startTime);
-          audioBufferSourcesRef.current.push(source);
-        }
-      });
+      if (selectedAudioTracks.includes('dubbed') && advancedEditMode && dubbedAudioBuffer) {
+        const source = audioContextRef.current!.createBufferSource();
+        source.buffer = dubbedAudioBuffer;
+        source.connect(audioContextRef.current!.destination);
+        source.start(0, startTime);
+        audioBufferSourcesRef.current.push(source);
+      }
     };
 
     // Update audio elements when tracks change
@@ -165,9 +181,14 @@ ${subtitle.text}
       audioElementsRef.current = {};
 
       // Create new audio elements for tracks with URLs
-      Object.entries(audioTracks).forEach(([id, track]) => {
-        if (track.url && !track.buffer) {
-          const audio = new Audio(track.url);
+      Object.entries(audioTracks).forEach(([id, audioTrack]) => {
+        // Skip creating audio element for dubbed track in advanced mode
+        if (id === 'dubbed' && dubbedAudioBuffer) {
+          return;
+        }
+        
+        if (audioTrack.url) {
+          const audio = new Audio(audioTrack.url);
           audio.preload = 'auto';
           audio.muted = !selectedAudioTracks.includes(id);
           
@@ -193,7 +214,7 @@ ${subtitle.text}
         });
         audioElementsRef.current = {};
       };
-    }, [audioTracks]);
+    }, [audioTracks, dubbedAudioBuffer]);
 
     // Handle selected tracks changes
     useEffect(() => {
@@ -206,7 +227,7 @@ ${subtitle.text}
       if (videoRef.current && !videoRef.current.paused) {
         playBufferTracks(videoRef.current.currentTime);
       }
-    }, [selectedAudioTracks]);
+    }, [audioTracks, dubbedAudioBuffer, selectedAudioTracks]);
 
     // Sync video and audio playback
     useEffect(() => {
@@ -282,7 +303,13 @@ ${subtitle.text}
           audioContextRef.current = null;
         }
       };
-    }, [audioTracks, selectedAudioTracks]);
+    }, [audioTracks, dubbedAudioBuffer, selectedAudioTracks]);
+
+    useEffect(() => {
+      if (audioElementsRef.current['dubbed'] && selectedAudioTracks.includes('dubbed') && dubbedAudioBuffer) {
+        audioElementsRef.current['dubbed'].muted = true;
+      }
+    }, [dubbedAudioBuffer, selectedAudioTracks]);
 
     // Add timeupdate listener to check for tracks only in advanced edit mode
     useEffect(() => {      
@@ -302,7 +329,7 @@ ${subtitle.text}
           trackAudioContextRef.current = null;
         }
       };
-    }, [tracks, advancedEditMode]);
+    }, [tracks]);
 
     useEffect(() => {
       const video = videoRef.current;
@@ -321,7 +348,7 @@ ${subtitle.text}
       return () => {
         video.removeEventListener('seeked', handleSeeked);
       };
-    }, [tracks, advancedEditMode]);
+    }, [tracks]);
 
     const playTrackBuffer = (track: Track) => {
       if (!track.buffer) return;
@@ -388,6 +415,7 @@ ${subtitle.text}
       if (!videoRef.current) return;
       
       const currentTime = videoRef.current.currentTime;
+      console.log("currentTime", currentTime);
       
       try {
         // Find any track (including deleted ones) that should be active at current time

@@ -13,6 +13,7 @@ export interface MediaPlayerProps {
   selectedAudioTracks: string[];
   selectedSubtitles: string;
   advancedEditMode?: boolean;
+  dubbedAudioBuffer?: AudioBuffer | null;
 }
 
 export interface MediaPlayerRef {

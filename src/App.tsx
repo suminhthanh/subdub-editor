@@ -144,6 +144,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [audioTracks, setAudioTracks] = useState<{ [key: string]: AudioTrack }>({});
   const [chunkBuffers, setChunkBuffers] = useState<{ [key: string]: ArrayBuffer }>({});
+  const [dubbedAudioBuffer, setDubbedAudioBuffer] = useState<AudioBuffer | null>(null);
   const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>(['background', 'dubbed']); // Default to first two tracks
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
@@ -175,6 +176,8 @@ function App() {
     if (uuidParam) {
       setUuidParam(uuidParam);
       handleFileOrUUIDSelect(null, uuidParam);
+    } else {
+      setLoadError('errorLoadingUUID');
     }
   }, [appMode]);
 
@@ -319,10 +322,7 @@ function App() {
 
     setChunkBuffers(newChunkBuffers);
     const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
-    setAudioTracks(prevTracks => ({
-      ...prevTracks,
-      dubbed: { ...prevTracks.dubbed, buffer: constructedDubbedAudioBuffer },
-    }));
+    setDubbedAudioBuffer(constructedDubbedAudioBuffer);
   }, []);
 
   const handleEditTrack = (track: Track) => {
@@ -444,21 +444,22 @@ function App() {
         const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
 
         for (const selectedAudioTrack of selectedAudioTracks) {
-          const audioTrack = audioTracks[selectedAudioTrack];
-          if (audioTrack) {
-            let audioBuffer = audioTrack.buffer;
-            if (!audioBuffer) {
+          let audioBuffer: AudioBuffer | null = null;
+          if (selectedAudioTrack === 'dubbed') {
+            audioBuffer = dubbedAudioBuffer;
+          } else {
+            const audioTrack = audioTracks[selectedAudioTrack];
+            if (audioTrack) {
               const audioArrayBuffer = await audioService.downloadAudioURL(audioTrack.url);
               audioBuffer = await audioService.decodeAudioData(audioArrayBuffer);
             }
-
-            if (audioBuffer && backgroundBuffer) {
-              const finalAudioBuffer = await audioService.mixAudioBuffers(
+          }
+          if (audioBuffer && backgroundBuffer) {
+            const finalAudioBuffer = await audioService.mixAudioBuffers(
                 backgroundBuffer,
                 audioBuffer
               );
-              selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
-            }
+            selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
           } else {
             throw new Error(`Audio track ${selectedAudioTrack} not found`);
           }
@@ -667,6 +668,7 @@ function App() {
                   selectedAudioTracks={selectedAudioTracks}
                   selectedSubtitles={selectedSubtitles}
                   advancedEditMode={advancedEditMode}
+                  dubbedAudioBuffer={dubbedAudioBuffer}
                 />
               </VideoContainer>
               {isEditMode && (
