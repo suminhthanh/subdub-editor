@@ -23,6 +23,27 @@ const RightButtons = styled.div`
   gap: 10px;
 `;
 
+const UndoButton = styled(Button)`
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  color: ${colors.primary};
+  background-color: transparent;
+  &:hover {
+    background-color: ${colors.desactivatLight};
+  }
+`;
+
+const TextContainer = styled.div`
+  position: relative;
+`;
+
+const UndoContainer = styled.div`
+  position: absolute;
+  right: 5px;
+  top: 5px;
+`;
+
 interface TrackEditModalProps {
   track: Track | null;
   onSave: (updatedTrack: Track, needsReconstruction: boolean) => void;
@@ -103,21 +124,66 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
     onClose();
   };
 
+  const handleUndoText = () => {
+    if (track?.original_text) {
+      setText(track.original_text);
+    }
+  };
+
+  const handleUndoTranslation = () => {
+    if (track?.original_translated_text) {
+      setTranslatedText(track.original_translated_text);
+    }
+  };
+
+  const hasTextChanges = text !== track?.original_text;
+  const hasTranslationChanges = translatedText !== track?.original_translated_text;
+
   return (
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
         {isDubbingService && (
           <>
             <Label>{t('originalText')}</Label>
-            <TextArea value={text} onChange={(e) => setText(e.target.value)} readOnly />
+            <TextContainer>
+              <TextArea value={text} onChange={(e) => setText(e.target.value)} readOnly />
+            </TextContainer>
             <Label>{t('translatedText')}</Label>
-            <TextArea value={translatedText} onChange={(e) => setTranslatedText(e.target.value)} />
+            <TextContainer>
+              <TextArea 
+                value={translatedText} 
+                onChange={(e) => setTranslatedText(e.target.value)} 
+              />
+              {hasTranslationChanges && (
+                <UndoContainer>
+                  <UndoButton onClick={handleUndoTranslation} title={t('undo')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" fill="currentColor"/>
+                    </svg>
+                  </UndoButton>
+                </UndoContainer>
+              )}
+            </TextContainer>
           </>
         )}
         {!isDubbingService && (
           <>
             <Label>{t('text')}</Label>
-            <TextArea value={text} onChange={(e) => setText(e.target.value)} />
+            <TextContainer>
+              <TextArea 
+                value={text} 
+                onChange={(e) => setText(e.target.value)} 
+              />
+              {hasTextChanges && (
+                <UndoContainer>
+                  <UndoButton onClick={handleUndoText} title={t('undo')}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" fill="currentColor"/>
+                    </svg>
+                  </UndoButton>
+                </UndoContainer>
+              )}
+            </TextContainer>
           </>
         )}
         <Label>{t('startTime')}</Label>

@@ -100,18 +100,21 @@ export const parseTracksFromJSON = (utterances: DubbingJSON[]): Track[] => {
       voice: matxaSynthesisProvider.getVoice(utterance.assigned_voice),
     });
 
+    const text = utterance.text || "";
+    const translated_text = utterance.translated_text || "";
+
     tracks.push({
       id: utterance.id,
       start: utterance.start || 0,
       end: utterance.end || 0,
       speaker_id: utterance.speaker_id,
       path: utterance.path || "",
-      text: utterance.text || "",
-      original_text: utterance.text || "",
+      text: text,
+      original_text: text,
       for_dubbing: utterance.for_dubbing || false,
       ssml_gender: utterance.gender || "",
-      translated_text: utterance.translated_text || "",
-      original_translated_text: utterance.translated_text || "",
+      translated_text: translated_text,
+      original_translated_text: translated_text,
       pitch: utterance.pitch || 0,
       speed: utterance.speed || 1,
       volume_gain_db: utterance.volume_gain_db || 0,

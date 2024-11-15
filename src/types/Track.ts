@@ -10,10 +10,10 @@ export interface Track {
   // The end time of the track in seconds
   end: number;
 
-  // The original text content
+  // The non-translated text content
   text: string;
 
-  // The original text content
+  // The original non-translated text content
   original_text?: string;
 
   // The translated text content
