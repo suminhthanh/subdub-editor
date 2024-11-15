@@ -433,20 +433,24 @@ function App() {
   const handleDownloadWithSelectedTracks = async (selectedAudioTracks: string[], selectedSubtitles: string[]) => {
     if (mediaUrl && tracks.length > 0) {
       try {
+        console.log("handleDownloadWithSelectedTracks", selectedAudioTracks, selectedSubtitles);
         setIsRebuilding(true);
         let fileToProcess: File | string = mediaFile || mediaUrl;
 
-        const backgroundAudio = audioTracks.background;
+        // Download and decode background audio
+        const backgroundArrayBuffer = await audioService.downloadAudioURL(audioTracks.background.url);
+        const backgroundBuffer = await audioService.decodeAudioData(backgroundArrayBuffer);
+        
         const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
-
-        // Decode background audio once
-        const backgroundBuffer = backgroundAudio.buffer;
 
         for (const selectedAudioTrack of selectedAudioTracks) {
           const audioTrack = audioTracks[selectedAudioTrack];
           if (audioTrack) {
-            // Create a fresh copy of the buffer for each iteration
-            const audioBuffer = audioTrack.buffer;
+            let audioBuffer = audioTrack.buffer;
+            if (!audioBuffer) {
+              const audioArrayBuffer = await audioService.downloadAudioURL(audioTrack.url);
+              audioBuffer = await audioService.decodeAudioData(audioArrayBuffer);
+            }
 
             if (audioBuffer && backgroundBuffer) {
               const finalAudioBuffer = await audioService.mixAudioBuffers(

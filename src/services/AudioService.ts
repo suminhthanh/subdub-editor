@@ -135,6 +135,11 @@ class AudioService {
     return this.audioContext.decodeAudioData(arrayBuffer);
   }
 
+  async downloadAudioURL(url: string): Promise<ArrayBuffer> {
+    const response = await fetch(url);
+    return response.arrayBuffer();
+  }
+
   async mixAudioBuffers(
     buffer1: AudioBuffer,
     buffer2: AudioBuffer
