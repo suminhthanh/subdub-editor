@@ -21,6 +21,7 @@ export const colors = {
   accentLight: "#6a6af8",
   text: "#333333", // Added for better contrast
   timeline: "#ffe8cc", // Added for timeline ruler
+  disabled: "#999999",
 };
 
 // Typography

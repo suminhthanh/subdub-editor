@@ -43,11 +43,12 @@
   "loadingMedia": "Loading media, please wait...",
   "edit": "Edit",
   "advanced": "Advanced",
-  "enableTimeline": "Enable Timeline",
+  "enableTimeline": "Enable Timeline (experimental)",
   "delete": "Delete",
   "regenerate": "Regenerate",
   "regenerating": "Regenerating...",
   "regenerateDescription": "Once you have made all the necessary edits you can send us back the modifications so we can regenrate the video. You will receive an email once the video is ready.",
   "regenerateRequestSent": "Your request has been sent successfully. You will receive an email once the video is ready.",
-  "close": "Close"
+  "close": "Close",
+  "undo": "Undo"
 }

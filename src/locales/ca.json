@@ -43,11 +43,12 @@
   "loadingMedia": "Carregant vídeo, si us plau, espereu...",
   "edit": "Edita",
   "advanced": "Avançat",
-  "enableTimeline": "Mostrar Línia de Temps",
+  "enableTimeline": "Mostrar Línia de Temps (experimental)",
   "delete": "Eliminar",
   "regenerate": "Regenera",
   "regenerating": "Regenerant...",
   "regenerateDescription": "Després d'haver fet totes les modificacions necessàries, pots enviar-nos les modificacions per regenerar el vídeo. Rebràs un correu electrònic quan el vídeo estigui llest.",
   "regenerateRequestSent": "La teva petició ha estat enviada amb èxit. Rebràs un correu electrònic quan el vídeo estigui llest.",
-  "close": "Tanca"
+  "close": "Tanca",
+  "undo": "Desfer"
 }
