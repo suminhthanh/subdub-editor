@@ -48,7 +48,6 @@ interface TrackEditModalProps {
   track: Track | null;
   onSave: (updatedTrack: Track, needsReconstruction: boolean) => void;
   onClose: () => void;
-  onDelete: (trackId: number) => void;
   ModalOverlay: React.ComponentType<any>;
   isDubbingService: boolean;
 }
@@ -57,7 +56,6 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
   track, 
   onSave, 
   onClose, 
-  onDelete, 
   ModalOverlay, 
   isDubbingService,
 }) => {
@@ -119,7 +117,8 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
 
   const handleDelete = () => {
     if (track) {
-      onDelete(track.id);
+      const updatedTrack = { ...track, deleted: true };
+      onSave(updatedTrack, true);
     }
     onClose();
   };

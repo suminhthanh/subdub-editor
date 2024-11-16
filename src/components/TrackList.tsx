@@ -89,7 +89,6 @@ interface TrackListProps {
   onTrackChange: (trackId: number, updatedTrack: Track, recreateAudio: boolean) => void;
   onTimeChange: (time: number) => void;
   onEditTrack: (track: Track) => void;
-  onDeleteTrack: (trackId: number) => void;
   isDubbingService: boolean;
   showSpeakerColors: boolean;
 }
@@ -99,7 +98,6 @@ const TrackList: React.FC<TrackListProps> = ({
   onTrackChange,
   onTimeChange,
   onEditTrack,
-  onDeleteTrack,
   isDubbingService,
   showSpeakerColors,
 }) => {
@@ -151,10 +149,10 @@ const TrackList: React.FC<TrackListProps> = ({
     };
   }, [debouncedTrackChange]);
 
-  const handleUndoDelete = (trackId: number) => {
+  const handleDeleteAndUndo = (trackId: number, deleted: boolean) => {
     const originalTrack = tracks.find(track => track.id === trackId);
     if (!originalTrack) return;
-    const updatedTrack = { ...originalTrack, deleted: false };
+    const updatedTrack = { ...originalTrack, deleted };
     onTrackChange(trackId, updatedTrack, true);
   };
 
@@ -185,14 +183,14 @@ const TrackList: React.FC<TrackListProps> = ({
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
                   </svg>
                 </IconButton>
-                <IconButton onClick={() => onDeleteTrack(track.id)} title={t('delete')}>
+                <IconButton onClick={() => handleDeleteAndUndo(track.id, true)} title={t('delete')}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                   </svg>
                 </IconButton>
               </>
             ) : (
-              <IconButton onClick={() => handleUndoDelete(track.id)} title={t('undo')}>
+              <IconButton onClick={() => handleDeleteAndUndo(track.id, false)} title={t('undo')}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" fill="currentColor"/>
                 </svg>

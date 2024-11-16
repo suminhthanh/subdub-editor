@@ -307,7 +307,7 @@ function App() {
     const newChunkBuffers: { [key: string]: ArrayBuffer } = {};
 
     for (const track of dubbedTracks) {
-      const chunkName = track.dubbed_path.split("/").pop();
+      const chunkName = track.id;
       if (chunkName) {
         try {
           const buffer = await DubbingAPIService.loadDubbedUtterance(uuid, track.id);
@@ -338,10 +338,8 @@ function App() {
           console.log("Recreating constructed audio...");
           const result = await audioService.recreateConstructedAudio(updatedTracks, chunkBuffers);
           console.log("Audio reconstruction complete. Updating audio tracks...");
-          setAudioTracks(prevTracks => ({
-            ...prevTracks,
-            dubbed: { ...prevTracks.dubbed, label: t('dubbedVocals'), buffer: result },
-          }));
+          console.log("result", result);
+          setDubbedAudioBuffer(result);
         } else {
           for (const track of updatedTracks) {
             if (track.needsResynthesis) {
@@ -398,19 +396,6 @@ function App() {
       prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
     );
   };
-
-  const handleDeleteTrack = useCallback((trackId: number) => {
-    setTracks(prevTracks => {
-      const newTracks = prevTracks.map(t => 
-        t.id === trackId ? { ...t, deleted: true } : t
-      );
-      if (advancedEditMode) {
-        recreateConstructedAudio(newTracks);
-      }
-      return newTracks;
-    });
-
-  }, [advancedEditMode]);
 
   const handleSubtitlesChange = (subtitles: string) => {
     setSelectedSubtitles(subtitles);
@@ -713,7 +698,6 @@ function App() {
                           onTrackChange={handleTrackChange}
                           onTimeChange={handleTimeChange}
                           onEditTrack={handleEditTrack}
-                          onDeleteTrack={handleDeleteTrack}
                           isDubbingService={isDubbingService}
                           showSpeakerColors={showSpeakerColors}
                         />
@@ -756,7 +740,6 @@ function App() {
         track={editingTrack}
         onSave={handleSaveTrack}
         onClose={() => setEditingTrack(null)}
-        onDelete={handleDeleteTrack}
         ModalOverlay={ModalOverlay}
         isDubbingService={isDubbingService}
       />

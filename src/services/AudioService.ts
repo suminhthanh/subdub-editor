@@ -23,10 +23,10 @@ class AudioService {
   ): Promise<AudioBuffer> {
     console.log("Recreating constructed audio in AudioService...");
     const dubbedTracks = tracks
-      .filter(
-        (track) => track.dubbed_path && track.for_dubbing && !track.deleted
-      )
+      .filter((track) => !track.deleted)
       .sort((a, b) => a.start - b.start);
+
+    console.log("dubbedTracks", dubbedTracks);
 
     if (dubbedTracks.length === 0) {
       throw new Error("No dubbed tracks found");
@@ -58,7 +58,7 @@ class AudioService {
       }
 
       // Get the chunk buffer for this track
-      const chunkKey = track.dubbed_path.split("/").pop() || "";
+      const chunkKey = track.id;
       let chunkBuffer = chunkBuffers[chunkKey];
 
       if (!chunkBuffer && !track.needsResynthesis) {
