@@ -1,7 +1,7 @@
 import React, { useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
-import { Button, colors, typography } from '../styles/designSystem';
+import { IconButton, colors, typography } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
 import { debounce } from 'lodash';
 import { speakerService } from '../services/SpeakerService';
@@ -72,18 +72,6 @@ const TrackTextArea = styled.textarea<{ isDeleted?: boolean }>`
   }
 `;
 
-const IconButton = styled(Button)`
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  color: ${colors.primary};
-  background-color: transparent;
-  &:hover {
-    background-color: ${colors.desactivatLight};
-  }
-`;
-
 interface TrackListProps {
   tracks: Track[];
   onTrackChange: (trackId: number, updatedTrack: Track, recreateAudio: boolean) => void;
@@ -91,6 +79,7 @@ interface TrackListProps {
   onEditTrack: (track: Track) => void;
   isDubbingService: boolean;
   showSpeakerColors: boolean;
+  isMediaFullyLoaded?: boolean;
 }
 
 const TrackList: React.FC<TrackListProps> = ({
@@ -100,6 +89,7 @@ const TrackList: React.FC<TrackListProps> = ({
   onEditTrack,
   isDubbingService,
   showSpeakerColors,
+  isMediaFullyLoaded = true,
 }) => {
   const { t } = useTranslation();
 
@@ -173,24 +163,36 @@ const TrackList: React.FC<TrackListProps> = ({
               value={isDubbingService ? track.translated_text : track.text}
               onChange={(e) => handleTextareaChange(track.id, e)}
               onFocus={(e) => adjustTextareaHeight(e.target as HTMLTextAreaElement)}
-              readOnly={isDubbingService || track.deleted}
+              readOnly={isDubbingService || track.deleted || !isMediaFullyLoaded}
               isDeleted={track.deleted}
             />
             {!track.deleted ? (
               <>
-                <IconButton onClick={() => onEditTrack(track)} title={t('edit')}>
+                <IconButton 
+                  onClick={() => onEditTrack(track)} 
+                  title={t('edit')}
+                  disabled={!isMediaFullyLoaded}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
                   </svg>
                 </IconButton>
-                <IconButton onClick={() => handleDeleteAndUndo(track.id, true)} title={t('delete')}>
+                <IconButton 
+                  onClick={() => handleDeleteAndUndo(track.id, true)} 
+                  title={t('delete')}
+                  disabled={!isMediaFullyLoaded}
+                >
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                   </svg>
                 </IconButton>
               </>
             ) : (
-              <IconButton onClick={() => handleDeleteAndUndo(track.id, false)} title={t('undo')}>
+              <IconButton 
+                onClick={() => handleDeleteAndUndo(track.id, false)} 
+                title={t('undo')}
+                disabled={!isMediaFullyLoaded}
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z" fill="currentColor"/>
                 </svg>

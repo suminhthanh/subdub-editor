@@ -323,6 +323,8 @@ function App() {
     setChunkBuffers(newChunkBuffers);
     const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
     setDubbedAudioBuffer(constructedDubbedAudioBuffer);
+    setAdvancedEditMode(true);
+    setIsMediaFullyLoaded(true);
   }, []);
 
   const handleEditTrack = (track: Track) => {
@@ -528,11 +530,10 @@ function App() {
           },
         });
         if (parsedTracks.length < 100) {
-          setAdvancedEditMode(true);
           loadChunksInBackground(uuidParam, parsedTracks);
+        } else {
+          setIsMediaFullyLoaded(true);
         }
-        
-        setIsMediaFullyLoaded(true);
       }
     } catch (error) {
       console.error("Error loading edit mode:", error);
@@ -691,6 +692,7 @@ function App() {
                           isDubbingService={isDubbingService}
                           onTrackChange={handleTrackChange}
                           showSpeakerColors={showSpeakerColors}
+                          isMediaFullyLoaded={isMediaFullyLoaded}
                         />
                       ) : activeTab === 'list' ? (
                         <TrackList
@@ -700,6 +702,7 @@ function App() {
                           onEditTrack={handleEditTrack}
                           isDubbingService={isDubbingService}
                           showSpeakerColors={showSpeakerColors}
+                          isMediaFullyLoaded={isMediaFullyLoaded}
                         />
                       ) : (
                         <VideoOptions
@@ -719,6 +722,7 @@ function App() {
                               setActiveTab('list');
                             }
                           }}
+                          isMediaFullyLoaded={isMediaFullyLoaded}
                         />
                       )}
                     </>

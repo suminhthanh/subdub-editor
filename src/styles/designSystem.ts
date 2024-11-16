@@ -120,3 +120,20 @@ export const Label = styled.label`
   font-size: 14px;
   color: ${colors.text};
 `;
+
+export const IconButton = styled(Button)`
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  color: ${colors.primary};
+  background-color: transparent;
+  &:hover {
+    background-color: ${colors.desactivatLight};
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background-color: transparent;
+  }
+`;

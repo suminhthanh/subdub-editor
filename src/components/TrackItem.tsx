@@ -28,6 +28,7 @@ interface TrackItemProps {
   onEdit: (track: Track) => void;
   isDubbingService: boolean;
   showSpeakerColors: boolean;
+  isMediaFullyLoaded: boolean;
 }
 
 const TrackItem: React.FC<TrackItemProps> = ({ 
@@ -36,7 +37,8 @@ const TrackItem: React.FC<TrackItemProps> = ({
   zoomLevel, 
   onEdit, 
   isDubbingService,
-  showSpeakerColors
+  showSpeakerColors,
+  isMediaFullyLoaded
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const interactionStartPosRef = useRef<{ x: number; y: number } | null>(null);
@@ -50,7 +52,7 @@ const TrackItem: React.FC<TrackItemProps> = ({
       const dx = Math.abs(clientX - interactionStartPosRef.current.x);
       const dy = Math.abs(clientY - interactionStartPosRef.current.y);
       
-      if (dx < 5 && dy < 5 && !isDragging) {
+      if (dx < 5 && dy < 5 && !isDragging && isMediaFullyLoaded) {
         onEdit(track);
       }
     }
@@ -117,6 +119,7 @@ const TrackItem: React.FC<TrackItemProps> = ({
       bounds="parent"
       enableResizing={{ left: true, right: true }}
       minWidth={10}
+      disabled={!isMediaFullyLoaded}
     >
       <TrackBox
         backgroundColor={backgroundColor}

@@ -89,6 +89,7 @@ interface VideoOptionsProps {
   onSpeakerVoiceChange: (speakerId: string, newVoice: Voice) => void;
   timelineVisible: boolean;
   onTimelineVisibleChange: (enabled: boolean) => void;
+  isMediaFullyLoaded: boolean;
 }
 
 const VideoOptions: React.FC<VideoOptionsProps> = ({
@@ -102,6 +103,7 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
   onSpeakerVoiceChange,
   timelineVisible,
   onTimelineVisibleChange,
+  isMediaFullyLoaded
 }) => {
   const { t } = useTranslation();
   const [newSpeakerName, setNewSpeakerName] = useState('');
@@ -217,10 +219,12 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
             <SpeakerInput
               value={speaker.name}
               onChange={(e) => handleSpeakerNameChange(speaker.id, e.target.value)}
+              disabled={!isMediaFullyLoaded}
             />
             <VoiceSelect
               value={speaker.voice.id}
               onChange={(e) => handleSpeakerVoiceChange(speaker.id, e.target.value)}
+              disabled={!isMediaFullyLoaded}
             >
               {voices.map(voice => (
                 <option key={voice.id} value={voice.id}>
@@ -243,10 +247,11 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
           value={newSpeakerName}
           onChange={(e) => setNewSpeakerName(e.target.value)}
           placeholder={t('newSpeakerName')}
+          disabled={!isMediaFullyLoaded}
         />
-        <AddSpeakerButton onClick={handleAddSpeaker}>+</AddSpeakerButton>
+        <AddSpeakerButton onClick={handleAddSpeaker} disabled={!isMediaFullyLoaded}>+</AddSpeakerButton>
       </SpeakerItem>
-
+{/* 
       <h3>{t('advanced')}</h3>
       <CheckboxContainer>
         <Checkbox
@@ -256,7 +261,7 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
           onChange={(e) => onTimelineVisibleChange(e.target.checked)}
         />
         <Label htmlFor="timeline-visible">{t('enableTimeline')}</Label>
-      </CheckboxContainer>
+      </CheckboxContainer> */}
     </OptionsContainer>
   );
 };
