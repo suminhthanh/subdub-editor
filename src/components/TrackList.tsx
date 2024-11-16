@@ -94,7 +94,7 @@ const TrackList: React.FC<TrackListProps> = ({
   const { t } = useTranslation();
 
   const handleTimeClick = (time: number) => {
-    onTimeChange(time);
+    onTimeChange(time - 0.2);
   };
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {

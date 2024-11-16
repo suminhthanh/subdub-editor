@@ -30,6 +30,7 @@ const VideoPlayer = forwardRef<MediaPlayerRef, MediaPlayerProps>(
     const gainNodeRef = useRef<GainNode | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const audioBufferSourcesRef = useRef<AudioBufferSourceNode[]>([]);
+    const currentlyPlayingTrackRef = useRef<Track | null>(null);
 
     const [originalSubtitlesUrl, dubbedSubtitlesUrl] = useMemo(() => {
       if (tracks.length === 0) return ['', ''];
@@ -65,6 +66,7 @@ ${subtitle.text}
         if (videoRef.current) {
           videoRef.current.currentTime = time;
           videoRef.current.play();
+          currentlyPlayingTrackRef.current = null;
           // Handle HTML audio elements
           Object.values(audioElementsRef.current).forEach(audio => {
             audio.currentTime = time;
@@ -402,6 +404,7 @@ ${subtitle.text}
           } catch (error) {
             console.error("Error stopping track:", error);
           } finally {
+            currentlyPlayingTrackRef.current = null;
             // Always ensure dubbed vocals are unmuted when track ends
             if (audioElementsRef.current['dubbed'] && selectedAudioTracks.includes('dubbed')) {
               audioElementsRef.current['dubbed'].muted = false;
@@ -422,6 +425,7 @@ ${subtitle.text}
       if (!videoRef.current || advancedEditMode) return;
       
       const currentTime = videoRef.current.currentTime;
+      console.log("currentTime", currentTime);
       
       try {
         const activeTrack = tracks.find(track => 
@@ -429,20 +433,15 @@ ${subtitle.text}
           currentTime <= track.end
         );
 
-        const activeBufferTrack = tracks.find(track => 
-          track.buffer && 
-          !track.deleted && 
-          currentTime >= track.start - 1 && 
-          currentTime <= track.end
-        );
 
-        if (activeTrack?.deleted || activeBufferTrack) {
+        if (activeTrack?.deleted || activeTrack?.buffer) {
           if (audioElementsRef.current['dubbed']) {
             audioElementsRef.current['dubbed'].muted = true;
           }
           
-          if (activeBufferTrack) {
-            playTrackBuffer(activeBufferTrack);
+          if (activeTrack?.buffer && activeTrack !== currentlyPlayingTrackRef.current) {
+            currentlyPlayingTrackRef.current = activeTrack;
+            playTrackBuffer(activeTrack);
           }
         } else {
           if (audioElementsRef.current['dubbed']) {

@@ -304,26 +304,28 @@ function App() {
     const totalChunks = dubbedTracks.length;
     let loadedChunks = 0;
 
-    const newChunkBuffers: { [key: string]: ArrayBuffer } = {};
+    try {
 
-    for (const track of dubbedTracks) {
-      const chunkName = track.id;
-      if (chunkName) {
-        try {
-          const buffer = await DubbingAPIService.loadDubbedUtterance(uuid, track.id);
-          newChunkBuffers[chunkName] = buffer;
-          loadedChunks++;
-          setChunkLoadingProgress((loadedChunks / totalChunks) * 100);
-        } catch (error) {
-          console.error(`Failed to load chunk: ${chunkName}`, error);
+      const newChunkBuffers: { [key: string]: ArrayBuffer } = {};
+
+      for (const track of dubbedTracks) {
+        const chunkName = track.id;
+        if (chunkName) {
+            const buffer = await DubbingAPIService.loadDubbedUtterance(uuid, track.id);
+            newChunkBuffers[chunkName] = buffer;
+            loadedChunks++;
+            setChunkLoadingProgress((loadedChunks / totalChunks) * 100);
+
         }
       }
-    }
 
-    setChunkBuffers(newChunkBuffers);
-    const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
-    setDubbedAudioBuffer(constructedDubbedAudioBuffer);
-    setAdvancedEditMode(true);
+      setChunkBuffers(newChunkBuffers);
+      const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
+      setDubbedAudioBuffer(constructedDubbedAudioBuffer);
+      setAdvancedEditMode(true);
+    } catch (error) {
+      console.error("Error loading chunks in background:", error);
+    }
     setIsMediaFullyLoaded(true);
   }, []);
 
