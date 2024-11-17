@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Button, ModalOverlay, Title, Message, ErrorMessage, ErrorBox } from '../styles/designSystem';
@@ -41,8 +41,14 @@ const RegenerateModal: React.FC<RegenerateModalProps> = ({ onClose, onRegenerate
     }
   };
 
+  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
   return (
-    <ModalOverlay>
+    <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
         <Title>{t('regenerate')}</Title>
         {error ? (

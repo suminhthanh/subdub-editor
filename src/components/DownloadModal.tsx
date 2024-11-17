@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import styled, { keyframes }  from 'styled-components';
 import { useTranslation } from 'react-i18next';
 import { Button, Label, ModalOverlay, colors, Title, ErrorMessage, Message, ErrorBox } from '../styles/designSystem';
@@ -117,6 +117,12 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
     }
   };
 
+  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  }, [onClose]);
+
   if (error) {
     return (
       <ModalOverlay>
@@ -136,7 +142,7 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
   }
 
   return (
-    <ModalOverlay>
+    <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
         <Title>{!isDownloading ? t('selectTracksForDownload') : t('preparingDownload')}</Title>
         {!isDownloading ? (

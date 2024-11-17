@@ -6,7 +6,7 @@ import TrackTimeline from './components/TrackTimeline';
 import TrackList from './components/TrackList';
 import { extractTracks, rebuildMedia } from './services/FFmpegService';
 import TrackEditModal from './components/TrackEditModal';
-import { Button, Select, colors, typography, ModalOverlay } from './styles/designSystem';
+import { Button, Select, colors, typography } from './styles/designSystem';
 import { Input } from './styles/designSystem';
 import { Track } from './types/Track';
 import { TranscriptionAPIService } from './services/TranscriptionAPIService';
@@ -23,9 +23,6 @@ const GlobalStyle = createGlobalStyle`
   body {
     margin: 0;
     padding: 0;
-    font-family: ${typography.fontFamily};
-    background-color: ${colors.secondaryBackground};
-    color: ${colors.black};
   }
 `;
 
@@ -37,6 +34,9 @@ const AppContainer = styled.div`
   margin: 0 auto;
   box-sizing: border-box;
   background-color: ${colors.background};
+  position: relative;
+  font-family: ${typography.fontFamily};
+  color: ${colors.black};
 `;
 
 const Header = styled.div`
@@ -570,183 +570,182 @@ function App() {
   };
 
   return (
-    <>
-      <GlobalStyle />
-      <AppContainer>
-        <Header>
-          {backgroundLoadingMessage && (
-            <ProgressMessage>
-              {backgroundLoadingMessage}
-            </ProgressMessage>
-          )}
-          {(chunkLoadingProgress > 0 && chunkLoadingProgress < 100) && (
-            <ProgressMessage>
-              {t('loadingChunks')}: {chunkLoadingProgress.toFixed(0)}%
-            </ProgressMessage>
-          )}
-          {reconstructionMessage && (
-            <ProgressMessage>{reconstructionMessage}</ProgressMessage>
-          )}
-          <HeaderRight>
-            {mediaUrl && (
-              <>
-                {!uuidParam && (
-                  <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
-                )}
-                {isDubbingService && (
-                  <>
-                    {!isEditMode && (
-                      <Button onClick={handleEditModeToggle}>
-                        {t('edit')}
-                      </Button>
-                    )}
-                    {isEditMode ? (
-                      advancedEditMode ? (
-                        <Button 
-                          onClick={handleDownloadClick}
-                          disabled={!isMediaFullyLoaded}
-                        >
-                          {t('downloadResult')}
-                        </Button>
-                      ) : (
-                        <Button 
-                          onClick={() => setShowRegenerateModal(true)}
-                          disabled={!isMediaFullyLoaded}
-                        >
-                          {t('regenerate')}
-                        </Button>
-                      )
-                    ) : (
-                      <Button onClick={handleSimpleDownload}>
+    <AppContainer>
+      <Header>
+        {backgroundLoadingMessage && (
+          <ProgressMessage>
+            {backgroundLoadingMessage}
+          </ProgressMessage>
+        )}
+        {(chunkLoadingProgress > 0 && chunkLoadingProgress < 100) && (
+          <ProgressMessage>
+            {t('loadingChunks')}: {chunkLoadingProgress.toFixed(0)}%
+          </ProgressMessage>
+        )}
+        {reconstructionMessage && (
+          <ProgressMessage>{reconstructionMessage}</ProgressMessage>
+        )}
+        <HeaderRight>
+          {mediaUrl && (
+            <>
+              {!uuidParam && (
+                <Button onClick={handleCloseMedia}>{t('closeMedia')}</Button>
+              )}
+              {isDubbingService && (
+                <>
+                  {!isEditMode && (
+                    <Button onClick={handleEditModeToggle}>
+                      {t('edit')}
+                    </Button>
+                  )}
+                  {isEditMode ? (
+                    advancedEditMode ? (
+                      <Button 
+                        onClick={handleDownloadClick}
+                        disabled={!isMediaFullyLoaded}
+                      >
                         {t('downloadResult')}
                       </Button>
+                    ) : (
+                      <Button 
+                        onClick={() => setShowRegenerateModal(true)}
+                        disabled={!isMediaFullyLoaded}
+                      >
+                        {t('regenerate')}
+                      </Button>
+                    )
+                  ) : (
+                    <Button onClick={handleSimpleDownload}>
+                      {t('downloadResult')}
+                    </Button>
+                  )}
+                </>
+              )}
+              {!isDubbingService && (
+                <Button onClick={handleDownloadClick}>
+                  {t('downloadResult')}
+                </Button>
+              )}
+            </>
+          )}
+          {!process.env.APP_LANGUAGE && (
+            <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="ca">Català</option>
+            </Select>
+          )}
+        </HeaderRight>
+      </Header>
+      <ContentContainer>
+        {isLoading ? (
+          <CenteredMessage>{t('loading')}</CenteredMessage>
+        ) : mediaUrl ? (
+          <>
+            <VideoContainer isEditMode={isEditMode}>
+              <MediaPlayer 
+                src={mediaUrl} 
+                tracks={isEditMode ? tracks : []} 
+                ref={mediaRef} 
+                mediaType={mediaType} 
+                audioTracks={audioTracks}
+                selectedAudioTracks={selectedAudioTracks}
+                selectedSubtitles={selectedSubtitles}
+                advancedEditMode={advancedEditMode}
+                dubbedAudioBuffer={dubbedAudioBuffer}
+              />
+            </VideoContainer>
+            {isEditMode && (
+              <TrackContainer>
+                {tracks.length > 0 && (
+                  <>
+                    <TabContainer>
+                      {timelineVisible && (
+                        <Tab 
+                          active={activeTab === 'timeline'} 
+                          onClick={() => setActiveTab('timeline')}
+                        >
+                          {t('timeline')}
+                        </Tab>
+                      )}
+                      <Tab 
+                        active={activeTab === 'list'} 
+                        onClick={() => setActiveTab('list')}
+                      >
+                        {t('list')}
+                      </Tab>
+                      <Tab 
+                        active={activeTab === 'options'} 
+                        onClick={() => setActiveTab('options')}
+                      >
+                        {t('options')}
+                      </Tab>
+                    </TabContainer>
+                    {activeTab === 'timeline' && timelineVisible ? (
+                      <TrackTimeline
+                        tracks={tracks}
+                        currentTime={currentTime}
+                        onTimeChange={handleTimeChange}
+                        onEditTrack={handleEditTrack}
+                        isDubbingService={isDubbingService}
+                        onTrackChange={handleTrackChange}
+                        showSpeakerColors={showSpeakerColors}
+                        isMediaFullyLoaded={isMediaFullyLoaded}
+                      />
+                    ) : activeTab === 'list' ? (
+                      <TrackList
+                        tracks={tracks}
+                        onTrackChange={handleTrackChange}
+                        onTimeChange={handleTimeChange}
+                        onEditTrack={handleEditTrack}
+                        isDubbingService={isDubbingService}
+                        showSpeakerColors={showSpeakerColors}
+                        isMediaFullyLoaded={isMediaFullyLoaded}
+                      />
+                    ) : (
+                      <VideoOptions
+                        audioTracks={audioTracks}
+                        selectedTracks={selectedAudioTracks}
+                        onAudioTrackToggle={handleAudioTrackToggle}
+                        selectedSubtitles={selectedSubtitles}
+                        onSubtitlesChange={handleSubtitlesChange}
+                        showSpeakerColors={showSpeakerColors}
+                        onShowSpeakerColorsChange={handleShowSpeakerColorsChange}
+                        tracks={tracks}
+                        onSpeakerVoiceChange={handleSpeakerVoiceChange}
+                        timelineVisible={timelineVisible}
+                        onTimelineVisibleChange={(enabled) => {
+                          setTimelineVisible(enabled);
+                          if (!enabled && activeTab === 'timeline') {
+                            setActiveTab('list');
+                          }
+                        }}
+                        isMediaFullyLoaded={isMediaFullyLoaded}
+                      />
                     )}
                   </>
                 )}
-                {!isDubbingService && (
-                  <Button onClick={handleDownloadClick}>
-                    {t('downloadResult')}
-                  </Button>
-                )}
-              </>
+              </TrackContainer>
             )}
-            {!process.env.APP_LANGUAGE && (
-              <Select onChange={changeLanguage} value={i18n.language} style={{ margin: 0 }}>
-                <option value="en">English</option>
-                <option value="es">Español</option>
-                <option value="ca">Català</option>
-              </Select>
-            )}
-          </HeaderRight>
-        </Header>
-        <ContentContainer>
-          {isLoading ? (
-            <CenteredMessage>{t('loading')}</CenteredMessage>
-          ) : mediaUrl ? (
-            <>
-              <VideoContainer isEditMode={isEditMode}>
-                <MediaPlayer 
-                  src={mediaUrl} 
-                  tracks={isEditMode ? tracks : []} 
-                  ref={mediaRef} 
-                  mediaType={mediaType} 
-                  audioTracks={audioTracks}
-                  selectedAudioTracks={selectedAudioTracks}
-                  selectedSubtitles={selectedSubtitles}
-                  advancedEditMode={advancedEditMode}
-                  dubbedAudioBuffer={dubbedAudioBuffer}
-                />
-              </VideoContainer>
-              {isEditMode && (
-                <TrackContainer>
-                  {tracks.length > 0 && (
-                    <>
-                      <TabContainer>
-                        {timelineVisible && (
-                          <Tab 
-                            active={activeTab === 'timeline'} 
-                            onClick={() => setActiveTab('timeline')}
-                          >
-                            {t('timeline')}
-                          </Tab>
-                        )}
-                        <Tab 
-                          active={activeTab === 'list'} 
-                          onClick={() => setActiveTab('list')}
-                        >
-                          {t('list')}
-                        </Tab>
-                        <Tab 
-                          active={activeTab === 'options'} 
-                          onClick={() => setActiveTab('options')}
-                        >
-                          {t('options')}
-                        </Tab>
-                      </TabContainer>
-                      {activeTab === 'timeline' && timelineVisible ? (
-                        <TrackTimeline
-                          tracks={tracks}
-                          currentTime={currentTime}
-                          onTimeChange={handleTimeChange}
-                          onEditTrack={handleEditTrack}
-                          isDubbingService={isDubbingService}
-                          onTrackChange={handleTrackChange}
-                          showSpeakerColors={showSpeakerColors}
-                          isMediaFullyLoaded={isMediaFullyLoaded}
-                        />
-                      ) : activeTab === 'list' ? (
-                        <TrackList
-                          tracks={tracks}
-                          onTrackChange={handleTrackChange}
-                          onTimeChange={handleTimeChange}
-                          onEditTrack={handleEditTrack}
-                          isDubbingService={isDubbingService}
-                          showSpeakerColors={showSpeakerColors}
-                          isMediaFullyLoaded={isMediaFullyLoaded}
-                        />
-                      ) : (
-                        <VideoOptions
-                          audioTracks={audioTracks}
-                          selectedTracks={selectedAudioTracks}
-                          onAudioTrackToggle={handleAudioTrackToggle}
-                          selectedSubtitles={selectedSubtitles}
-                          onSubtitlesChange={handleSubtitlesChange}
-                          showSpeakerColors={showSpeakerColors}
-                          onShowSpeakerColorsChange={handleShowSpeakerColorsChange}
-                          tracks={tracks}
-                          onSpeakerVoiceChange={handleSpeakerVoiceChange}
-                          timelineVisible={timelineVisible}
-                          onTimelineVisibleChange={(enabled) => {
-                            setTimelineVisible(enabled);
-                            if (!enabled && activeTab === 'timeline') {
-                              setActiveTab('list');
-                            }
-                          }}
-                          isMediaFullyLoaded={isMediaFullyLoaded}
-                        />
-                      )}
-                    </>
-                  )}
-                </TrackContainer>
-              )}
-            </>
-          ) : loadError ? (
-            <CenteredMessage>{t(loadError)}</CenteredMessage>
-          ) : (!appMode || appMode === 'file') && !uuidParam ? (
-            <CenteredContent>
-              <Input type="file" onChange={handleFileChange} />
-              <Button onClick={handleSubmit} disabled={!selectedFile}>{t('openFile')}</Button>
-            </CenteredContent>
-          ) : null}
-        </ContentContainer>
-      </AppContainer>
-      <TrackEditModal
-        track={editingTrack}
-        onSave={handleSaveTrack}
-        onClose={() => setEditingTrack(null)}
-        ModalOverlay={ModalOverlay}
-        isDubbingService={isDubbingService}
-      />
+          </>
+        ) : loadError ? (
+          <CenteredMessage>{t(loadError)}</CenteredMessage>
+        ) : (!appMode || appMode === 'file') && !uuidParam ? (
+          <CenteredContent>
+            <Input type="file" onChange={handleFileChange} />
+            <Button onClick={handleSubmit} disabled={!selectedFile}>{t('openFile')}</Button>
+          </CenteredContent>
+        ) : null}
+      </ContentContainer>
+      
+      {editingTrack && (
+        <TrackEditModal
+          track={editingTrack}
+          onSave={handleSaveTrack}
+          onClose={() => setEditingTrack(null)}
+          isDubbingService={isDubbingService}
+        />
+      )}
       {showDownloadModal && (
         <DownloadModal
           audioTracks={audioTracks}
@@ -763,7 +762,7 @@ function App() {
           onRegenerate={handleRegenerateVideo}
         />
       )}
-    </>
+    </AppContainer>
   );
 }
 

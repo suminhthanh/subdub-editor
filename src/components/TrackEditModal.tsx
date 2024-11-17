@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { Track } from '../types/Track';
-import { Button, Input, ModalContent, TextArea, Select, Label, colors } from '../styles/designSystem';
+import { Button, Input, ModalContent, TextArea, Select, Label, colors, ModalOverlay } from '../styles/designSystem';
 import { useTranslation } from 'react-i18next';
 import { speakerService, Speaker } from '../services/SpeakerService';
 
@@ -48,7 +48,6 @@ interface TrackEditModalProps {
   track: Track | null;
   onSave: (updatedTrack: Track, needsReconstruction: boolean) => void;
   onClose: () => void;
-  ModalOverlay: React.ComponentType<any>;
   isDubbingService: boolean;
 }
 
@@ -56,7 +55,6 @@ const TrackEditModal: React.FC<TrackEditModalProps> = ({
   track, 
   onSave, 
   onClose, 
-  ModalOverlay, 
   isDubbingService,
 }) => {
   const { t } = useTranslation();
