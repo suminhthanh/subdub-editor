@@ -14,7 +14,6 @@ import { DubbingAPIService } from './services/DubbingAPIService';
 import { audioService } from './services/AudioService';
 import VideoOptions from './components/VideoOptions';
 import DownloadModal from './components/DownloadModal';
-import LoadingOverlay from './components/LoadingOverlay';
 import { speakerService } from './services/SpeakerService';
 import { Voice } from './types/Voice';
 import { AudioTrack } from './types/AudioTrack';
@@ -149,7 +148,6 @@ function App() {
   const [selectedSubtitles, setSelectedSubtitles] = useState<string>('none');
   const [showSpeakerColors, setShowSpeakerColors] = useState(true);
   const [showDownloadModal, setShowDownloadModal] = useState(false);
-  const [isRebuilding, setIsRebuilding] = useState(false);
   const [appMode, setAppMode] = useState<'dubbing' | 'transcription' | 'file' | null>(
     process.env.APP_MODE as 'dubbing' | 'transcription' | 'file' | null
   );
@@ -160,6 +158,7 @@ function App() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [timelineVisible, setTimelineVisible] = useState(false);
   const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState<string>('');
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -300,11 +299,10 @@ function App() {
   }, [serviceParam]);
 
   const loadChunksInBackground = useCallback(async (uuid: string, tracks: Track[]) => {
-    const dubbedTracks = tracks.filter(track => track.dubbed_path && track.for_dubbing);
-    const totalChunks = dubbedTracks.length;
-    let loadedChunks = 0;
-
     try {
+      const dubbedTracks = tracks.filter(track => track.dubbed_path && track.for_dubbing);
+      const totalChunks = dubbedTracks.length;
+      let loadedChunks = 0;
 
       const newChunkBuffers: { [key: string]: ArrayBuffer } = {};
 
@@ -419,57 +417,57 @@ function App() {
     setShowDownloadModal(false);
   };
 
-  const handleDownloadWithSelectedTracks = async (selectedAudioTracks: string[], selectedSubtitles: string[]) => {
+  const handleDownloadWithSelectedTracks = async (
+    selectedAudioTracks: string[], 
+    selectedSubtitles: string[],
+  ) => {
     if (mediaUrl && tracks.length > 0) {
-      try {
-        console.log("handleDownloadWithSelectedTracks", selectedAudioTracks, selectedSubtitles);
-        setIsRebuilding(true);
-        let fileToProcess: File | string = mediaFile || mediaUrl;
+      let fileToProcess: File | string = mediaFile || mediaUrl;
 
-        // Download and decode background audio
-        const backgroundArrayBuffer = await audioService.downloadAudioURL(audioTracks.background.url);
-        const backgroundBuffer = await audioService.decodeAudioData(backgroundArrayBuffer);
-        
-        const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
+      setDownloadProgress(t('downloadingBackgroundAudio'));
+      // Download and decode background audio
+      const backgroundArrayBuffer = await audioService.downloadAudioURL(audioTracks.background.url);
+      const backgroundBuffer = await audioService.decodeAudioData(backgroundArrayBuffer);
+      
+      const selectedAudioBuffers: { buffer: AudioBuffer, label: string }[] = [];
 
-        for (const selectedAudioTrack of selectedAudioTracks) {
-          let audioBuffer: AudioBuffer | null = null;
-          if (selectedAudioTrack === 'dubbed') {
-            audioBuffer = dubbedAudioBuffer;
-          } else {
-            const audioTrack = audioTracks[selectedAudioTrack];
-            if (audioTrack) {
-              const audioArrayBuffer = await audioService.downloadAudioURL(audioTrack.url);
-              audioBuffer = await audioService.decodeAudioData(audioArrayBuffer);
-            }
-          }
-          if (audioBuffer && backgroundBuffer) {
-            const finalAudioBuffer = await audioService.mixAudioBuffers(
-                backgroundBuffer,
-                audioBuffer
-              );
-            selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
-          } else {
-            throw new Error(`Audio track ${selectedAudioTrack} not found`);
+      for (const selectedAudioTrack of selectedAudioTracks) {
+        setDownloadProgress(t('downloadingTrack', { track: audioTracks[selectedAudioTrack]?.label.toLowerCase() }));
+        let audioBuffer: AudioBuffer | null = null;
+        if (selectedAudioTrack === 'dubbed') {
+          audioBuffer = dubbedAudioBuffer;
+        } else {
+          const audioTrack = audioTracks[selectedAudioTrack];
+          if (audioTrack) {
+            const audioArrayBuffer = await audioService.downloadAudioURL(audioTrack.url);
+            audioBuffer = await audioService.decodeAudioData(audioArrayBuffer);
           }
         }
-        console.log("selectedAudioBuffers", selectedAudioBuffers);
-
-        const newMediaBlob = await rebuildMedia(fileToProcess, tracks, selectedAudioBuffers, selectedSubtitles);
-        const url = URL.createObjectURL(newMediaBlob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `output_${mediaFileName}`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      } catch (error) {
-        console.error("Error downloading result:", error);
-      } finally {
-        setIsRebuilding(false);
-        setShowDownloadModal(false);
+        if (audioBuffer && backgroundBuffer) {
+          setDownloadProgress(t('mixingAudio', { track: audioTracks[selectedAudioTrack]?.label.toLowerCase() }));
+          const finalAudioBuffer = await audioService.mixAudioBuffers(
+              backgroundBuffer,
+              audioBuffer
+            );
+          selectedAudioBuffers.push({ buffer: finalAudioBuffer, label: selectedAudioTrack });
+        } else {
+          throw new Error(`Audio track ${selectedAudioTrack} not found`);
+        }
       }
+
+      setDownloadProgress(t('rebuildingMediaOnDownload'));
+      const newMediaBlob = await rebuildMedia(fileToProcess, tracks, selectedAudioBuffers, selectedSubtitles, setDownloadProgress);
+      
+      setDownloadProgress(t('preparingDownload'));
+      throw new Error("test");
+      const url = URL.createObjectURL(newMediaBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `output_${mediaFileName}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -755,10 +753,10 @@ function App() {
           subtitles={['original', 'dubbed']}
           onClose={handleDownloadModalClose}
           onDownload={handleDownloadWithSelectedTracks}
-          isRebuilding={isRebuilding}
+          onRegenerate={() => setShowRegenerateModal(true)}
+          progressMessage={downloadProgress}
         />
       )}
-      {isRebuilding && <LoadingOverlay message={t('rebuildingMedia')} />}
       {showRegenerateModal && (
         <RegenerateModal
           onClose={() => setShowRegenerateModal(false)}

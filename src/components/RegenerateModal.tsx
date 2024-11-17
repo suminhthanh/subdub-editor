@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { Button, ModalOverlay } from '../styles/designSystem';
+import { Button, ModalOverlay, Title, Message, ErrorMessage, ErrorBox } from '../styles/designSystem';
 
 const ModalContent = styled.div`
   background: white;
@@ -18,11 +18,6 @@ const ButtonContainer = styled.div`
   margin-top: 20px;
 `;
 
-const Message = styled.p`
-  margin: 0 0 20px 0;
-  line-height: 1.5;
-`;
-
 interface RegenerateModalProps {
   onClose: () => void;
   onRegenerate: () => Promise<void>;
@@ -32,28 +27,38 @@ const RegenerateModal: React.FC<RegenerateModalProps> = ({ onClose, onRegenerate
   const { t } = useTranslation();
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     try {
+      throw new Error("test");
       await onRegenerate();
       setIsComplete(true);
     } catch (error) {
       console.error('Error regenerating video:', error);
-      // You might want to show an error message here
+      setError(`${error}`);
     }
   };
 
   return (
     <ModalOverlay>
       <ModalContent>
-        <Message>
-          {isComplete
-            ? t('regenerateRequestSent')
-            : t('regenerateDescription')}
-        </Message>
+        <Title>{t('regenerate')}</Title>
+        {error ? (
+          <>
+            <ErrorMessage>{t('errorRegenerating')}</ErrorMessage>
+            <ErrorBox>{error}</ErrorBox>
+          </>
+        ) : (
+          <Message>
+            {isComplete
+              ? t('regenerateRequestSent')
+              : t('regenerateDescription')}
+          </Message>
+        )}
         <ButtonContainer>
-          {!isComplete ? (
+          {!isComplete && !error ? (
             <>
               <Button onClick={onClose}>{t('cancel')}</Button>
               <Button 

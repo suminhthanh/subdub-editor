@@ -137,3 +137,33 @@ export const IconButton = styled(Button)`
     background-color: transparent;
   }
 `;
+
+export const Title = styled.h2`
+  color: ${colors.primary};
+  margin: 0 0 20px 0;
+`;
+
+export const Message = styled.p`
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+`;
+
+export const ErrorMessage = styled.p`
+  color: ${colors.tertiary};
+  margin: 0 0 20px 0;
+`;
+
+export const ErrorBox = styled.pre`
+  background-color: #ffebee; // Light red background
+  border: 1px solid ${colors.tertiary};
+  border-radius: 4px;
+  padding: 12px;
+  margin: 10px 0;
+  font-family: monospace;
+  font-size: 14px;
+  color: ${colors.tertiary};
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+`;

@@ -50,5 +50,16 @@
   "regenerateDescription": "Després d'haver fet totes les modificacions necessàries, pots enviar-nos les modificacions per regenerar el vídeo. Rebràs un correu electrònic quan el vídeo estigui llest.",
   "regenerateRequestSent": "La teva petició ha estat enviada amb èxit. Rebràs un correu electrònic quan el vídeo estigui llest.",
   "close": "Tanca",
-  "undo": "Desfer"
+  "undo": "Desfer",
+  "errorRegenerating": "Error regenerant el vídeo",
+  "downloading": "Descarregant...",
+  "downloadError": "Error descarregant el vídeo",
+  "downloadErrorMessage": "Hi ha hagut un error descarregant el vídeo. Podeu provar a enviar-ho per a que sigui regenerat al nostre servidor.",
+  "preparingDownload": "Preparant la descàrrega...",
+  "downloadingBackgroundAudio": "Descarregant àudio de fons...",
+  "downloadingTrack": "Descarregant {{track}}...",
+  "mixingAudio": "Mixant {{track}} amb àudio de fons...",
+  "rebuildingMediaOnDownload": "Reconstruint el vídeo...",
+  "loadingFFmpeg": "Carregant FFmpeg...",
+  "preparingMedia": "Preparant el vídeo..."
 }

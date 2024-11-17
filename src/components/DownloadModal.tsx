@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes }  from 'styled-components';
 import { useTranslation } from 'react-i18next';
-import { Button, Label, ModalOverlay, colors } from '../styles/designSystem';
+import { Button, Label, ModalOverlay, colors, Title, ErrorMessage, Message, ErrorBox } from '../styles/designSystem';
 import { AudioTrack } from '../types/AudioTrack';
 
 const ModalContent = styled.div`
@@ -10,11 +10,6 @@ const ModalContent = styled.div`
   border-radius: 5px;
   max-width: 500px;
   width: 100%;
-`;
-
-const Title = styled.h2`
-  color: ${colors.primary};
-  margin-bottom: 20px;
 `;
 
 const TrackList = styled.div`
@@ -37,18 +32,54 @@ const ButtonContainer = styled.div`
   gap: 10px;
 `;
 
+const spin = keyframes`
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+`;
+
+const Spinner = styled.div`
+  border: 4px solid ${colors.background};
+  border-top: 4px solid ${colors.primary};
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: ${spin} 1s linear infinite;
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+`;
+
+const Center = styled.div`
+  text-align: center;
+`;
+
 interface DownloadModalProps {
   audioTracks: { [key: string]: AudioTrack };
   subtitles: string[];
   onClose: () => void;
-  onDownload: (selectedAudioTracks: string[], selectedSubtitles: string[]) => void;
-  isRebuilding: boolean;
+  onDownload: (selectedAudioTracks: string[], selectedSubtitles: string[]) => Promise<void>;
+  onRegenerate?: () => void;
+  progressMessage?: string;
 }
 
-const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, onClose, onDownload, isRebuilding }) => {
+const DownloadModal: React.FC<DownloadModalProps> = ({ 
+  audioTracks, 
+  subtitles, 
+  onClose, 
+  onDownload, 
+  onRegenerate,
+  progressMessage,
+}) => {
   const { t } = useTranslation();
-  const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>([]);
+  const [selectedAudioTracks, setSelectedAudioTracks] = useState<string[]>(['dubbed']);
   const [selectedSubtitles, setSelectedSubtitles] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleAudioTrackToggle = (id: string) => {
     setSelectedAudioTracks(prev =>
@@ -62,24 +93,63 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
     );
   };
 
-  const handleDownload = () => {
-    onDownload(selectedAudioTracks, selectedSubtitles);
-    onClose();
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    setError(null);
+    try {
+      await onDownload(
+        selectedAudioTracks, 
+        selectedSubtitles
+      );
+      onClose();
+    } catch (error) {
+      console.error('Error downloading video:', error);
+      setError(`${error}`);
+    } finally {
+      setIsDownloading(false);
+    }
   };
+
+  const handleRegenerateClick = () => {
+    if (onRegenerate) {
+      onRegenerate();
+      onClose();
+    }
+  };
+
+  if (error) {
+    return (
+      <ModalOverlay>
+        <ModalContent>
+          <Title>{t('downloadError')}</Title>
+          <ErrorMessage>{t('downloadErrorMessage')}</ErrorMessage>
+          <ErrorBox>{error}</ErrorBox>
+          <ButtonContainer>
+            <Button onClick={onClose}>{t('cancel')}</Button>
+            {onRegenerate && (
+              <Button onClick={handleRegenerateClick}>{t('regenerate')}</Button>
+            )}
+          </ButtonContainer>
+        </ModalContent>
+      </ModalOverlay>
+    );
+  }
 
   return (
     <ModalOverlay>
       <ModalContent>
-        <Title>{t('selectTracksForDownload')}</Title>
-        <TrackList>
-          <h3>{t('audioTracks')}</h3>
-          {Object.entries(audioTracks).filter(([id, track]) => id !== 'background').map(([id, track], index) => (
+        <Title>{!isDownloading ? t('selectTracksForDownload') : t('preparingDownload')}</Title>
+        {!isDownloading ? (
+          <>
+            <TrackList>
+              <h3>{t('audioTracks')}</h3>
+          {Object.entries(audioTracks).filter(([id]) => id !== 'background').map(([id, track], index) => (
             <TrackItem key={index}>
               <Checkbox
                 type="checkbox"
                 checked={selectedAudioTracks.includes(id)}
                 onChange={() => handleAudioTrackToggle(id)}
-                disabled={isRebuilding}
+                disabled={isDownloading}
               />
               <Label htmlFor={id}>{track.label}</Label>
             </TrackItem>
@@ -93,16 +163,33 @@ const DownloadModal: React.FC<DownloadModalProps> = ({ audioTracks, subtitles, o
                 type="checkbox"
                 checked={selectedSubtitles.includes(subtitle)}
                 onChange={() => handleSubtitleToggle(subtitle)}
-                disabled={isRebuilding}
+                disabled={isDownloading}
               />
               <Label htmlFor={subtitle}>{t(`${subtitle}Subtitles`)}</Label>
             </TrackItem>
-          ))}
-        </TrackList>
-        <ButtonContainer>
-          <Button onClick={onClose} disabled={isRebuilding}>{t('cancel')}</Button>
-          <Button onClick={handleDownload} disabled={isRebuilding}>{t('downloadResult')}</Button>
-        </ButtonContainer>
+              ))}
+            </TrackList>
+            <ButtonContainer>
+              <Button 
+                onClick={onClose} 
+              >
+                {t('cancel')}
+              </Button>
+              <Button 
+                onClick={handleDownload} 
+              >
+                {t('downloadResult')}
+              </Button>
+            </ButtonContainer>
+          </>
+        ) : (
+          <LoadingContainer>
+            <Spinner />
+            <Center>
+              <Message>{progressMessage || t('downloading')}</Message>
+            </Center>
+          </LoadingContainer>
+        )}
       </ModalContent>
     </ModalOverlay>
   );

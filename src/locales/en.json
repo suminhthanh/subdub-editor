@@ -50,5 +50,16 @@
   "regenerateDescription": "Once you have made all the necessary edits you can send us back the modifications so we can regenrate the video. You will receive an email once the video is ready.",
   "regenerateRequestSent": "Your request has been sent successfully. You will receive an email once the video is ready.",
   "close": "Close",
-  "undo": "Undo"
+  "undo": "Undo",
+  "errorRegenerating": "Error regenerating video. Please try again.",
+  "downloading": "Downloading...",
+  "downloadError": "Download Error",
+  "downloadErrorMessage": "There was an error downloading your video. You may need to regenerate it first.",
+  "preparingDownload": "Preparing download...",
+  "downloadingBackgroundAudio": "Downloading background audio...",
+  "downloadingTrack": "Downloading {{track}}...",
+  "mixingAudio": "Mixing {{track}} with background...",
+  "rebuildingMediaOnDownload": "Rebuilding media...",
+  "loadingFFmpeg": "Loading FFmpeg...",
+  "preparingMedia": "Preparing media..."
 }

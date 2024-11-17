@@ -50,5 +50,16 @@
   "regenerateDescription": "Después de haber hecho todas las modificaciones necesarias, puedes enviarnos las modificaciones para regenerar el vídeo. Recibirás un correo electrónico cuando el vídeo esté listo.",
   "regenerateRequestSent": "La petición ha sido enviada con éxito. Recibirás un correo electrónico cuando el vídeo esté listo.",
   "close": "Cerrar",
-  "undo": "Deshacer"
+  "undo": "Deshacer",
+  "errorRegenerating": "Error regenerando el vídeo. Por favor, inténtalo de nuevo.",
+  "downloading": "Descargando...",
+  "downloadError": "Error descargando el vídeo",
+  "downloadErrorMessage": "Ha ocurrido un error descargando el vídeo. Es posible que necesite regenerarlo primero.",
+  "preparingDownload": "Preparando la descarga...",
+  "downloadingBackgroundAudio": "Descargando audio de fondo...",
+  "downloadingTrack": "Descargando {{track}}...",
+  "mixingAudio": "Mezclando {{track}} con audio de fondo...",
+  "rebuildingMediaOnDownload": "Reconstruyendo el vídeo...",
+  "loadingFFmpeg": "Cargando FFmpeg...",
+  "preparingMedia": "Preparando el vídeo..."
 }

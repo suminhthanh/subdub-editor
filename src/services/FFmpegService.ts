@@ -4,6 +4,7 @@ import { Track } from "../types/Track";
 import { encodeWAV } from "../utils/audioUtils"; // Make sure to implement this function
 import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 import { speakerService } from "./SpeakerService";
+import { getI18n } from "react-i18next";
 
 const ffmpeg = createFFmpeg({ log: true });
 
@@ -38,23 +39,30 @@ export const rebuildMedia = async (
   mediaFile: File | string,
   tracks: Track[],
   selectedAudioTracks: { buffer: ArrayBuffer | AudioBuffer; label: string }[],
-  selectedSubtitles: string[]
+  selectedSubtitles: string[],
+  setProgressMessage: (message: string) => void
 ): Promise<Blob> => {
+  const { t } = getI18n();
+
   if (!ffmpeg.isLoaded()) {
+    setProgressMessage(t("loadingFFmpeg"));
     await ffmpeg.load();
   }
 
   const inputFileName = "input.mp4";
   const outputFileName = `output.mp4`;
 
+  setProgressMessage(t("preparingMedia"));
   ffmpeg.FS("writeFile", inputFileName, await fetchFile(mediaFile));
 
   // Write subtitle files
   if (selectedSubtitles.includes("original")) {
+    setProgressMessage(t("generatingOriginalSubtitles"));
     const originalSubtitles = generateSRT(tracks, false);
     ffmpeg.FS("writeFile", "original_subtitles.srt", originalSubtitles);
   }
   if (selectedSubtitles.includes("dubbed")) {
+    setProgressMessage(t("generatingDubbedSubtitles"));
     const dubbedSubtitles = generateSRT(tracks, true);
     ffmpeg.FS("writeFile", "dubbed_subtitles.srt", dubbedSubtitles);
   }
@@ -70,6 +78,9 @@ export const rebuildMedia = async (
 
   // Write audio files
   for (let i = 0; i < selectedAudioTracks.length; i++) {
+    setProgressMessage(
+      t("downloadingTrack", { track: selectedAudioTracks[i].label })
+    );
     const audioBuffer = selectedAudioTracks[i].buffer;
     let audioData: Uint8Array;
 
@@ -120,8 +131,10 @@ export const rebuildMedia = async (
 
   ffmpegArgs.push(outputFileName);
 
+  setProgressMessage(t("rebuildingMediaOnDownload"));
   await ffmpeg.run(...ffmpegArgs);
 
+  setProgressMessage(t("preparingDownload"));
   const data = ffmpeg.FS("readFile", outputFileName);
   return new Blob([data.buffer], { type: "video/mp4" });
 };
