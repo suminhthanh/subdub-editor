@@ -29,7 +29,7 @@
   "speakers": "Parlants",
   "newSpeakerName": "Nom del nou parlant",
   "speaker": "Parlant",
-  "selectSpeaker": "Selecciona un parlant",
+  "selectSpeaker": "Seleccionar un parlant",
   "showSpeakerColors": "Mostrar colors de parlants",
   "selectTracksForDownload": "Selecciona les pistes per descarregar",
   "rebuildingMedia": "Reconstruint el vídeo, si us plau, espereu...",
@@ -61,5 +61,7 @@
   "mixingAudio": "Mixant {{track}} amb àudio de fons...",
   "rebuildingMediaOnDownload": "Reconstruint el vídeo...",
   "loadingFFmpeg": "Carregant FFmpeg...",
-  "preparingMedia": "Preparant el vídeo..."
+  "preparingMedia": "Preparant el vídeo...",
+  "addSpeaker": "Afegir un parlant",
+  "selectVoice": "Seleccionar veu"
 }

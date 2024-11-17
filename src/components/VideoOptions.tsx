@@ -43,6 +43,7 @@ const SpeakerItem = styled.div`
   display: flex;
   align-items: center;
   margin-bottom: 10px;
+  width: 100%;
 `;
 
 const SpeakerInput = styled.input`
@@ -50,10 +51,8 @@ const SpeakerInput = styled.input`
   padding: 5px;
   border: 1px solid ${colors.border};
   border-radius: 4px;
-`;
-
-const AddSpeakerButton = styled(Button)`
-  margin-top: 10px;
+  width: 30vw;
+  flex-grow: 1;
 `;
 
 const ColorSquare = styled.div<{ color: string }>`
@@ -75,6 +74,12 @@ const VoiceSelect = styled.select`
   padding: 5px;
   border: 1px solid ${colors.border};
   border-radius: 4px;
+  width: 30vw;
+`;
+
+const FullWidthButton = styled(Button)`
+  width: 100%;
+  margin-top: 5px;
 `;
 
 interface VideoOptionsProps {
@@ -107,8 +112,10 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
 }) => {
   const { t } = useTranslation();
   const [newSpeakerName, setNewSpeakerName] = useState('');
+  const [newSpeakerVoice, setNewSpeakerVoice] = useState('');
   const [speakers, setSpeakers] = useState<Speaker[]>(speakerService.getSpeakers());
   const [voices, setVoices] = useState<Voice[]>([]);
+  const [newSpeakerColor, setNewSpeakerColor] = useState('#' + Math.floor(Math.random()*16777215).toString(16));
 
   useEffect(() => {
     const loadVoices = async () => {
@@ -137,10 +144,15 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
   };
 
   const handleAddSpeaker = () => {
-    if (newSpeakerName.trim() && voices.length > 0) {
-      speakerService.addSpeaker(newSpeakerName.trim(), voices[0]);
-      setSpeakers([...speakerService.getSpeakers()]);
-      setNewSpeakerName("");
+    if (newSpeakerName.trim() && newSpeakerVoice) {
+      const selectedVoice = voices.find(voice => voice.id === newSpeakerVoice);
+      if (selectedVoice) {
+        speakerService.addSpeaker(newSpeakerName.trim(), selectedVoice, newSpeakerColor);
+        setSpeakers([...speakerService.getSpeakers()]);
+        setNewSpeakerName("");
+        setNewSpeakerVoice("");
+        setNewSpeakerColor('#' + Math.floor(Math.random()*16777215).toString(16));
+      }
     }
   };
 
@@ -241,17 +253,50 @@ const VideoOptions: React.FC<VideoOptionsProps> = ({
             />
           </SpeakerItem>
         ))}
+      
+        <SpeakerItem>
+          <ColorSquare 
+            color={newSpeakerColor} 
+            onClick={() => {
+              const input = document.getElementById('new-speaker-color') as HTMLInputElement;
+              input.click();
+            }}
+          />
+          <SpeakerInput
+            value={newSpeakerName}
+            onChange={(e) => setNewSpeakerName(e.target.value)}
+            placeholder={t('newSpeakerName')}
+            disabled={!isMediaFullyLoaded}
+          />
+          <VoiceSelect
+            value={newSpeakerVoice}
+            onChange={(e) => setNewSpeakerVoice(e.target.value)}
+            disabled={!isMediaFullyLoaded}
+          >
+            <option value="">{t('selectVoice')}</option>
+            {voices.map(voice => (
+              <option key={voice.id} value={voice.id}>
+                {voice.label}
+              </option>
+            ))}
+          </VoiceSelect>
+          <ColorInput
+            id="new-speaker-color"
+            type="color"
+            value={newSpeakerColor}
+            onChange={(e) => setNewSpeakerColor(e.target.value)}
+            hidden
+          />
+        </SpeakerItem>
+        <FullWidthButton 
+          onClick={handleAddSpeaker} 
+          disabled={!isMediaFullyLoaded || !newSpeakerName.trim() || !newSpeakerVoice}
+        >
+          {t('addSpeaker')}
+        </FullWidthButton>
       </SpeakerList>
-      <SpeakerItem>
-        <SpeakerInput
-          value={newSpeakerName}
-          onChange={(e) => setNewSpeakerName(e.target.value)}
-          placeholder={t('newSpeakerName')}
-          disabled={!isMediaFullyLoaded}
-        />
-        <AddSpeakerButton onClick={handleAddSpeaker} disabled={!isMediaFullyLoaded}>+</AddSpeakerButton>
-      </SpeakerItem>
-{/* 
+
+      {/* 
       <h3>{t('advanced')}</h3>
       <CheckboxContainer>
         <Checkbox

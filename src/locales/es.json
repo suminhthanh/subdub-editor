@@ -61,5 +61,7 @@
   "mixingAudio": "Mezclando {{track}} con audio de fondo...",
   "rebuildingMediaOnDownload": "Reconstruyendo el vídeo...",
   "loadingFFmpeg": "Cargando FFmpeg...",
-  "preparingMedia": "Preparando el vídeo..."
+  "preparingMedia": "Preparando el vídeo...",
+  "addSpeaker": "Añadir hablante",
+  "selectVoice": "Seleccionar voz"
 }

@@ -124,6 +124,8 @@ export const parseTracksFromJSON = (utterances: DubbingJSON[]): Track[] => {
     });
   }
 
+  speakerService.sortSpeakers();
+
   return tracks;
 };
 

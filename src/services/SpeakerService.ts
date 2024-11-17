@@ -46,16 +46,19 @@ class SpeakerService {
   }
 
   getSpeakers(): Speaker[] {
-    this.speakers.sort((a, b) => a.name.localeCompare(b.name));
     return this.speakers;
   }
 
-  addSpeaker(name: string, voice: Voice): void {
+  addSpeaker(
+    name: string,
+    voice: Voice,
+    color: string = getRandomColor()
+  ): void {
     this.speakers.push({
       id: uuidv4(),
       name,
       voice,
-      color: getRandomColor(),
+      color,
     });
   }
 
@@ -70,6 +73,10 @@ class SpeakerService {
     return (
       this.speakers.find((speaker) => speaker.id === id) || this.speakers[0]
     );
+  }
+
+  sortSpeakers(): void {
+    this.speakers.sort((a, b) => a.name.localeCompare(b.name));
   }
 }
 
