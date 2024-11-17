@@ -49,7 +49,7 @@ const RegenerateModal: React.FC<RegenerateModalProps> = ({ onClose, onRegenerate
   return (
     <ModalOverlay onClick={handleOverlayClick}>
       <ModalContent>
-        <Title>{t('regenerate')}</Title>
+        <Title>{t('regenerateTitle')}</Title>
         {error ? (
           <>
             <ErrorMessage>{t('errorRegenerating')}</ErrorMessage>

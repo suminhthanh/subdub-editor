@@ -112,13 +112,15 @@ export const ModalContent = styled.div`
   padding: 20px;
   border-radius: 5px;
   width: 90vw;
-  max-width: 1000px;
+  max-width: 80%;
   color: ${colors.text};
 `;
 
 export const Label = styled.label`
   font-size: 14px;
   color: ${colors.text};
+  font-weight: normal;
+  margin: 0px;
 `;
 
 export const IconButton = styled(Button)`

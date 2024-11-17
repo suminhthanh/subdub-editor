@@ -18,11 +18,11 @@ const OptionsContainer = styled.div`
 const CheckboxContainer = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin: 0 0 10px 0;
 `;
 
 const Checkbox = styled.input`
-  margin-right: 10px;
+  margin: 0 10px 0 0;
 `;
 
 const RadioContainer = styled.div`
@@ -32,17 +32,17 @@ const RadioContainer = styled.div`
 `;
 
 const RadioButton = styled.input`
-  margin-right: 10px;
+  margin: 0 10px 0 0;
 `;
 
 const SpeakerList = styled.div`
-  margin-top: 20px;
+  margin: 20px 0 0 0;
 `;
 
 const SpeakerItem = styled.div`
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
+  margin: 0 0 10px 0;
   width: 100%;
 `;
 

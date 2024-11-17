@@ -46,6 +46,7 @@
   "enableTimeline": "Enable Timeline (experimental)",
   "delete": "Delete",
   "regenerate": "Regenerate",
+  "regenerateTitle": "Regenerate video",
   "regenerating": "Regenerating...",
   "regenerateDescription": "Once you have made all the necessary edits you can send us back the modifications so we can regenrate the video. You will receive an email once the video is ready.",
   "regenerateRequestSent": "Your request has been sent successfully. You will receive an email once the video is ready.",
