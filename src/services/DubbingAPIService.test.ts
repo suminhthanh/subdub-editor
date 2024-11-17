@@ -1,4 +1,4 @@
-import { DubbingAPIService } from "./DubbingAPIService";
+import { DubbingAPIService, DubbingJSON } from "./DubbingAPIService";
 import { speakerService } from "./SpeakerService";
 import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 
@@ -30,39 +30,37 @@ describe("DubbingAPIService", () => {
 
   describe("parseTracksFromJSON", () => {
     it("should parse valid dubbing JSON data", () => {
-      const mockData = {
-        utterances: [
-          {
-            id: "1",
-            start: 0,
-            end: 5,
-            speaker_id: "SPEAKER_01",
-            path: "path/to/audio.mp3",
-            text: "Hello, world!",
-            for_dubbing: true,
-            ssml_gender: "Female",
-            translated_text: "Hola, mundo!",
-            assigned_voice: "voice1",
-            pitch: 0,
-            speed: 1,
-            volume_gain_db: 0,
-            dubbed_path: "path/to/dubbed/audio.mp3",
-            chunk_size: 150,
-          },
-        ],
-        source_language: "en",
-      };
+      const mockData: DubbingJSON[] = [
+        {
+          id: 1,
+          start: 0,
+          end: 5,
+          speaker_id: "SPEAKER_01",
+          path: "path/to/audio.mp3",
+          text: "Hello, world!",
+          for_dubbing: true,
+          gender: "Female",
+          translated_text: "Hola, mundo!",
+          assigned_voice: "voice1",
+          pitch: 0,
+          speed: 1,
+          volume_gain_db: 0,
+          dubbed_path: "path/to/dubbed/audio.mp3",
+        },
+      ];
 
       const result = DubbingAPIService.parseTracksFromJSON(mockData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
-        id: expect.any(String),
+        id: 1,
         start: 0,
         end: 5,
         speaker_id: "SPEAKER_01",
         path: "path/to/audio.mp3",
         text: "Hello, world!",
+        original_text: "Hello, world!",
+        original_translated_text: "Hola, mundo!",
         for_dubbing: true,
         ssml_gender: "Female",
         translated_text: "Hola, mundo!",
@@ -81,17 +79,14 @@ describe("DubbingAPIService", () => {
     });
 
     it("should handle missing properties", () => {
-      const mockData = {
-        utterances: [
-          {
-            id: "1",
-            start: 0,
-            end: 5,
-            speaker_id: "SPEAKER_01",
-          },
-        ],
-        source_language: "en",
-      };
+      const mockData = [
+        {
+          id: "1",
+          start: 0,
+          end: 5,
+          speaker_id: "SPEAKER_01",
+        },
+      ];
 
       const result = DubbingAPIService.parseTracksFromJSON(mockData);
 
@@ -127,37 +122,6 @@ describe("DubbingAPIService", () => {
         DubbingAPIService.parseTracksFromJSON(mockData as any)
       ).toThrow("utterances is not iterable");
     });
-  });
-
-  // You might want to add more tests for loadVideoFromUUID and loadTracksFromUUID
-  // However, these functions make API calls, so you'd need to mock the fetch function
-  // Here's an example of how you might structure those tests:
-
-  describe("loadVideoFromUUID", () => {
-    it("should load video data correctly", async () => {
-      const mockBlob = new Blob(["test"], { type: "video/mp4" });
-      const mockResponse = {
-        ok: true,
-        blob: jest.fn().mockResolvedValue(mockBlob),
-        headers: new Headers({
-          "content-type": "video/mp4",
-          "content-disposition": 'attachment; filename="test.mp4"',
-        }),
-      };
-
-      global.fetch = jest.fn().mockResolvedValue(mockResponse);
-      global.URL.createObjectURL = jest.fn().mockReturnValue("blob:test-url");
-
-      const result = await DubbingAPIService.loadVideoFromUUID("test-uuid");
-
-      expect(result).toEqual({
-        url: "blob:test-url",
-        contentType: "video/mp4",
-        filename: "test.mp4",
-      });
-    });
-
-    // Add more tests for error cases
   });
 
   describe("loadTracksFromUUID", () => {

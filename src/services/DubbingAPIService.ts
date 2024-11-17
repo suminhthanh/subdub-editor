@@ -8,7 +8,7 @@ import { getI18n } from "react-i18next";
 const API_BASE_URL =
   process.env.DUBBING_API_BASE_URL || "http://192.168.178.152:8700";
 
-type DubbingJSON = {
+export type DubbingJSON = {
   start: number;
   end: number;
   speaker_id: string;
