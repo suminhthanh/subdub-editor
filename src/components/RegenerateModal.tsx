@@ -32,7 +32,6 @@ const RegenerateModal: React.FC<RegenerateModalProps> = ({ onClose, onRegenerate
   const handleRegenerate = async () => {
     setIsRegenerating(true);
     try {
-      throw new Error("test");
       await onRegenerate();
       setIsComplete(true);
     } catch (error) {

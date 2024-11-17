@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import styled, { keyframes }  from 'styled-components';
-import { useTranslation } from 'react-i18next';
+import { useTranslation, Trans } from 'react-i18next';
 import { Button, Label, ModalOverlay, colors, Title, ErrorMessage, Message, ErrorBox } from '../styles/designSystem';
 import { AudioTrack } from '../types/AudioTrack';
 
@@ -147,6 +147,11 @@ const DownloadModal: React.FC<DownloadModalProps> = ({
         <Title>{!isDownloading ? t('selectTracksForDownload') : t('preparingDownload')}</Title>
         {!isDownloading ? (
           <>
+            <Message>
+              <Trans i18nKey="downloadExplanation" components={{
+                regenerateLink: <span style={{ color: colors.primary, cursor: 'pointer' }} onClick={handleRegenerateClick} />
+              }} />
+            </Message>
             <TrackList>
               <h3>{t('audioTracks')}</h3>
           {Object.entries(audioTracks).filter(([id]) => id !== 'background').map(([id, track], index) => (

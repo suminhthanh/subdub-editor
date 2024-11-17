@@ -63,5 +63,6 @@
   "loadingFFmpeg": "Cargando FFmpeg...",
   "preparingMedia": "Preparando el vídeo...",
   "addSpeaker": "Añadir hablante",
-  "selectVoice": "Seleccionar voz"
+  "selectVoice": "Seleccionar voz",
+  "downloadExplanation": "Selecciona las pistas de audio y subtítulos que quieres descargar. El vídeo se regenerará en tu navegador, por lo que puede ser lento dependiendo de tu dispositivo. Si prefieres, puedes solicitar que el vídeo se regenera en nuestro servidor <regenerateLink>aquí</regenerateLink>."
 }

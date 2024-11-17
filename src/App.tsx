@@ -459,7 +459,6 @@ function App() {
       const newMediaBlob = await rebuildMedia(fileToProcess, tracks, selectedAudioBuffers, selectedSubtitles, setDownloadProgress);
       
       setDownloadProgress(t('preparingDownload'));
-      throw new Error("test");
       const url = URL.createObjectURL(newMediaBlob);
       const a = document.createElement('a');
       a.href = url;

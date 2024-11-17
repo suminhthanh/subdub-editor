@@ -63,5 +63,6 @@
   "loadingFFmpeg": "Carregant FFmpeg...",
   "preparingMedia": "Preparant el vídeo...",
   "addSpeaker": "Afegir un parlant",
-  "selectVoice": "Seleccionar veu"
+  "selectVoice": "Seleccionar veu",
+  "downloadExplanation": "Selecciona les pistes d'àudio i subtítols que vols descarregar. El video es regenerarà en el teu navegador pel que depenent del teu dispositiu pot ser lent. Si ho prefereixes, pots demanar que el vídeo sigui regenerat al nostre servidor clicant <regenerateLink>aquí</regenerateLink>."
 }

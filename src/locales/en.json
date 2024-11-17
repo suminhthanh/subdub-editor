@@ -63,5 +63,6 @@
   "loadingFFmpeg": "Loading FFmpeg...",
   "preparingMedia": "Preparing media...",
   "addSpeaker": "Add speaker",
-  "selectVoice": "Select voice"
+  "selectVoice": "Select voice",
+  "downloadExplanation": "Select the audio and subtitles tracks you want to download. The video will be regenerated in your browser so it may be slow depending on your device. If you prefer, you can request that the video be regenerated on our server <regenerateLink>here</regenerateLink>."
 }
