@@ -6,6 +6,7 @@ import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 jest.mock("./SpeakerService", () => ({
   speakerService: {
     setSpeaker: jest.fn(),
+    sortSpeakers: jest.fn(),
   },
 }));
 
