@@ -116,12 +116,12 @@ export const rebuildMedia = async (
   let subtitleIndex = 0;
   if (selectedSubtitles.includes("original")) {
     ffmpegArgs.push("-map", `${1 + subtitleIndex}`, "-c:s", "mov_text");
-    ffmpegArgs.push("-metadata:s:s:0", "language=es");
+    ffmpegArgs.push("-metadata:s:s:0", "language=spa");
     subtitleIndex++;
   }
   if (selectedSubtitles.includes("dubbed")) {
     ffmpegArgs.push("-map", `${1 + subtitleIndex}`, "-c:s", "mov_text");
-    ffmpegArgs.push("-metadata:s:s:1", "language=ca");
+    ffmpegArgs.push("-metadata:s:s:1", "language=cat");
   }
 
   // Set audio track titles
