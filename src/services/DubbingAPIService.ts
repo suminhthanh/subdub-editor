@@ -42,15 +42,13 @@ export const getMediaUrl = (uuid: string): string => {
 };
 
 export const getSilentVideoUrl = (uuid: string): string => {
-  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=original_video.mp4`;
+  return `${API_BASE_URL}/get_regenerate_file/?uuid=${uuid}&name=original_video`;
 };
 
 export const loadOriginalVocalsFromUUID = async (
   uuid: string
 ): Promise<ArrayBuffer> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/vocals.mp3`
-  );
+  const response = await fetch(getOriginalVocalsUrl(uuid));
   if (!response.ok) {
     throw new Error("Failed to load original audio");
   }
@@ -60,9 +58,7 @@ export const loadOriginalVocalsFromUUID = async (
 export const loadDubbedVocalsFromUUID = async (
   uuid: string
 ): Promise<ArrayBuffer> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=dubbed_vocals.mp3`
-  );
+  const response = await fetch(getDubbedVocalsUrl(uuid));
   if (!response.ok) {
     throw new Error("Failed to load original audio");
   }
@@ -72,9 +68,7 @@ export const loadDubbedVocalsFromUUID = async (
 export const loadBackgroundAudioFromUUID = async (
   uuid: string
 ): Promise<ArrayBuffer> => {
-  const response = await fetch(
-    `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/no_vocals.mp3`
-  );
+  const response = await fetch(getBackgroundAudioUrl(uuid));
   if (!response.ok) {
     throw new Error("Failed to load background audio");
   }
@@ -143,15 +137,15 @@ export const loadDubbedUtterance = async (
 };
 
 export const getBackgroundAudioUrl = (uuid: string): string => {
-  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/no_vocals.mp3`;
+  return `${API_BASE_URL}/get_regenerate_file/?uuid=${uuid}&name=no_vocals`;
 };
 
 export const getOriginalVocalsUrl = (uuid: string): string => {
-  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=htdemucs/original_audio/vocals.mp3`;
+  return `${API_BASE_URL}/get_regenerate_file/?uuid=${uuid}&name=vocals`;
 };
 
 export const getDubbedVocalsUrl = (uuid: string): string => {
-  return `${API_BASE_URL}/get_chunk/?uuid=${uuid}&chunk_name=dubbed_vocals.mp3`;
+  return `${API_BASE_URL}/get_regenerate_file/?uuid=${uuid}&name=dubbed_vocals`;
 };
 
 export const regenerateVideo = async (
