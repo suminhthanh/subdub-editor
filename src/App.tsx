@@ -320,7 +320,7 @@ function App() {
       setChunkBuffers(newChunkBuffers);
       const constructedDubbedAudioBuffer = await audioService.recreateConstructedAudio(tracks, newChunkBuffers);
       setDubbedAudioBuffer(constructedDubbedAudioBuffer);
-      setAdvancedEditMode(true);
+      setAdvancedEditMode(false); //Disable advanced edition
     } catch (error) {
       console.error("Error loading chunks in background:", error);
     }
