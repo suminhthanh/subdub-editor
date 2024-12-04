@@ -6,7 +6,7 @@ const API_BASE_URL =
   process.env.TRANSCRIPTION_API_BASE_URL ||
   "https://api.softcatala.org/transcribe-service/v1";
 
-export const getMediaUrl = (uuid: string): string => {
+export const getMediaUrl = (uuid: string, revision: string): string => {
   return `${API_BASE_URL}/get_file/?uuid=${uuid}&ext=bin`;
 };
 
