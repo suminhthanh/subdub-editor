@@ -13,7 +13,7 @@ export const getMediaUrl = (uuid: string, revision: string): string => {
 export const getMediaMetadata = async (
   uuid: string
 ): Promise<{ contentType: string; filename: string }> => {
-  const response = await fetch(getMediaUrl(uuid), { method: "HEAD" });
+  const response = await fetch(getMediaUrl(uuid, ""), { method: "HEAD" });
   if (!response.ok) {
     throw new Error("Failed to load video");
   }
