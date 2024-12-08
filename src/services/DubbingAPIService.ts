@@ -6,7 +6,7 @@ import { matxaSynthesisProvider } from "./MatxaSynthesisProvider";
 import { getI18n } from "react-i18next";
 
 const API_BASE_URL =
-  process.env.DUBBING_API_BASE_URL || "http://192.168.178.152:8700";
+  process.env.DUBBING_API_BASE_URL || "http://localhost:8700";
 
 export type DubbingJSON = {
   start: number;
