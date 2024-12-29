@@ -34,17 +34,7 @@ jobs:
         id: find-js
         run: |
           JS_FILE=$(find dist/assets -name "index-*.js" -type f)
-          # Store just the filename, not the full path
-          JS_FILENAME=$(basename "$JS_FILE")
           echo "js_file=$JS_FILE" >> $GITHUB_OUTPUT
-          echo "js_filename=$JS_FILENAME" >> $GITHUB_OUTPUT
-
-      - name: Save JS file content
-        run: |
-          pwd
-          ls -al
-          mkdir -p temp
-          cp "${{ steps.find-js.outputs.js_file }}" "temp/${{ steps.find-js.outputs.js_filename }}"
 
       - name: Checkout wp-softcatala repository
         uses: actions/checkout@v4
@@ -57,7 +47,7 @@ jobs:
         run: |
           pwd
           ls -al
-          cp "temp/${{ steps.find-js.outputs.js_filename }}" wp-softcatala/static/js/subdub-editor.js
+          cp "${{ steps.find-js.outputs.js_file }}" wp-softcatala/static/js/subdub-editor.js
 
       - name: Commit and push changes
         working-directory: wp-softcatala
