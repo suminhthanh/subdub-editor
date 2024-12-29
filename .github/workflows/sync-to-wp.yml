@@ -33,6 +33,8 @@ jobs:
 
       - name: Save JS file content
         run: |
+          pwd
+          ls -al
           mkdir -p temp
           cp "${{ steps.find-js.outputs.js_file }}" "temp/${{ steps.find-js.outputs.js_filename }}"
 
@@ -44,6 +46,8 @@ jobs:
 
       - name: Copy JS file
         run: |
+          pwd
+          ls -al
           cp "temp/${{ steps.find-js.outputs.js_filename }}" static/js/subdub-editor.js
 
       - name: Commit and push changes
