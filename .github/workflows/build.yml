@@ -7,6 +7,9 @@ on:
         required: false
         type: boolean
         default: false
+      tag:
+        required: false
+        type: string
     secrets:
       DUBBING_API_BASE_URL:
         required: false
@@ -20,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
 
       - name: Use Node.js
         uses: actions/setup-node@v4
