@@ -1,0 +1,47 @@
+name: Sync to WordPress Theme
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    secrets:
+      DUBBING_API_BASE_URL: ${{ secrets.DUBBING_API_BASE_URL }}
+      TRANSCRIPTION_API_BASE_URL: ${{ secrets.TRANSCRIPTION_API_BASE_URL }}
+      MATXA_API_BASE_URL: ${{ secrets.MATXA_API_BASE_URL }}
+
+  sync:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Find JS filename
+        id: find-js
+        run: |
+          JS_FILE=$(find dist/assets -name "index-*.js" -type f)
+          echo "js_file=$JS_FILE" >> $GITHUB_OUTPUT
+
+      - name: Checkout wp-softcatala repository
+        uses: actions/checkout@v4
+        with:
+          repository: Softcatala/wp-softcatala
+          token: ${{ secrets.WP_REPO_TOKEN }}
+
+      - name: Copy JS file
+        run: |
+          cp ${{ steps.find-js.outputs.js_file }} static/js/subdub-editor.js
+
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add static/js/subdub-editor.js
+          git commit -m "Update subdub-editor.js to version ${{ github.event.release.tag_name }}"
+          git push origin HEAD:master
