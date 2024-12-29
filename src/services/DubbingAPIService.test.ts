@@ -7,6 +7,7 @@ jest.mock("./SpeakerService", () => ({
   speakerService: {
     setSpeaker: jest.fn(),
     sortSpeakers: jest.fn(),
+    getSpeakerById: jest.fn(),
   },
 }));
 
@@ -143,5 +144,86 @@ describe("DubbingAPIService", () => {
     });
 
     // Add more tests for error cases
+  });
+
+  describe("regenerateVideo", () => {
+    beforeEach(() => {
+      global.fetch = jest.fn().mockResolvedValue({ ok: true });
+    });
+
+    it("should use speaker voice gender when available", async () => {
+      // Mock getSpeakerById for this test
+      (speakerService.getSpeakerById as jest.Mock) = jest.fn().mockReturnValue({
+        voice: {
+          id: "voice1",
+          name: "Test Voice",
+          gender: "female",
+          language: "en",
+        },
+      });
+
+      const testTrack = {
+        id: 1,
+        start: 0,
+        end: 1,
+        speaker_id: "speaker1",
+        path: "path/to/audio",
+        text: "Hello",
+        original_text: "Hello",
+        for_dubbing: true,
+        ssml_gender: "male", // This should be overridden by the voice gender
+        translated_text: "Hola",
+        original_translated_text: "Hola",
+        pitch: 0,
+        speed: 1,
+        volume_gain_db: 0,
+        dubbed_path: "path/to/dubbed",
+        chunk_size: 0,
+        needsResynthesis: false,
+        updated: true,
+      };
+
+      await DubbingAPIService.regenerateVideo("test-uuid", [testTrack]);
+
+      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body);
+
+      expect(requestBody.utterance_update[0].gender).toBe("female");
+    });
+
+    it("should fallback to track ssml_gender when speaker voice is not available", async () => {
+      // Mock getSpeakerById to return a speaker without voice
+      (speakerService.getSpeakerById as jest.Mock) = jest.fn().mockReturnValue({
+        voice: null,
+      });
+
+      const testTrack = {
+        id: 1,
+        start: 0,
+        end: 1,
+        speaker_id: "speaker1",
+        path: "path/to/audio",
+        text: "Hello",
+        original_text: "Hello",
+        for_dubbing: true,
+        ssml_gender: "male",
+        translated_text: "Hola",
+        original_translated_text: "Hola",
+        pitch: 0,
+        speed: 1,
+        volume_gain_db: 0,
+        dubbed_path: "path/to/dubbed",
+        chunk_size: 0,
+        needsResynthesis: false,
+        updated: true,
+      };
+
+      await DubbingAPIService.regenerateVideo("test-uuid", [testTrack]);
+
+      const fetchCall = (global.fetch as jest.Mock).mock.calls[0];
+      const requestBody = JSON.parse(fetchCall[1].body);
+
+      expect(requestBody.utterance_update[0].gender).toBe("male");
+    });
   });
 });

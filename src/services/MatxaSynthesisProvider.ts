@@ -2,7 +2,6 @@ import { Voice } from "../types/Voice";
 import { SynthesisProvider } from "./SynthesisService";
 
 interface MatxaVoice extends Voice {
-  gender: string;
   language: string;
   region: string;
   name: string;

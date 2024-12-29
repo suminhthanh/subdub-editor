@@ -168,7 +168,9 @@ export const regenerateVideo = async (
       path: track.path,
       text: track.text,
       for_dubbing: track.for_dubbing,
-      gender: track.ssml_gender,
+      gender:
+        speakerService.getSpeakerById(track.speaker_id)?.voice?.gender ||
+        track.ssml_gender,
       translated_text: track.translated_text || "",
       assigned_voice:
         speakerService.getSpeakerById(track.speaker_id)?.voice?.id || "",
