@@ -31,7 +31,7 @@ describe("DubbingAPIService", () => {
   });
 
   describe("parseTracksFromJSON", () => {
-    it("should parse valid dubbing JSON data", () => {
+    it("should parse valid dubbing JSON data", async () => {
       const mockData: DubbingJSON[] = [
         {
           id: 1,
@@ -51,7 +51,7 @@ describe("DubbingAPIService", () => {
         },
       ];
 
-      const result = DubbingAPIService.parseTracksFromJSON(mockData);
+      const result = await DubbingAPIService.parseTracksFromJSON(mockData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
@@ -80,7 +80,7 @@ describe("DubbingAPIService", () => {
       });
     });
 
-    it("should handle missing properties", () => {
+    it("should handle missing properties", async () => {
       const mockData = [
         {
           id: "1",
@@ -90,7 +90,7 @@ describe("DubbingAPIService", () => {
         },
       ];
 
-      const result = DubbingAPIService.parseTracksFromJSON(mockData);
+      const result = await DubbingAPIService.parseTracksFromJSON(mockData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual(
@@ -117,12 +117,12 @@ describe("DubbingAPIService", () => {
       });
     });
 
-    it("should throw an error for invalid input", () => {
+    it("should throw an error for invalid input", async () => {
       const mockData = { invalid: "data" };
 
-      expect(() =>
+      await expect(
         DubbingAPIService.parseTracksFromJSON(mockData as any)
-      ).toThrow("utterances is not iterable");
+      ).rejects.toThrow("utterances is not iterable");
     });
   });
 

@@ -85,13 +85,15 @@ export const loadTracksFromUUID = async (
   return response.json();
 };
 
-export const parseTracksFromJSON = (utterances: DubbingJSON[]): Track[] => {
+export const parseTracksFromJSON = async (
+  utterances: DubbingJSON[]
+): Promise<Track[]> => {
   const tracks: Track[] = [];
   for (const utterance of utterances) {
-    speakerService.setSpeaker({
+    await speakerService.setSpeaker({
       id: utterance.speaker_id,
       name: `${getI18n().t("speaker")} ${utterance.speaker_id.slice(-2)}`,
-      voice: matxaSynthesisProvider.getVoice(utterance.assigned_voice),
+      voice: await matxaSynthesisProvider.getVoice(utterance.assigned_voice),
     });
 
     const text = utterance.text || "";
