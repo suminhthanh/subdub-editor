@@ -5,7 +5,7 @@ import path from "path";
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   return {
-    base: "/subdub-editor/",
+    base: "/",
     plugins: [react()],
     server: {
       port: 3000,
